@@ -1294,7 +1294,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     try {
       // エスケープシーケンスや特殊キーはリテラルで送信
-      await sshClient.execPersistent(_resolveMuxCmd(TmuxCommands.sendKeys(target, data, literal: true)));
+      await sshClient.execInput(_resolveMuxCmd(TmuxCommands.sendKeys(target, data, literal: true)));
       _boostPolling();
     } catch (_) {
       // キー送信エラーは静かに無視

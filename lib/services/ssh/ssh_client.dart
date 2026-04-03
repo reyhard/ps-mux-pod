@@ -130,6 +130,9 @@ class SshClient {
   /// 持続的シェルセッション（ポーリング用）
   PersistentShell? _persistentShell;
 
+  /// 入力専用の持続的シェル（ポーリングと並行してキー送信可能）
+  PersistentShell? _inputShell;
+
   /// 検出されたtmuxバイナリの絶対パス
   String? _tmuxPath;
 
@@ -340,6 +343,8 @@ class SshClient {
     // 持続的シェルを解放
     await _persistentShell?.dispose();
     _persistentShell = null;
+    await _inputShell?.dispose();
+    _inputShell = null;
 
     await _stdoutSubscription?.cancel();
     await _stderrSubscription?.cancel();
@@ -363,10 +368,14 @@ class SshClient {
     try {
       _persistentShell = PersistentShell(_client!);
       await _persistentShell!.start();
+      // 入力専用シェルも開始
+      _inputShell = PersistentShell(_client!);
+      await _inputShell!.start();
     } catch (e) {
       // 持続的シェルの開始に失敗しても接続自体は継続
       // 従来のexec()メソッドにフォールバック
       _persistentShell = null;
+      _inputShell = null;
     }
   }
 
@@ -378,8 +387,12 @@ class SshClient {
       await _persistentShell?.dispose();
       _persistentShell = PersistentShell(_client!);
       await _persistentShell!.start();
+      await _inputShell?.dispose();
+      _inputShell = PersistentShell(_client!);
+      await _inputShell!.start();
     } catch (e) {
       _persistentShell = null;
+      _inputShell = null;
     }
   }
 
@@ -737,6 +750,36 @@ class SshClient {
       }
       // その他のエラーは従来のexec()にフォールバック
       return exec(resolvedCommand, timeout: timeout);
+    }
+  }
+
+  /// 入力専用シェル経由でコマンドを実行（ポーリングと並行可能）
+  ///
+  /// send-keysなどの入力コマンド用。ポーリングで使用する
+  /// 持続的シェルとは独立しており、ポーリング中でもブロックされない。
+  Future<String> execInput(String command, {Duration? timeout}) async {
+    if (!isConnected || _client == null) {
+      throw SshConnectionError('Not connected');
+    }
+
+    final resolvedCommand = _resolveTmuxCommand(command);
+
+    if (_inputShell == null || !_inputShell!.isStarted) {
+      return execPersistent(resolvedCommand, timeout: timeout);
+    }
+
+    try {
+      return await _inputShell!.exec(resolvedCommand, timeout: timeout);
+    } on PersistentShellError catch (e) {
+      if (e.message.contains('closed') || e.message.contains('disposed')) {
+        try {
+          await _inputShell!.restart();
+          return await _inputShell!.exec(resolvedCommand, timeout: timeout);
+        } catch (_) {
+          return execPersistent(resolvedCommand, timeout: timeout);
+        }
+      }
+      return execPersistent(resolvedCommand, timeout: timeout);
     }
   }
 
