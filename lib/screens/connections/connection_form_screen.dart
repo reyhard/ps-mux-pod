@@ -1041,9 +1041,30 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         ),
       );
 
-      // tmuxがインストールされているか確認
-      // connect()内でPersistentShell（対話シェル）経由で絶対パスを検出済み
-      tmuxInstalled = sshClient.tmuxPath != null;
+      // マルチプレクサの検出
+      if (_muxType == 'psmux') {
+        // psmux指定: psmuxの存在を確認
+        try {
+          final output = await sshClient.exec('psmux -V');
+          tmuxInstalled = output.isNotEmpty && !output.toLowerCase().contains('not found');
+        } catch (_) {
+          tmuxInstalled = false;
+        }
+      } else if (_muxType == 'tmux') {
+        tmuxInstalled = sshClient.tmuxPath != null;
+      } else {
+        // auto: まずpsmux、なければtmux
+        try {
+          final output = await sshClient.exec('psmux -V');
+          if (output.isNotEmpty && !output.toLowerCase().contains('not found') && !output.toLowerCase().contains('error')) {
+            tmuxInstalled = true;
+          } else {
+            tmuxInstalled = sshClient.tmuxPath != null;
+          }
+        } catch (_) {
+          tmuxInstalled = sshClient.tmuxPath != null;
+        }
+      }
     } on SshAuthenticationError catch (e) {
       errorMessage = 'Authentication failed: ${e.message}';
     } on SshConnectionError catch (e) {
@@ -1066,9 +1087,10 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
           ),
         );
       } else {
+        final muxLabel = _muxType == 'psmux' ? 'psmux' : 'tmux/psmux';
         final message = tmuxInstalled
-            ? 'Connection successful! tmux is available.'
-            : 'Connection successful! Warning: tmux not found.';
+            ? 'Connection successful! $muxLabel is available.'
+            : 'Connection successful! Warning: $muxLabel not found.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),

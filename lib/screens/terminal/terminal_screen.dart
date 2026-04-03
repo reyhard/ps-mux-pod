@@ -14,6 +14,12 @@ import '../../providers/ssh_provider.dart';
 import '../../providers/mux_provider.dart';
 import '../../providers/tmux_provider.dart';
 import '../../services/keychain/secure_storage.dart';
+import '../../services/mux/mux_detector.dart';
+import '../../services/mux/mux_node.dart';
+import '../../services/mux/mux_types.dart';
+import '../../services/mux/psmux_backend.dart';
+import '../../services/mux/ssh_executor.dart';
+import '../../services/mux/tmux_backend.dart';
 import '../../services/network/network_monitor.dart';
 import '../../services/ssh/input_queue.dart';
 import '../../services/ssh/ssh_client.dart' show SshConnectOptions;
@@ -165,6 +171,9 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
   // directInput設定のローカルキャッシュ（ref.watch回避）
   bool _directInputEnabled = true;
+
+  // 検出されたMuxバックエンド名（'tmux' or 'psmux'）
+  String _muxBackendName = 'tmux';
 
   // Riverpodリスナー
   ProviderSubscription<SshState>? _sshSubscription;
@@ -331,6 +340,51 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     }
   }
 
+  /// TmuxCommandsの出力をMuxバックエンドに応じて変換
+  ///
+  /// psmuxの場合、先頭の "tmux " を "psmux " に置換する。
+  String _resolveMuxCmd(String cmd) {
+    if (_muxBackendName == 'psmux') {
+      return cmd.replaceFirst('tmux ', 'psmux ');
+    }
+    return cmd;
+  }
+
+  /// Muxバックエンドを検出してMuxProviderにセットアップ
+  Future<void> _detectAndSetupMuxBackend(Connection connection) async {
+    final sshClient = ref.read(sshProvider.notifier).client;
+    if (sshClient == null) return;
+
+    final executor = SshExecutor(sshClient);
+
+    // バックエンド種別を決定
+    MuxType detectedType;
+    if (connection.muxType == 'psmux') {
+      detectedType = MuxType.psmux;
+    } else if (connection.muxType == 'tmux') {
+      detectedType = MuxType.tmux;
+    } else {
+      // auto: MuxDetectorで検出
+      final detector = MuxDetector(executor);
+      detectedType = await detector.detect();
+    }
+
+    _muxBackendName = detectedType == MuxType.psmux ? 'psmux' : 'tmux';
+    debugPrint('[Terminal] Detected mux backend: $_muxBackendName');
+
+    // MuxBackendを作成
+    final backend = detectedType == MuxType.psmux
+        ? PsmuxBackend(executor)
+        : TmuxBackend(executor);
+
+    // MuxNodeツリーを構築してMuxProviderにセット
+    final rootNode = MuxNode(
+      backend: backend,
+      executor: executor,
+    );
+    ref.read(muxProvider.notifier).setRootNode(rootNode);
+  }
+
   /// SSH接続してtmuxセッションをセットアップ
   Future<void> _connectAndSetup() async {
     if (!mounted) {
@@ -361,6 +415,12 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
         return;
       }
 
+      // 3.5. Muxバックエンドを検出してセットアップ
+      await _detectAndSetupMuxBackend(connection);
+      if (!mounted || _isDisposed) {
+        return;
+      }
+
       // 4. セッションツリー全体を取得
       await _refreshSessionTree();
       if (!mounted || _isDisposed) {
@@ -383,10 +443,10 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
         } else {
           // 新規セッション作成
           final sshClient = ref.read(sshProvider.notifier).client;
-          await sshClient?.exec(TmuxCommands.newSession(
+          await sshClient?.exec(_resolveMuxCmd(TmuxCommands.newSession(
             name: widget.sessionName!,
             detached: true,
-          ));
+          )));
           if (!mounted || _isDisposed) return;
           await _refreshSessionTree();
           if (!mounted || _isDisposed) return;
@@ -399,7 +459,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
         // セッションがない場合は自動生成名で新規作成
         final sshClient = ref.read(sshProvider.notifier).client;
         sessionName = 'muxpod-${DateTime.now().millisecondsSinceEpoch}';
-        await sshClient?.exec(TmuxCommands.newSession(name: sessionName, detached: true));
+        await sshClient?.exec(_resolveMuxCmd(TmuxCommands.newSession(name: sessionName, detached: true)));
         if (!mounted || _isDisposed) return;
         await _refreshSessionTree();
         if (!mounted || _isDisposed) return;
@@ -467,7 +527,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
         );
 
         // ペインにフォーカスインを送信（Claude Code等のアプリがフォーカスを検知できるようにする）
-        await sshNotifier.client?.exec(TmuxCommands.sendKeys(activePane.id, '\x1b[I', literal: true));
+        await sshNotifier.client?.exec(_resolveMuxCmd(TmuxCommands.sendKeys(activePane.id, '\x1b[I', literal: true)));
       }
 
       // 8. 100msポーリング開始
@@ -501,7 +561,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     }
 
     try {
-      final cmd = TmuxCommands.listAllPanes();
+      final cmd = _resolveMuxCmd(TmuxCommands.listAllPanes());
       final output = await sshClient.exec(cmd);
       if (!mounted || _isDisposed) return;
       ref.read(tmuxProvider.notifier).parseAndUpdateFullTree(output);
@@ -603,9 +663,9 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       // capture-pane + カーソル位置情報 + ペインモード を1回で取得
       // 出力形式: [ペイン内容]\n[カーソル情報]\n[ペインモード]
       final combinedCommand =
-          '${TmuxCommands.capturePane(target, escapeSequences: true, startLine: -1000)}; '
-          '${TmuxCommands.getCursorPosition(target)}; '
-          '${TmuxCommands.getPaneMode(target)}';
+          '${_resolveMuxCmd(TmuxCommands.capturePane(target, escapeSequences: true, startLine: -1000))}; '
+          '${_resolveMuxCmd(TmuxCommands.getCursorPosition(target))}; '
+          '${_resolveMuxCmd(TmuxCommands.getPaneMode(target))}';
 
       final combinedOutput = await sshClient.execPersistent(
         combinedCommand,
@@ -1067,7 +1127,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     try {
       // エスケープシーケンスや特殊キーはリテラルで送信
-      await sshClient.exec(TmuxCommands.sendKeys(target, data, literal: true));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.sendKeys(target, data, literal: true)));
       _boostPolling();
     } catch (_) {
       // キー送信エラーは静かに無視
@@ -1106,7 +1166,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     try {
       // tmux select-windowを実行
-      await sshClient.exec(TmuxCommands.selectWindow(sessionName, windowIndex));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.selectWindow(sessionName, windowIndex)));
     } catch (e) {
       // SSH接続が閉じている場合は無視
       debugPrint('[Terminal] Failed to select window: $e');
@@ -1138,14 +1198,14 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     try {
       // 前のペインにフォーカスアウトを送信
       if (oldPaneId != null && oldPaneId != paneId) {
-        await sshClient.exec(TmuxCommands.sendKeys(oldPaneId, '\x1b[O', literal: true));
+        await sshClient.exec(_resolveMuxCmd(TmuxCommands.sendKeys(oldPaneId, '\x1b[O', literal: true)));
       }
 
       // tmux select-paneを実行
-      await sshClient.exec(TmuxCommands.selectPane(paneId));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.selectPane(paneId)));
 
       // 新しいペインにフォーカスインを送信（Claude Code等のアプリがフォーカスを検知できるようにする）
-      await sshClient.exec(TmuxCommands.sendKeys(paneId, '\x1b[I', literal: true));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.sendKeys(paneId, '\x1b[I', literal: true)));
     } catch (e) {
       // SSH接続が閉じている場合は無視
       debugPrint('[Terminal] Failed to select pane: $e');
@@ -1597,8 +1657,8 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     try {
       final command = direction == SplitDirection.horizontal
-          ? TmuxCommands.splitWindowHorizontal(target: paneId)
-          : TmuxCommands.splitWindowVertical(target: paneId);
+          ? _resolveMuxCmd(TmuxCommands.splitWindowHorizontal(target: paneId))
+          : _resolveMuxCmd(TmuxCommands.splitWindowVertical(target: paneId));
       await sshClient.exec(command);
       await _refreshSessionTree();
     } catch (e) {
@@ -2235,7 +2295,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     if (target == null) return;
 
     try {
-      await sshClient.exec(TmuxCommands.sendKeys(target, key, literal: literal));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.sendKeys(target, key, literal: literal)));
       _boostPolling();
     } catch (_) {
       // キー送信エラーは静かに無視（ポーリングで状態は更新される）
@@ -2249,7 +2309,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     final target = ref.read(tmuxProvider.notifier).currentTarget;
     if (target == null) return;
     try {
-      await sshClient.exec(TmuxCommands.enterCopyMode(target));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.enterCopyMode(target)));
       _boostPolling();
     } catch (_) {}
   }
@@ -2261,7 +2321,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     final target = ref.read(tmuxProvider.notifier).currentTarget;
     if (target == null) return;
     try {
-      await sshClient.exec(TmuxCommands.cancelCopyMode(target));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.cancelCopyMode(target)));
       _boostPolling();
     } catch (_) {}
   }
@@ -2278,7 +2338,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     try {
       // 特殊キーはリテラルではなくtmux形式で送信
-      await sshClient.exec(TmuxCommands.sendKeys(target, tmuxKey, literal: false));
+      await sshClient.exec(_resolveMuxCmd(TmuxCommands.sendKeys(target, tmuxKey, literal: false)));
       _boostPolling();
     } catch (_) {
       // キー送信エラーは静かに無視（ポーリングで状態は更新される）
