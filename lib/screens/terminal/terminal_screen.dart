@@ -11,6 +11,7 @@ import '../../providers/active_session_provider.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/ssh_provider.dart';
+import '../../providers/mux_provider.dart';
 import '../../providers/tmux_provider.dart';
 import '../../services/keychain/secure_storage.dart';
 import '../../services/network/network_monitor.dart';
