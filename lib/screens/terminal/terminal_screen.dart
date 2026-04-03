@@ -771,11 +771,12 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     );
   }
 
-  /// キー入力後にポーリングを即座にブースト（アイドル時の応答性改善）
+  /// キー入力後にポーリングを即座に実行（アイドル時の応答性改善）
   void _boostPolling() {
     _currentPollingInterval = _minPollingInterval;
     _pollTimer?.cancel();
-    _scheduleNextPoll();
+    // 次のインターバルを待たず即座にポーリング実行
+    _pollPaneContent().then((_) => _scheduleNextPoll());
   }
 
   /// ポーリング間隔を更新
@@ -1293,8 +1294,11 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     if (target == null) return;
 
     try {
-      // エスケープシーケンスや特殊キーはリテラルで送信
-      await sshClient.execInput(_resolveMuxCmd(TmuxCommands.sendKeys(target, data, literal: true)));
+      // Fire-and-forget: send-keysの結果は不要なのでawaitしない
+      // 入力専用シェルを使用（ポーリングと並行可能）
+      unawaited(
+        sshClient.execInput(_resolveMuxCmd(TmuxCommands.sendKeys(target, data, literal: true))).catchError((_) => ''),
+      );
       _boostPolling();
     } catch (_) {
       // キー送信エラーは静かに無視
