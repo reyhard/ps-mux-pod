@@ -693,13 +693,22 @@ class _ConnectionCardState extends ConsumerState<_ConnectionCard> {
         options: options,
       );
 
-      final cmd = TmuxCommands.listSessions();
-      debugPrint('_fetchSessions: tmuxPath=${sshClient.tmuxPath}, cmd="$cmd"');
+      // Muxバックエンドに応じてコマンドを解決
+      String resolveMuxCmd(String cmd) {
+        if (connection.muxType == 'psmux') {
+          return cmd.replaceFirst('tmux ', 'psmux ');
+        }
+        return cmd;
+      }
+
+      final cmd = resolveMuxCmd(TmuxCommands.listSessions());
+      debugPrint('_fetchSessions: tmuxPath=${sshClient.tmuxPath}, muxType=${connection.muxType}, cmd="$cmd"');
       final result = await sshClient.execWithExitCode(cmd);
       debugPrint('_fetchSessions: stdout="${result.stdout.trim()}", stderr="${result.stderr.trim()}", exitCode=${result.exitCode}');
       if (result.exitCode != null && result.exitCode != 0) {
+        final muxLabel = connection.muxType == 'psmux' ? 'psmux' : 'tmux';
         throw SshConnectionError(
-          result.stderr.isNotEmpty ? result.stderr.trim() : 'tmux command failed (exit code: ${result.exitCode})',
+          result.stderr.isNotEmpty ? result.stderr.trim() : '$muxLabel command failed (exit code: ${result.exitCode})',
         );
       }
       final sessions = TmuxParser.parseSessions(result.stdout);

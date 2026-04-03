@@ -572,7 +572,18 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       final output = await sshClient.exec(cmd);
       debugPrint('[Terminal] refreshSessionTree output (${output.length} chars): ${output.substring(0, output.length.clamp(0, 200))}');
       if (!mounted || _isDisposed) return;
-      ref.read(tmuxProvider.notifier).parseAndUpdateFullTree(output);
+
+      // -Fフォーマット出力を試行（|||区切りがあるか確認）
+      if (output.contains(TmuxCommands.delimiter)) {
+        ref.read(tmuxProvider.notifier).parseAndUpdateFullTree(output);
+      } else {
+        // psmux等 -F非対応: list-sessionsのデフォルト出力をフォールバックパース
+        debugPrint('[Terminal] No ||| delimiters found, falling back to list-sessions');
+        final sessionsCmd = _resolveMuxCmd(TmuxCommands.listSessions());
+        final sessionsOutput = await sshClient.exec(sessionsCmd);
+        if (!mounted || _isDisposed) return;
+        ref.read(tmuxProvider.notifier).parseAndUpdateSessions(sessionsOutput);
+      }
     } catch (e) {
       debugPrint('[Terminal] refreshSessionTree error: $e');
     }

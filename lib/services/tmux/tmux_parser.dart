@@ -12,7 +12,9 @@ class TmuxParser {
 
   /// セッション一覧をパース
   ///
-  /// 対応フォーマット: `#{session_name}\t#{session_created}\t#{session_attached}\t#{session_windows}\t#{session_id}`
+  /// 対応フォーマット:
+  /// 1. カスタム: `#{session_name}|||#{session_created}|||#{session_attached}|||#{session_windows}|||#{session_id}`
+  /// 2. デフォルト: `name: N windows (created DATE)` (psmux等 -Fフラグ非対応時のフォールバック)
   static List<TmuxSession> parseSessions(String output, {String delimiter = defaultDelimiter}) {
     debugPrint('parseSessions: raw output="${output.trim()}"');
     if (!isServerRunning(output)) {
@@ -26,13 +28,39 @@ class TmuxParser {
       final trimmed = line.trim();
       if (trimmed.isEmpty) continue;
 
+      // カスタムフォーマット（|||区切り）を試行
       final session = parseSessionLine(trimmed, delimiter: delimiter);
       if (session != null) {
         sessions.add(session);
+        continue;
+      }
+
+      // デフォルトフォーマットをフォールバック: "name: N windows (created DATE)"
+      final defaultSession = _parseDefaultSessionLine(trimmed);
+      if (defaultSession != null) {
+        sessions.add(defaultSession);
       }
     }
 
     return sessions;
+  }
+
+  /// デフォルトフォーマットのセッション行をパース
+  ///
+  /// フォーマット: `name: N windows (created DATE)` または `name: N windows (created DATE) (attached)`
+  static TmuxSession? _parseDefaultSessionLine(String line) {
+    final match = RegExp(r'^(.+?):\s+(\d+)\s+windows?\s+\(created\s+(.+?)\)(\s+\(attached\))?$').firstMatch(line);
+    if (match == null) return null;
+
+    final name = match.group(1)!;
+    final windowCount = int.tryParse(match.group(2)!) ?? 0;
+    final attached = match.group(4) != null;
+
+    return TmuxSession(
+      name: name,
+      windowCount: windowCount,
+      attached: attached,
+    );
   }
 
   /// 単一のセッション行をパース
