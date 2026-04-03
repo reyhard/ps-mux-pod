@@ -23,6 +23,7 @@ import '../../services/mux/tmux_backend.dart';
 import '../../services/network/network_monitor.dart';
 import '../../services/ssh/input_queue.dart';
 import '../../services/ssh/ssh_client.dart' show SshConnectOptions;
+import '../../services/terminal/scrollback_buffer.dart';
 import '../../services/tmux/pane_navigator.dart';
 import '../../services/tmux/tmux_commands.dart';
 import '../../services/tmux/tmux_parser.dart';
@@ -165,6 +166,9 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
   // 入力キュー（切断中の入力を保持）
   final _inputQueue = InputQueue();
+
+  // スクロールバックバッファ（クライアント側履歴保持）
+  final _scrollbackBuffer = ScrollbackBuffer();
 
   // バックグラウンド状態
   bool _isInBackground = false;
@@ -822,7 +826,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       // capture-pane + カーソル位置情報 + ペインモード を1回で取得
       // 出力形式: [ペイン内容]\n[カーソル情報]\n[ペインモード]
       final combinedCommand =
-          '${_resolveMuxCmd(TmuxCommands.capturePane(target, escapeSequences: true, startLine: -1000))}; '
+          '${_resolveMuxCmd(TmuxCommands.capturePaneVisible(target))}; '
           '${_resolveMuxCmd(TmuxCommands.getCursorPosition(target))}; '
           '${_resolveMuxCmd(TmuxCommands.getPaneMode(target))}';
 
@@ -841,6 +845,10 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       final processedOutput = output.endsWith('\n')
           ? output.substring(0, output.length - 1)
           : output;
+
+      // Feed scrollback buffer with visible lines
+      final visibleLines = processedOutput.split('\n');
+      _scrollbackBuffer.appendNewContent(visibleLines);
 
       final endTime = DateTime.now();
 
@@ -1371,6 +1379,9 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       return;
     }
     if (!mounted || _isDisposed) return;
+
+    // スクロールバックバッファをクリア（ペイン切り替え時）
+    _scrollbackBuffer.clear();
 
     // tmux_providerでアクティブペインを更新
     ref.read(tmuxProvider.notifier).setActivePane(paneId);
