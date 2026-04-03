@@ -410,12 +410,32 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            _buildNavigationKeysRow(),
             _buildModifierKeysRow(),
             _buildArrowKeysRow(),
             if (widget.directInputEnabled) _buildDirectInputRow(),
             const SizedBox(height: 4),
           ],
         ),
+      ),
+    );
+  }
+
+  /// ナビゲーションキー行（PgUp, PgDn, Home, End, Del, Ins）
+  Widget _buildNavigationKeysRow() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      color: isDark ? DesignColors.surfaceDark : DesignColors.surfaceLight,
+      child: Row(
+        children: [
+          _buildSpecialKeyButton('PgUp', 'PPage'),
+          _buildSpecialKeyButton('PgDn', 'NPage'),
+          _buildSpecialKeyButton('Home', 'Home'),
+          _buildSpecialKeyButton('End', 'End'),
+          _buildSpecialKeyButton('Del', 'DC'),
+          _buildSpecialKeyButton('Ins', 'IC'),
+        ],
       ),
     );
   }
