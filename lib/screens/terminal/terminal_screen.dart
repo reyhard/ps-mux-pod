@@ -170,6 +170,10 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
   // スクロールバックバッファ（クライアント側履歴保持）
   final _scrollbackBuffer = ScrollbackBuffer();
 
+  // スクロールバック履歴取得状態
+  bool _isLoadingScrollback = false;
+  bool _scrollbackSeeded = false;
+
   // バックグラウンド状態
   bool _isInBackground = false;
 
@@ -192,6 +196,14 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     // スクロール時にスクロールボタンを表示
     _terminalScrollController.addListener(_onTerminalScroll);
+
+    // スクロール先頭到達時にスクロールバック履歴を取得
+    _terminalScrollController.addListener(() {
+      if (_terminalScrollController.hasClients &&
+          _terminalScrollController.offset <= 0) {
+        _onScrollTopReached();
+      }
+    });
 
     // 次フレームでリスナーを設定（ref使用のため）
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -769,6 +781,39 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
         _scheduleNextPoll();
       },
     );
+  }
+
+  /// スクロール位置が先頭に到達した時にスクロールバック履歴を取得
+  Future<void> _onScrollTopReached() async {
+    if (_isLoadingScrollback || _scrollbackSeeded) return;
+    _isLoadingScrollback = true;
+
+    try {
+      final sshClient = ref.read(sshProvider.notifier).client;
+      final target = ref.read(tmuxProvider.notifier).currentTarget;
+      if (sshClient == null || target == null) return;
+
+      // 一括でスクロールバック履歴を取得
+      final historyOutput = await sshClient.execPersistent(
+        _resolveMuxCmd(TmuxCommands.capturePane(target, escapeSequences: true, startLine: -1000)),
+        timeout: const Duration(seconds: 3),
+      );
+
+      if (!mounted || _isDisposed) return;
+
+      final historyLines = historyOutput.split('\n');
+      // 現在の可視領域より前の行だけをスクロールバックに追加
+      final paneHeight = _viewNotifier.value.paneHeight;
+      if (historyLines.length > paneHeight) {
+        final scrollbackLines = historyLines.sublist(0, historyLines.length - paneHeight);
+        _scrollbackBuffer.seedHistory(scrollbackLines);
+        _scrollbackSeeded = true;
+      }
+    } catch (_) {
+      // エラー時はリトライ可能にするため_scrollbackSeededをfalseのまま
+    } finally {
+      _isLoadingScrollback = false;
+    }
   }
 
   /// キー入力後にポーリングを即座に実行（アイドル時の応答性改善）
@@ -1386,6 +1431,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     // スクロールバックバッファをクリア（ペイン切り替え時）
     _scrollbackBuffer.clear();
+    _scrollbackSeeded = false;
 
     // tmux_providerでアクティブペインを更新
     ref.read(tmuxProvider.notifier).setActivePane(paneId);
