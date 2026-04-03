@@ -136,6 +136,9 @@ class SshClient {
   /// 検出されたtmuxバイナリの絶対パス
   String? _tmuxPath;
 
+  /// tmuxコマンド置換用の正規表現（事前コンパイル）
+  static final _tmuxCommandRegex = RegExp(r'(^|;\s*)tmux\b');
+
   /// execチャネル排他制御用ロック
   Completer<void>? _execLock;
 
@@ -470,18 +473,11 @@ class SshClient {
 
   /// コマンド内の `tmux` を検出済み絶対パスに置換
   String _resolveTmuxCommand(String command) {
-    if (_tmuxPath == null) {
-      debugPrint('_resolveTmuxCommand: _tmuxPath=null, command unchanged');
-      return command;
-    }
-    final resolved = command.replaceAllMapped(
-      RegExp(r'(^|;\s*)tmux\b'),
+    if (_tmuxPath == null) return command;
+    return command.replaceAllMapped(
+      _tmuxCommandRegex,
       (m) => '${m[1]}$_tmuxPath',
     );
-    if (resolved != command) {
-      debugPrint('_resolveTmuxCommand: "$command" => "$resolved"');
-    }
-    return resolved;
   }
 
   /// Keep-aliveを開始

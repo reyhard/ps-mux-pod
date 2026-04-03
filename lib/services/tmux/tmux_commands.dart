@@ -239,6 +239,14 @@ class TmuxCommands {
     return 'tmux display-message -p -t ${_escapeArg(target)} "#{pane_mode}"';
   }
 
+  /// カーソル位置・ペインサイズ・ペインモードを1回で取得（ポーリング最適化用）
+  ///
+  /// 出力形式: "cursor_x,cursor_y,pane_width,pane_height,pane_mode"
+  /// pane_modeはcopy-mode時のみ値あり（通常時は空文字）
+  static String getPaneInfo(String target) {
+    return 'tmux display-message -p -t ${_escapeArg(target)} "#{cursor_x},#{cursor_y},#{pane_width},#{pane_height},#{pane_mode}"';
+  }
+
   /// copy-modeに入る
   static String enterCopyMode(String target) {
     return 'tmux copy-mode -t ${_escapeArg(target)}';

@@ -868,23 +868,21 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
       final startTime = DateTime.now();
 
-      // 3つのコマンドを1つに統合して実行（持続的シェルは同時に1コマンドのみ）
-      // capture-pane + カーソル位置情報 + ペインモード を1回で取得
-      // 出力形式: [ペイン内容]\n[カーソル情報]\n[ペインモード]
+      // 2つのコマンドを1つに統合して実行（持続的シェルは同時に1コマンドのみ）
+      // capture-pane + ペイン情報(カーソル/サイズ/モード) を1回で取得
+      // 出力形式: [ペイン内容]\n[cursor_x,cursor_y,width,height,pane_mode]
       final combinedCommand =
           '${_resolveMuxCmd(TmuxCommands.capturePaneVisible(target))}; '
-          '${_resolveMuxCmd(TmuxCommands.getCursorPosition(target))}; '
-          '${_resolveMuxCmd(TmuxCommands.getPaneMode(target))}';
+          '${_resolveMuxCmd(TmuxCommands.getPaneInfo(target))}';
 
       final combinedOutput = await sshClient.execPersistent(
         combinedCommand,
         timeout: const Duration(seconds: 2),
       );
 
-      // 出力を分割（最後の行がペインモード、その前がカーソル情報）
+      // 出力を分割（最後の行がペイン情報: cursor_x,cursor_y,width,height,pane_mode）
       final lines = combinedOutput.split('\n');
-      final paneModeOutput = lines.isNotEmpty ? lines.removeLast() : '';
-      final cursorOutput = lines.isNotEmpty ? lines.removeLast() : '';
+      final paneInfoOutput = lines.isNotEmpty ? lines.removeLast() : '';
       final output = lines.join('\n');
 
       // capture-paneの出力末尾にある改行を削除
@@ -901,14 +899,17 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       // アンマウント済みならスキップ
       if (!mounted || _isDisposed) return;
 
-      // カーソル位置とペインサイズを更新
-      if (cursorOutput.isNotEmpty) {
-        final parts = cursorOutput.trim().split(',');
+      // カーソル位置・ペインサイズ・ペインモードを更新（統合フォーマット）
+      String paneModeOutput = '';
+      if (paneInfoOutput.isNotEmpty) {
+        final parts = paneInfoOutput.trim().split(',');
         if (parts.length >= 4) {
           final x = int.tryParse(parts[0]);
           final y = int.tryParse(parts[1]);
           final w = int.tryParse(parts[2]);
           final h = int.tryParse(parts[3]);
+          // 5番目のフィールドがpane_mode（copy-mode時のみ値あり）
+          paneModeOutput = parts.length >= 5 ? parts[4] : '';
 
           // ペインサイズの更新検知
           if (w != null && h != null && (w != _viewNotifier.value.paneWidth || h != _viewNotifier.value.paneHeight)) {
