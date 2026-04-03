@@ -140,8 +140,8 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
   int _pendingLatency = 0;
 
   // 適応型ポーリング用
-  int _currentPollingInterval = 100;
-  static const int _minPollingInterval = 50;
+  int _currentPollingInterval = 300;
+  static const int _minPollingInterval = 200;
   static const int _maxPollingInterval = 2000;
 
   // 選択状態保持用（スクロールモード中の更新抑制）

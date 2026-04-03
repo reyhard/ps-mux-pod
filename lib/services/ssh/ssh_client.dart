@@ -536,8 +536,8 @@ class SshClient {
     }
 
     try {
-      // 持続的シェル経由でkeep-alive（高速）
-      await execPersistent(
+      // 入力シェル経由でkeep-alive（ポーリング用シェルと競合しない）
+      await execInput(
         'echo ping',
         timeout: Duration(seconds: _keepAliveTimeoutSeconds),
       );
