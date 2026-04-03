@@ -35,12 +35,16 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
   final _passwordController = TextEditingController();
   final _tmuxPathController = TextEditingController();
   final _deepLinkIdController = TextEditingController();
+  final _wslDistroController = TextEditingController();
 
   String _authMethod = 'password';
   String? _selectedKeyId;
   bool _isSaving = false;
   bool _isTesting = false;
   bool _obscurePassword = true;
+  String _muxType = 'auto';
+  String _transport = 'ssh';
+  bool _nestedTmux = false;
 
   @override
   void initState() {
@@ -61,6 +65,10 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
       _selectedKeyId = connection.keyId;
       _tmuxPathController.text = connection.tmuxPath ?? '';
       _deepLinkIdController.text = connection.deepLinkId ?? '';
+      _muxType = connection.muxType;
+      _transport = connection.transport;
+      _wslDistroController.text = connection.wslDistro ?? '';
+      _nestedTmux = connection.nestedTmux;
     }
   }
 
@@ -73,6 +81,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
     _passwordController.dispose();
     _tmuxPathController.dispose();
     _deepLinkIdController.dispose();
+    _wslDistroController.dispose();
     super.dispose();
   }
 
@@ -255,6 +264,28 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
               ),
               const SizedBox(height: 8),
               _buildDeepLinkIdInput(),
+              const SizedBox(height: 16),
+              // Mux Type
+              _buildFieldLabel('MUX TYPE'),
+              const SizedBox(height: 8),
+              _buildMuxTypeDropdown(),
+              const SizedBox(height: 16),
+              // Transport
+              _buildFieldLabel('TRANSPORT'),
+              const SizedBox(height: 8),
+              _buildTransportDropdown(),
+              // WSL Distribution (only when transport is wslBridge)
+              if (_transport == 'wslBridge') ...[
+                const SizedBox(height: 16),
+                _buildFieldLabel('WSL DISTRIBUTION'),
+                const SizedBox(height: 8),
+                _buildWslDistroInput(),
+              ],
+              // Nested tmux toggle (only when muxType is psmux)
+              if (_muxType == 'psmux') ...[
+                const SizedBox(height: 16),
+                _buildNestedTmuxToggle(),
+              ],
             ],
           ),
         ),
@@ -565,6 +596,155 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildMuxTypeDropdown() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
+    final inputColor = isDark ? DesignColors.inputDark : DesignColors.inputLight;
+    return DropdownButtonFormField<String>(
+      value: _muxType,
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.view_column_outlined, color: mutedColor, size: 20),
+        filled: true,
+        fillColor: inputColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      dropdownColor: colorScheme.surface,
+      style: GoogleFonts.spaceGrotesk(fontSize: 14, color: colorScheme.onSurface),
+      items: const [
+        DropdownMenuItem(value: 'auto', child: Text('Auto Detect')),
+        DropdownMenuItem(value: 'tmux', child: Text('tmux')),
+        DropdownMenuItem(value: 'psmux', child: Text('psmux')),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _muxType = value);
+        }
+      },
+    );
+  }
+
+  Widget _buildTransportDropdown() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
+    final inputColor = isDark ? DesignColors.inputDark : DesignColors.inputLight;
+    return DropdownButtonFormField<String>(
+      value: _transport,
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.swap_horiz, color: mutedColor, size: 20),
+        filled: true,
+        fillColor: inputColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      dropdownColor: colorScheme.surface,
+      style: GoogleFonts.spaceGrotesk(fontSize: 14, color: colorScheme.onSurface),
+      items: const [
+        DropdownMenuItem(value: 'ssh', child: Text('SSH')),
+        DropdownMenuItem(value: 'wslBridge', child: Text('WSL Bridge')),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _transport = value);
+        }
+      },
+    );
+  }
+
+  Widget _buildWslDistroInput() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
+    final inputColor = isDark ? DesignColors.inputDark : DesignColors.inputLight;
+    return TextFormField(
+      controller: _wslDistroController,
+      style: GoogleFonts.jetBrainsMono(fontSize: 14, color: colorScheme.onSurface),
+      decoration: InputDecoration(
+        hintText: 'e.g. Ubuntu',
+        hintStyle: GoogleFonts.jetBrainsMono(color: mutedColor.withValues(alpha: 0.5)),
+        prefixIcon: Icon(Icons.computer, color: mutedColor, size: 20),
+        filled: true,
+        fillColor: inputColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
+  Widget _buildNestedTmuxToggle() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'NESTED TMUX',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1,
+                  color: mutedColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Probe for tmux inside WSL panes',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11,
+                  color: mutedColor.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: _nestedTmux,
+          onChanged: (value) => setState(() => _nestedTmux = value),
+          activeThumbColor: colorScheme.primary,
+        ),
+      ],
     );
   }
 
@@ -924,6 +1104,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
 
       final saveTmuxPath = _tmuxPathController.text.trim();
       final saveDeepLinkId = _deepLinkIdController.text.trim();
+      final saveWslDistro = _wslDistroController.text.trim();
       final connection = Connection(
         id: connectionId,
         name: _nameController.text.trim(),
@@ -934,6 +1115,10 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         keyId: _authMethod == 'key' ? _selectedKeyId : null,
         tmuxPath: saveTmuxPath.isNotEmpty ? saveTmuxPath : null,
         deepLinkId: saveDeepLinkId.isNotEmpty ? saveDeepLinkId : null,
+        muxType: _muxType,
+        transport: _transport,
+        wslDistro: saveWslDistro.isNotEmpty ? saveWslDistro : null,
+        nestedTmux: _nestedTmux,
         createdAt: widget.isEditing
             ? ref.read(connectionsProvider.notifier).getById(connectionId)?.createdAt ?? DateTime.now()
             : DateTime.now(),

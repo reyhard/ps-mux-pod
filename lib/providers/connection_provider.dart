@@ -20,6 +20,18 @@ class Connection {
   /// ディープリンク用の識別子（外部スクリプトと共有可能）
   final String? deepLinkId;
 
+  /// マルチプレクサ種別: 'tmux' | 'psmux' | 'auto'
+  final String muxType;
+
+  /// トランスポート種別: 'ssh' | 'local' | 'wslBridge'
+  final String transport;
+
+  /// WSLディストリビューション名（transport が 'wslBridge' の場合のみ使用）
+  final String? wslDistro;
+
+  /// WSLペイン内でtmuxを探索するか
+  final bool nestedTmux;
+
   const Connection({
     required this.id,
     required this.name,
@@ -32,6 +44,10 @@ class Connection {
     required this.createdAt,
     this.lastConnectedAt,
     this.deepLinkId,
+    this.muxType = 'auto',
+    this.transport = 'ssh',
+    this.wslDistro,
+    this.nestedTmux = false,
   });
 
   Connection copyWith({
@@ -47,6 +63,11 @@ class Connection {
     DateTime? lastConnectedAt,
     String? deepLinkId,
     bool clearDeepLinkId = false,
+    String? muxType,
+    String? transport,
+    String? wslDistro,
+    bool clearWslDistro = false,
+    bool? nestedTmux,
   }) {
     return Connection(
       id: id ?? this.id,
@@ -60,6 +81,10 @@ class Connection {
       createdAt: createdAt ?? this.createdAt,
       lastConnectedAt: lastConnectedAt ?? this.lastConnectedAt,
       deepLinkId: clearDeepLinkId ? null : (deepLinkId ?? this.deepLinkId),
+      muxType: muxType ?? this.muxType,
+      transport: transport ?? this.transport,
+      wslDistro: clearWslDistro ? null : (wslDistro ?? this.wslDistro),
+      nestedTmux: nestedTmux ?? this.nestedTmux,
     );
   }
 
@@ -76,6 +101,10 @@ class Connection {
       'createdAt': createdAt.toIso8601String(),
       'lastConnectedAt': lastConnectedAt?.toIso8601String(),
       'deepLinkId': deepLinkId,
+      'muxType': muxType,
+      'transport': transport,
+      'wslDistro': wslDistro,
+      'nestedTmux': nestedTmux,
     };
   }
 
@@ -94,6 +123,10 @@ class Connection {
           ? DateTime.parse(json['lastConnectedAt'] as String)
           : null,
       deepLinkId: json['deepLinkId'] as String?,
+      muxType: json['muxType'] as String? ?? 'auto',
+      transport: json['transport'] as String? ?? 'ssh',
+      wslDistro: json['wslDistro'] as String?,
+      nestedTmux: json['nestedTmux'] as bool? ?? false,
     );
   }
 }
