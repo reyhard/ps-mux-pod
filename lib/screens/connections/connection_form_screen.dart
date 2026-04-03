@@ -605,7 +605,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
     final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
     final inputColor = isDark ? DesignColors.inputDark : DesignColors.inputLight;
     return DropdownButtonFormField<String>(
-      value: _muxType,
+      initialValue: _muxType,
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.view_column_outlined, color: mutedColor, size: 20),
         filled: true,
@@ -645,7 +645,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
     final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
     final inputColor = isDark ? DesignColors.inputDark : DesignColors.inputLight;
     return DropdownButtonFormField<String>(
-      value: _transport,
+      initialValue: _transport,
       decoration: InputDecoration(
         prefixIcon: Icon(Icons.swap_horiz, color: mutedColor, size: 20),
         filled: true,

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import '../ssh/ssh_client.dart';
 import 'command_executor.dart';

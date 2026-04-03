@@ -103,4 +103,7 @@ class MuxNode {
 
   /// `true` if this node has no children.
   bool get isLeaf => _children.isEmpty;
+
+  /// Human-readable label for this node (backend name).
+  String get label => backend.name;
 }

@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_muxpod/services/mux/command_executor.dart';
-import 'package:flutter_muxpod/services/mux/mux_models.dart';
 import 'package:flutter_muxpod/services/mux/tmux_backend.dart';
 
 // ---------------------------------------------------------------------------
@@ -412,7 +411,7 @@ void main() {
 
     test('MuxWindow falls back to index string when id is absent', () async {
       // Produce a window line without an explicit id (empty second field)
-      final output = '0${_d}${_d}noname${_d}0${_d}1${_d}';
+      final output = '0$_d${_d}noname${_d}0${_d}1$_d';
       final executor = _MockExecutor(responses: {'list-windows': output});
 
       final windows = await TmuxBackend(executor).listWindows('s');

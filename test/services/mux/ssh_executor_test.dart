@@ -140,7 +140,6 @@ void main() {
 
     test('execute() passes through timeout parameter', () async {
       const command = 'tmux list-sessions';
-      const timeout = Duration(seconds: 30);
 
       // This test mainly verifies that no exception is thrown
       // The mock implementation ignores the timeout parameter
