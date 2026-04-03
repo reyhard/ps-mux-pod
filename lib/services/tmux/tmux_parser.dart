@@ -240,6 +240,72 @@ class TmuxParser {
     return panes;
   }
 
+  // ===== デフォルトフォーマットパーサー（-F非対応時のフォールバック） =====
+
+  /// デフォルトフォーマットでウィンドウをパース
+  ///
+  /// フォーマット: `0: bash* (1 panes) [80x24] [layout ...]` or `0: bash- (1 panes) [80x24]`
+  static List<TmuxWindow> parseWindowsDefault(String output) {
+    final windows = <TmuxWindow>[];
+    final re = RegExp(r'^(\d+):\s+(\S+?)([*\-#!~MZ]*)\s+\((\d+)\s+panes?\)(?:\s+\[(\d+)x(\d+)\])?');
+
+    for (final line in output.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+
+      final match = re.firstMatch(trimmed);
+      if (match == null) continue;
+
+      final index = int.tryParse(match.group(1)!) ?? 0;
+      final name = match.group(2)!;
+      final flags = match.group(3) ?? '';
+      final paneCount = int.tryParse(match.group(4)!) ?? 1;
+      final windowFlags = _parseWindowFlags(flags);
+
+      windows.add(TmuxWindow(
+        index: index,
+        name: name,
+        active: flags.contains('*'),
+        paneCount: paneCount,
+        flags: windowFlags,
+      ));
+    }
+
+    return windows;
+  }
+
+  /// デフォルトフォーマットでペインをパース
+  ///
+  /// フォーマット: `0: [80x24] [history 0/2000, 0 bytes] %0 (active)`
+  static List<TmuxPane> parsePanesDefault(String output) {
+    final panes = <TmuxPane>[];
+    final re = RegExp(r'^(\d+):\s+\[(\d+)x(\d+)\].*?(%\d+)(?:\s+\(active\))?$');
+
+    for (final line in output.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+
+      final match = re.firstMatch(trimmed);
+      if (match == null) continue;
+
+      final index = int.tryParse(match.group(1)!) ?? 0;
+      final width = int.tryParse(match.group(2)!) ?? 80;
+      final height = int.tryParse(match.group(3)!) ?? 24;
+      final id = match.group(4)!;
+      final active = trimmed.contains('(active)');
+
+      panes.add(TmuxPane(
+        index: index,
+        id: id,
+        active: active,
+        width: width,
+        height: height,
+      ));
+    }
+
+    return panes;
+  }
+
   // ===== ペインコンテンツ =====
 
   /// capture-pane出力をパース（ANSIエスケープ付き）

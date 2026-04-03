@@ -474,6 +474,18 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       // 6. アクティブセッション/ウィンドウ/ペインを設定
       ref.read(tmuxProvider.notifier).setActiveSession(sessionName);
 
+      // 6.0 選択セッションのwindows/panesが空の場合、個別に取得
+      {
+        final activeSession = ref.read(tmuxProvider).activeSession;
+        if (activeSession != null && activeSession.windows.isEmpty) {
+          debugPrint('[Terminal] Active session "${activeSession.name}" has no windows, fetching individually');
+          await _fetchWindowsAndPanesForSession(sessionName);
+          if (!mounted || _isDisposed) return;
+          // 再度アクティブセッションを設定（windows/panes更新済み）
+          ref.read(tmuxProvider.notifier).setActiveSession(sessionName);
+        }
+      }
+
       // 6.1 ディープリンクまたは保存されたウィンドウ/ペイン位置を復元
       if (widget.deepLinkWindowName != null) {
         // ディープリンク: ウィンドウ名で検索
@@ -576,17 +588,145 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       // -Fフォーマット出力を試行（|||区切りがあるか確認）
       if (output.contains(TmuxCommands.delimiter)) {
         ref.read(tmuxProvider.notifier).parseAndUpdateFullTree(output);
+
+        // psmux: list-panes -a が一部セッションしか返さない場合、
+        // list-sessions で補完して全セッション名を取得する
+        final treeState = ref.read(tmuxProvider);
+        if (treeState.sessions.isNotEmpty) {
+          final sessionsCmd = _resolveMuxCmd(TmuxCommands.listSessions());
+          final sessionsOutput = await sshClient.exec(sessionsCmd);
+          if (!mounted || _isDisposed) return;
+          final allSessions = TmuxParser.parseSessions(sessionsOutput);
+          // ツリーに含まれないセッションを追加（windows空で追加）
+          final treeNames = treeState.sessions.map((s) => s.name).toSet();
+          final missing = allSessions.where((s) => !treeNames.contains(s.name));
+          if (missing.isNotEmpty) {
+            final merged = [...treeState.sessions, ...missing];
+            ref.read(tmuxProvider.notifier).updateSessions(merged);
+          }
+        }
       } else {
-        // psmux等 -F非対応: list-sessionsのデフォルト出力をフォールバックパース
+        // -F非対応: list-sessionsのデフォルト出力をフォールバックパース
         debugPrint('[Terminal] No ||| delimiters found, falling back to list-sessions');
         final sessionsCmd = _resolveMuxCmd(TmuxCommands.listSessions());
         final sessionsOutput = await sshClient.exec(sessionsCmd);
         if (!mounted || _isDisposed) return;
         ref.read(tmuxProvider.notifier).parseAndUpdateSessions(sessionsOutput);
+
+        // デフォルト出力からはwindows/panes情報がないため、
+        // 各セッションのwindowsとpanesを個別に取得
+        await _fetchWindowsAndPanesForSessions();
       }
     } catch (e) {
       debugPrint('[Terminal] refreshSessionTree error: $e');
     }
+  }
+
+  /// 単一セッションのwindows/panesを個別フェッチしてtmuxProviderを更新
+  Future<void> _fetchWindowsAndPanesForSession(String sessionName) async {
+    final sshClient = ref.read(sshProvider.notifier).client;
+    if (sshClient == null || !sshClient.isConnected) return;
+
+    try {
+      // ウィンドウ一覧
+      final winCmd = _resolveMuxCmd(TmuxCommands.listWindows(sessionName));
+      final winOutput = await sshClient.exec(winCmd);
+      var windows = TmuxParser.parseWindows(winOutput);
+      if (windows.isEmpty && winOutput.trim().isNotEmpty) {
+        windows = TmuxParser.parseWindowsDefault(winOutput);
+      }
+
+      // 各ウィンドウのペイン一覧
+      final updatedWindows = <TmuxWindow>[];
+      for (final window in windows) {
+        try {
+          final paneCmd = _resolveMuxCmd(TmuxCommands.listPanes(sessionName, window.index));
+          final paneOutput = await sshClient.exec(paneCmd);
+          var panes = TmuxParser.parsePanes(paneOutput);
+          if (panes.isEmpty && paneOutput.trim().isNotEmpty) {
+            panes = TmuxParser.parsePanesDefault(paneOutput);
+          }
+          updatedWindows.add(window.copyWith(panes: panes, paneCount: panes.length));
+        } catch (_) {
+          updatedWindows.add(window);
+        }
+      }
+
+      if (!mounted || _isDisposed) return;
+
+      // tmuxProviderのセッションリストを更新
+      final currentSessions = ref.read(tmuxProvider).sessions;
+      final updatedSessions = currentSessions.map((s) {
+        if (s.name == sessionName) {
+          return s.copyWith(windows: updatedWindows, windowCount: updatedWindows.length);
+        }
+        return s;
+      }).toList();
+
+      // セッションがまだリストにない場合は追加
+      if (!updatedSessions.any((s) => s.name == sessionName)) {
+        updatedSessions.add(TmuxSession(
+          name: sessionName,
+          windows: updatedWindows,
+          windowCount: updatedWindows.length,
+        ));
+      }
+
+      ref.read(tmuxProvider.notifier).updateSessions(updatedSessions);
+    } catch (e) {
+      debugPrint('[Terminal] _fetchWindowsAndPanesForSession error: $e');
+    }
+  }
+
+  /// セッションごとにwindowsとpanesを個別フェッチ（-F非対応時のフォールバック）
+  Future<void> _fetchWindowsAndPanesForSessions() async {
+    final sshClient = ref.read(sshProvider.notifier).client;
+    if (sshClient == null || !sshClient.isConnected) return;
+
+    final sessions = ref.read(tmuxProvider).sessions;
+    final updatedSessions = <TmuxSession>[];
+
+    for (final session in sessions) {
+      try {
+        // ウィンドウ一覧を取得
+        final winCmd = _resolveMuxCmd(TmuxCommands.listWindows(session.name));
+        final winOutput = await sshClient.exec(winCmd);
+        var windows = TmuxParser.parseWindows(winOutput);
+
+        // -Fフォーマットが効かない場合、デフォルトフォーマットをパース
+        if (windows.isEmpty && winOutput.trim().isNotEmpty) {
+          windows = TmuxParser.parseWindowsDefault(winOutput);
+        }
+
+        // 各ウィンドウのペイン一覧を取得
+        final updatedWindows = <TmuxWindow>[];
+        for (final window in windows) {
+          try {
+            final paneCmd = _resolveMuxCmd(TmuxCommands.listPanes(session.name, window.index));
+            final paneOutput = await sshClient.exec(paneCmd);
+            var panes = TmuxParser.parsePanes(paneOutput);
+
+            if (panes.isEmpty && paneOutput.trim().isNotEmpty) {
+              panes = TmuxParser.parsePanesDefault(paneOutput);
+            }
+
+            updatedWindows.add(window.copyWith(panes: panes, paneCount: panes.length));
+          } catch (_) {
+            updatedWindows.add(window);
+          }
+        }
+
+        updatedSessions.add(session.copyWith(
+          windows: updatedWindows,
+          windowCount: updatedWindows.length,
+        ));
+      } catch (_) {
+        updatedSessions.add(session);
+      }
+    }
+
+    if (!mounted || _isDisposed) return;
+    ref.read(tmuxProvider.notifier).updateSessions(updatedSessions);
   }
 
   /// 10秒ごとにセッションツリーを更新
