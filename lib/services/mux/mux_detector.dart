@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'command_executor.dart';
 import 'mux_types.dart';
 
@@ -19,25 +21,36 @@ class MuxDetector {
   Future<MuxType> detect() async {
     // Try psmux -V
     try {
+      debugPrint('[MuxDetector] Probing psmux -V ...');
       final output = await executor.execute('psmux -V');
+      debugPrint('[MuxDetector] psmux -V output: "$output"');
       if (output.isNotEmpty &&
           !output.toLowerCase().contains('not found') &&
           !output.toLowerCase().contains('error')) {
+        debugPrint('[MuxDetector] psmux detected');
         return MuxType.psmux;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[MuxDetector] psmux -V failed: $e');
+    }
 
     // Try tmux -V
     try {
+      debugPrint('[MuxDetector] Probing tmux -V ...');
       final output = await executor.execute('tmux -V');
+      debugPrint('[MuxDetector] tmux -V output: "$output"');
       if (output.isNotEmpty &&
           !output.toLowerCase().contains('not found') &&
           !output.toLowerCase().contains('error')) {
+        debugPrint('[MuxDetector] tmux detected');
         return MuxType.tmux;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[MuxDetector] tmux -V failed: $e');
+    }
 
     // Default to tmux (most common)
+    debugPrint('[MuxDetector] Neither detected, defaulting to tmux');
     return MuxType.tmux;
   }
 }

@@ -357,16 +357,22 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     final executor = SshExecutor(sshClient);
 
+    debugPrint('[Terminal] Detecting mux backend (connection.muxType=${connection.muxType})');
+
     // バックエンド種別を決定
     MuxType detectedType;
     if (connection.muxType == 'psmux') {
       detectedType = MuxType.psmux;
+      debugPrint('[Terminal] Using explicit psmux backend');
     } else if (connection.muxType == 'tmux') {
       detectedType = MuxType.tmux;
+      debugPrint('[Terminal] Using explicit tmux backend');
     } else {
       // auto: MuxDetectorで検出
+      debugPrint('[Terminal] Auto-detecting backend...');
       final detector = MuxDetector(executor);
       detectedType = await detector.detect();
+      debugPrint('[Terminal] Auto-detect result: $detectedType');
     }
 
     _muxBackendName = detectedType == MuxType.psmux ? 'psmux' : 'tmux';
@@ -562,11 +568,13 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
 
     try {
       final cmd = _resolveMuxCmd(TmuxCommands.listAllPanes());
+      debugPrint('[Terminal] refreshSessionTree cmd: ${cmd.substring(0, cmd.length.clamp(0, 80))}...');
       final output = await sshClient.exec(cmd);
+      debugPrint('[Terminal] refreshSessionTree output (${output.length} chars): ${output.substring(0, output.length.clamp(0, 200))}');
       if (!mounted || _isDisposed) return;
       ref.read(tmuxProvider.notifier).parseAndUpdateFullTree(output);
-    } catch (_) {
-      // ツリー更新エラーは静かに無視（次回ポーリングで再試行）
+    } catch (e) {
+      debugPrint('[Terminal] refreshSessionTree error: $e');
     }
   }
 
