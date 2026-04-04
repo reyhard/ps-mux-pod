@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import '../tmux/tmux_commands.dart';
 import '../tmux/tmux_parser.dart';
 import 'command_executor.dart';
@@ -145,8 +148,20 @@ class TmuxBackend implements MuxBackend {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<MuxPtySession> attachPty(String sessionId) {
-    throw UnimplementedError('Will be implemented in Task 1');
+  Future<MuxPtySession> attachPty(String sessionId) async {
+    final shell = await _executor.openInteractiveShell();
+
+    // Send the tmux attach command through the PTY
+    shell.write(Uint8List.fromList(
+      utf8.encode('tmux attach-session -t $sessionId\n'),
+    ));
+
+    return MuxPtySession(
+      stdout: shell.stdout,
+      write: shell.write,
+      resize: shell.resize,
+      close: shell.close,
+    );
   }
 
   // ---------------------------------------------------------------------------

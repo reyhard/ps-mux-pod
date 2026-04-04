@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_muxpod/services/mux/ssh_executor.dart';
 import 'package:flutter_muxpod/services/ssh/ssh_client.dart';
@@ -24,11 +25,6 @@ class MockSshClient implements SshClient {
   }
 
   @override
-  Future<String> execInput(String command, {Duration? timeout}) async {
-    throw UnsupportedError('execInput() should not be called in this test');
-  }
-
-  @override
   Future<void> startShell([ShellOptions? options]) async {}
 
   @override
@@ -46,6 +42,14 @@ class MockSshClient implements SshClient {
 
   @override
   bool get isConnected => _isConnected;
+
+  @override
+  Future<SSHSession> openPtyShell({
+    int cols = 80,
+    int rows = 24,
+    String termType = 'xterm-256color',
+  }) =>
+      throw UnsupportedError('openPtyShell() not available in mock');
 
   // Unimplemented members (not needed for these tests)
   @override
@@ -128,10 +132,12 @@ void main() {
       expect(result, isNotEmpty);
     });
 
-    test('openInteractiveShell() throws UnimplementedError (stub)', () {
+    test('openInteractiveShell() delegates to SshClient.openPtyShell()', () {
+      // The mock throws UnsupportedError from openPtyShell(),
+      // verifying that openInteractiveShell() delegates correctly.
       expect(
         () => executor.openInteractiveShell(),
-        throwsUnimplementedError,
+        throwsUnsupportedError,
       );
     });
 
