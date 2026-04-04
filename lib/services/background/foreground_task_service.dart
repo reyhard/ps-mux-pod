@@ -54,7 +54,7 @@ class SshForegroundTaskService {
   }
 
   /// 通知権限を要求
-  Future<bool> requestPermissions() async {
+  Future<bool> requestPermissions({bool askBatteryOptimization = true}) async {
     if (!Platform.isAndroid) return true;
 
     // Android 13以降は通知権限が必要
@@ -64,11 +64,13 @@ class SshForegroundTaskService {
       await FlutterForegroundTask.requestNotificationPermission();
     }
 
-    // バッテリー最適化の除外をリクエスト（オプション）
-    final batteryOptimization =
-        await FlutterForegroundTask.isIgnoringBatteryOptimizations;
-    if (!batteryOptimization) {
-      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+    // バッテリー最適化の除外をリクエスト（設定で無効化されていない場合のみ）
+    if (askBatteryOptimization) {
+      final batteryOptimization =
+          await FlutterForegroundTask.isIgnoringBatteryOptimizations;
+      if (!batteryOptimization) {
+        await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+      }
     }
 
     return await FlutterForegroundTask.checkNotificationPermission() ==
@@ -79,13 +81,16 @@ class SshForegroundTaskService {
   Future<bool> startService({
     required String connectionName,
     required String host,
+    bool askBatteryOptimization = true,
   }) async {
     if (!Platform.isAndroid) return true;
     if (_isRunning) return true;
 
     await initialize();
 
-    final hasPermission = await requestPermissions();
+    final hasPermission = await requestPermissions(
+      askBatteryOptimization: askBatteryOptimization,
+    );
     if (!hasPermission) {
       return false;
     }
