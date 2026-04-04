@@ -23,6 +23,9 @@ class AppSettings {
   /// ペインナビゲーション方向の反転
   final bool invertPaneNavigation;
 
+  /// バッテリー最適化の無効化を確認するかどうか
+  final bool askBatteryOptimization;
+
   const AppSettings({
     this.darkMode = true,
     this.fontSize = 14.0,
@@ -37,6 +40,7 @@ class AppSettings {
     this.directInputEnabled = false,
     this.showTerminalCursor = true,
     this.invertPaneNavigation = false,
+    this.askBatteryOptimization = true,
   });
 
   AppSettings copyWith({
@@ -53,6 +57,7 @@ class AppSettings {
     bool? directInputEnabled,
     bool? showTerminalCursor,
     bool? invertPaneNavigation,
+    bool? askBatteryOptimization,
   }) {
     return AppSettings(
       darkMode: darkMode ?? this.darkMode,
@@ -68,6 +73,7 @@ class AppSettings {
       directInputEnabled: directInputEnabled ?? this.directInputEnabled,
       showTerminalCursor: showTerminalCursor ?? this.showTerminalCursor,
       invertPaneNavigation: invertPaneNavigation ?? this.invertPaneNavigation,
+      askBatteryOptimization: askBatteryOptimization ?? this.askBatteryOptimization,
     );
   }
 }
@@ -87,6 +93,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
   static const String _directInputEnabledKey = 'settings_direct_input_enabled';
   static const String _showTerminalCursorKey = 'settings_show_terminal_cursor';
   static const String _invertPaneNavKey = 'settings_invert_pane_nav';
+  static const String _askBatteryOptimizationKey = 'settings_ask_battery_optimization';
 
   @override
   AppSettings build() {
@@ -111,6 +118,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
       directInputEnabled: prefs.getBool(_directInputEnabledKey) ?? false,
       showTerminalCursor: prefs.getBool(_showTerminalCursorKey) ?? true,
       invertPaneNavigation: prefs.getBool(_invertPaneNavKey) ?? false,
+      askBatteryOptimization: prefs.getBool(_askBatteryOptimizationKey) ?? true,
     );
   }
 
@@ -208,6 +216,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
   Future<void> setInvertPaneNavigation(bool value) async {
     state = state.copyWith(invertPaneNavigation: value);
     await _saveSetting(_invertPaneNavKey, value);
+  }
+
+  /// バッテリー最適化の無効化確認を設定
+  Future<void> setAskBatteryOptimization(bool value) async {
+    state = state.copyWith(askBatteryOptimization: value);
+    await _saveSetting(_askBatteryOptimizationKey, value);
   }
 
   /// リロード

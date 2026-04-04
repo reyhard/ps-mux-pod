@@ -157,6 +157,17 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
                 const Divider(),
+                const _SectionHeader(title: 'Connection'),
+                SwitchListTile(
+                  secondary: const Icon(Icons.battery_saver),
+                  title: const Text('バッテリー最適化の無効化を確認'),
+                  subtitle: const Text('接続時にバッテリー最適化の無効化を確認します'),
+                  value: settings.askBatteryOptimization,
+                  onChanged: (value) {
+                    ref.read(settingsProvider.notifier).setAskBatteryOptimization(value);
+                  },
+                ),
+                const Divider(),
                 const _SectionHeader(title: 'About'),
                 ListTile(
                   leading: const Icon(Icons.info),

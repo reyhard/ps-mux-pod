@@ -6,6 +6,7 @@ import '../services/background/foreground_task_service.dart';
 import '../services/network/network_monitor.dart';
 import '../services/ssh/ssh_client.dart';
 import 'connection_provider.dart';
+import 'settings_provider.dart';
 
 /// SSH接続状態
 class SshState {
@@ -200,9 +201,11 @@ class SshNotifier extends Notifier<SshState> {
       ref.read(connectionsProvider.notifier).updateLastConnected(connection.id);
 
       // Foreground Serviceを開始してバックグラウンドでも接続を維持
+      final askBattery = ref.read(settingsProvider).askBatteryOptimization;
       await _foregroundService.startService(
         connectionName: connection.name,
         host: connection.host,
+        askBatteryOptimization: askBattery,
       );
     } on SshConnectionError catch (e) {
       state = state.copyWith(
@@ -274,9 +277,11 @@ class SshNotifier extends Notifier<SshState> {
       ref.read(connectionsProvider.notifier).updateLastConnected(connection.id);
 
       // Foreground Serviceを開始してバックグラウンドでも接続を維持
+      final askBattery = ref.read(settingsProvider).askBatteryOptimization;
       await _foregroundService.startService(
         connectionName: connection.name,
         host: connection.host,
+        askBatteryOptimization: askBattery,
       );
     } on SshConnectionError catch (e) {
       state = state.copyWith(
