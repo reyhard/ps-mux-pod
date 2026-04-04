@@ -152,11 +152,12 @@ class TmuxBackend implements MuxBackend {
     final shell = await _executor.openInteractiveShell();
 
     // Wait briefly for shell to initialize before sending attach command
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 200));
 
-    // Send the tmux attach command through the PTY (using TmuxCommands for proper escaping)
+    // Send the tmux attach command through the PTY
+    // Use \r (carriage return) — that's what Enter sends in a PTY
     final attachCmd = TmuxCommands.attachSession(sessionId);
-    shell.write(Uint8List.fromList(utf8.encode('$attachCmd\n')));
+    shell.write(Uint8List.fromList(utf8.encode('$attachCmd\r')));
 
     return MuxPtySession(
       stdout: shell.stdout,

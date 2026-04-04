@@ -991,7 +991,16 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
                 },
                 onInputTap: _showInputDialog,
                 onRawInputTap: () {
-                  _terminalViewKey.currentState?.requestKeyboard();
+                  // Disable LIVE mode if active (it steals focus)
+                  if (_directInputEnabled) {
+                    ref.read(settingsProvider.notifier).setDirectInputEnabled(false);
+                    setState(() => _directInputEnabled = false);
+                  }
+                  // Small delay to let LIVE input field unfocus, then request
+                  // keyboard on TerminalView
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    _terminalViewKey.currentState?.requestKeyboard();
+                  });
                 },
                 directInputEnabled: _directInputEnabled,
                 onDirectInputToggle: () {

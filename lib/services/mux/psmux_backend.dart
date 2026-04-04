@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -169,17 +170,50 @@ class PsmuxBackend implements MuxBackend {
   Future<MuxPtySession> attachPty(String sessionId) async {
     final shell = await _executor.openInteractiveShell();
 
-    // Wait for shell to initialize (PowerShell startup can be slow)
-    await Future.delayed(const Duration(milliseconds: 300));
-
     final attachCmd = _toPsmuxCommand(TmuxCommands.attachSession(sessionId));
-    shell.write(Uint8List.fromList(utf8.encode('$attachCmd\n')));
+
+    // Single controller that wraps shell.stdout for the entire lifecycle.
+    // First waits for shell prompt, sends the attach command, then forwards
+    // all subsequent output to consumers.
+    final controller = StreamController<List<int>>();
+    bool promptSeen = false;
+    final promptCompleter = Completer<void>();
+
+    shell.stdout.listen(
+      (data) {
+        if (!promptSeen) {
+          // Check for shell prompt before forwarding
+          final text = String.fromCharCodes(data);
+          if (text.contains('>') || text.contains('\$') || text.contains('#')) {
+            promptSeen = true;
+            if (!promptCompleter.isCompleted) promptCompleter.complete();
+          }
+        }
+        // Forward ALL data (including pre-prompt) to the consumer
+        if (!controller.isClosed) controller.add(data);
+      },
+      onError: (e) { if (!controller.isClosed) controller.addError(e); },
+      onDone: () { if (!controller.isClosed) controller.close(); },
+    );
+
+    // Timeout after 5s in case prompt detection fails
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!promptCompleter.isCompleted) promptCompleter.complete();
+    });
+
+    await promptCompleter.future;
+
+    // Use \r (carriage return) — that's what Enter sends in a PTY
+    shell.write(Uint8List.fromList(utf8.encode('$attachCmd\r')));
 
     return MuxPtySession(
-      stdout: shell.stdout,
+      stdout: controller.stream,
       write: shell.write,
       resize: shell.resize,
-      close: shell.close,
+      close: () async {
+        await controller.close();
+        await shell.close();
+      },
     );
   }
 
