@@ -3,6 +3,7 @@ import 'package:flutter_muxpod/services/mux/command_executor.dart';
 import 'package:flutter_muxpod/services/mux/mux_backend.dart';
 import 'package:flutter_muxpod/services/mux/mux_models.dart';
 import 'package:flutter_muxpod/services/mux/mux_node.dart';
+import 'package:flutter_muxpod/services/mux/mux_pty_session.dart';
 
 // ---------------------------------------------------------------------------
 // Manual mocks
@@ -13,7 +14,9 @@ class _MockCommandExecutor implements CommandExecutor {
   Future<String> execute(String command) async => '';
 
   @override
-  Future<Stream<List<int>>> shell() async => Stream.empty();
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    throw UnimplementedError('Not needed for node tests');
+  }
 
   @override
   Future<void> dispose() async {}
@@ -66,6 +69,11 @@ class _MockMuxBackend implements MuxBackend {
 
   @override
   Future<MuxBackend?> getNestedBackend(String paneTarget) async => null;
+
+  @override
+  Future<MuxPtySession> attachPty(String sessionId) {
+    throw UnimplementedError('Not needed for node tests');
+  }
 }
 
 // ---------------------------------------------------------------------------

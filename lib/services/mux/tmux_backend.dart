@@ -3,6 +3,7 @@ import '../tmux/tmux_parser.dart';
 import 'command_executor.dart';
 import 'mux_backend.dart';
 import 'mux_models.dart';
+import 'mux_pty_session.dart';
 
 /// [MuxBackend] implementation that wraps [TmuxCommands] and [TmuxParser].
 ///
@@ -137,6 +138,15 @@ class TmuxBackend implements MuxBackend {
   Future<MuxBackend?> getNestedBackend(String paneTarget) async {
     // tmux does not support nesting in this architecture.
     return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // PTY
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<MuxPtySession> attachPty(String sessionId) {
+    throw UnimplementedError('Will be implemented in Task 1');
   }
 
   // ---------------------------------------------------------------------------

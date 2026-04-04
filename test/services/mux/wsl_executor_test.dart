@@ -17,8 +17,8 @@ class _MockCommandExecutor implements CommandExecutor {
   }
 
   @override
-  Future<Stream<List<int>>> shell() async {
-    return Stream.empty();
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    throw UnimplementedError('Not needed for WSL executor tests');
   }
 
   @override
@@ -88,13 +88,15 @@ void main() {
       });
     });
 
-    group('shell()', () {
-      test('delegates to inner executor shell()', () async {
+    group('openInteractiveShell()', () {
+      test('delegates to inner executor openInteractiveShell()', () async {
         final executor = WslBridgeExecutor(inner, distro: 'Ubuntu');
 
-        // Should not throw; result comes from the inner mock.
-        final stream = await executor.shell();
-        expect(stream, isNotNull);
+        // Inner mock throws UnimplementedError, so we expect the same.
+        expect(
+          () => executor.openInteractiveShell(),
+          throwsUnimplementedError,
+        );
       });
     });
 

@@ -21,7 +21,9 @@ class _MapExecutor implements CommandExecutor {
   }
 
   @override
-  Future<Stream<List<int>>> shell() async => const Stream.empty();
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    throw UnimplementedError('Not needed for detector tests');
+  }
 
   @override
   Future<void> dispose() async {}
@@ -121,7 +123,9 @@ class _TrackingExecutor implements CommandExecutor {
   }
 
   @override
-  Future<Stream<List<int>>> shell() => _inner.shell();
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    return _inner.openInteractiveShell(cols: cols, rows: rows);
+  }
 
   @override
   Future<void> dispose() => _inner.dispose();

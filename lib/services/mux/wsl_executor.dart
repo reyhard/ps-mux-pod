@@ -6,9 +6,9 @@ import 'command_executor.dart';
 /// the underlying executor (e.g. an SSH session into a Windows host)
 /// transparently runs the command inside the specified WSL distribution.
 ///
-/// [shell] and [dispose] are deliberately delegated or no-op'd:
-/// - [shell] opens an interactive session via the inner executor; the
-///   caller is expected to drive WSL interaction through that session.
+/// [openInteractiveShell] and [dispose] are deliberately delegated or no-op'd:
+/// - [openInteractiveShell] opens an interactive session via the inner executor;
+///   the caller is expected to drive WSL interaction through that session.
 /// - [dispose] does **not** dispose the inner executor — lifetime of the
 ///   inner executor is the caller's responsibility.
 class WslBridgeExecutor implements CommandExecutor {
@@ -28,11 +28,11 @@ class WslBridgeExecutor implements CommandExecutor {
 
   /// Opens an interactive shell via the inner executor.
   ///
-  /// The returned byte stream is the raw I/O of the inner shell; it is
+  /// The returned [InteractiveShell] provides bidirectional I/O; it is
   /// the caller's responsibility to send WSL commands through it.
   @override
-  Future<Stream<List<int>>> shell() {
-    return _inner.shell();
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    return _inner.openInteractiveShell(cols: cols, rows: rows);
   }
 
   /// No-op — the inner executor's lifetime is managed by its creator.

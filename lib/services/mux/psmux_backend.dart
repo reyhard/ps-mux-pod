@@ -3,6 +3,7 @@ import '../tmux/tmux_parser.dart';
 import 'command_executor.dart';
 import 'mux_backend.dart';
 import 'mux_models.dart';
+import 'mux_pty_session.dart';
 
 /// [MuxBackend] implementation for psmux.
 ///
@@ -155,6 +156,15 @@ class PsmuxBackend implements MuxBackend {
   @override
   Future<MuxBackend?> getNestedBackend(String paneTarget) async {
     return null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // PTY
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<MuxPtySession> attachPty(String sessionId) {
+    throw UnimplementedError('PTY stream not yet supported for psmux');
   }
 
   // ---------------------------------------------------------------------------

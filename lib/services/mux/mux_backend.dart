@@ -1,4 +1,5 @@
 import 'mux_models.dart';
+import 'mux_pty_session.dart';
 
 /// Abstract interface for terminal multiplexer backends.
 ///
@@ -36,4 +37,9 @@ abstract class MuxBackend {
 
   /// Returns a nested backend discovered inside a pane, or null.
   Future<MuxBackend?> getNestedBackend(String paneTarget);
+
+  // --- PTY ---
+
+  /// Open a real-time PTY session attached to the given session.
+  Future<MuxPtySession> attachPty(String sessionId);
 }

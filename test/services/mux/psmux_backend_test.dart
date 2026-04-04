@@ -23,7 +23,9 @@ class _MockExecutor implements CommandExecutor {
   }
 
   @override
-  Future<Stream<List<int>>> shell() async => const Stream.empty();
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    throw UnimplementedError('Not needed for psmux backend tests');
+  }
 
   @override
   Future<void> dispose() async {}

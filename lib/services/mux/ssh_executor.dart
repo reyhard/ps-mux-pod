@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import '../ssh/ssh_client.dart';
 import 'command_executor.dart';
 
@@ -19,42 +17,8 @@ class SshExecutor implements CommandExecutor {
   }
 
   @override
-  Future<Stream<List<int>>> shell() async {
-    final controller = StreamController<List<int>>();
-
-    // Set up event handlers to forward data to the stream
-    _sshClient.setEventHandlers(
-      SshEvents(
-        onData: (data) {
-          if (!controller.isClosed) {
-            controller.add(data);
-          }
-        },
-        onError: (error) {
-          if (!controller.isClosed) {
-            controller.addError(error);
-          }
-        },
-        onClose: () {
-          if (!controller.isClosed) {
-            controller.close();
-          }
-        },
-      ),
-    );
-
-    // Start the interactive shell
-    try {
-      await _sshClient.startShell();
-    } catch (e) {
-      if (!controller.isClosed) {
-        controller.addError(e);
-        controller.close();
-      }
-      rethrow;
-    }
-
-    return controller.stream;
+  Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
+    throw UnimplementedError('Will be implemented in Task 1');
   }
 
   @override
