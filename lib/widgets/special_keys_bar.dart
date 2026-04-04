@@ -4,16 +4,63 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/design_colors.dart';
 
+/// VT100/xterm escape sequence constants for special keys.
+///
+/// Used by [SpecialKeysBar] to produce raw escape sequences that can be
+/// written directly to the PTY stream.
+class Vt100Keys {
+  static const escape = '\x1b';
+  static const enter = '\r';
+  static const tab = '\t';
+  static const backspace = '\x7f';
+  static const delete = '\x1b[3~';
+  static const insert = '\x1b[2~';
+
+  static const up = '\x1b[A';
+  static const down = '\x1b[B';
+  static const right = '\x1b[C';
+  static const left = '\x1b[D';
+
+  static const home = '\x1b[H';
+  static const end = '\x1b[F';
+  static const pageUp = '\x1b[5~';
+  static const pageDown = '\x1b[6~';
+
+  static const f1 = '\x1bOP';
+  static const f2 = '\x1bOQ';
+  static const f3 = '\x1bOR';
+  static const f4 = '\x1bOS';
+  static const f5 = '\x1b[15~';
+  static const f6 = '\x1b[17~';
+  static const f7 = '\x1b[18~';
+  static const f8 = '\x1b[19~';
+  static const f9 = '\x1b[20~';
+  static const f10 = '\x1b[21~';
+  static const f11 = '\x1b[23~';
+  static const f12 = '\x1b[24~';
+
+  static const backTab = '\x1b[Z'; // Shift+Tab
+
+  /// Ctrl+letter -> control character (Ctrl+A = 0x01, ..., Ctrl+Z = 0x1A)
+  static String ctrl(String letter) {
+    final code = letter.toUpperCase().codeUnitAt(0) - 0x40;
+    return String.fromCharCode(code);
+  }
+
+  /// Alt (Meta) prefix: ESC + key
+  static String alt(String key) => '\x1b$key';
+}
+
 /// 特殊キーバー（HTMLデザイン仕様準拠）
 ///
-/// tmuxコマンド方式でキーを送信するため、
-/// tmux send-keys形式のキー名を使用する。
+/// VT100/xterm escape sequence方式でキーを送信するため、
+/// PTYストリームに直接書き込める形式のエスケープシーケンスを生成する。
 class SpecialKeysBar extends StatefulWidget {
   /// リテラルキー送信（通常の文字）
   final void Function(String key) onKeyPressed;
 
-  /// 特殊キー送信（tmux形式: Enter, Escape, C-c等）
-  final void Function(String tmuxKey) onSpecialKeyPressed;
+  /// 特殊キー送信（VT100エスケープシーケンス）
+  final void Function(String sequence) onSpecialKeyPressed;
 
   final VoidCallback? onInputTap;
   final bool hapticFeedback;
@@ -60,11 +107,6 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
 
   /// sentinel リセット中の再入防止フラグ
   bool _isResettingController = false;
-
-  /// 二重入力防止: _handleKeyEventで処理した最終時刻
-  /// iPad外付けキーボードではFlutter KeyEventとiOSテキスト入力が
-  /// 同一キーを二重に処理するため、タイムスタンプで抑制する
-  DateTime? _lastKeyEventHandledAt;
 
   @override
   void initState() {
@@ -127,17 +169,16 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           if (widget.hapticFeedback) {
             HapticFeedback.lightImpact();
           }
-          final List<String> modifiers = [];
+          String sequence = char;
           if (_ctrlPressed) {
-            modifiers.add('C');
+            sequence = Vt100Keys.ctrl(char);
             setState(() => _ctrlPressed = false);
           }
           if (_altPressed) {
-            modifiers.add('M');
+            sequence = Vt100Keys.alt(sequence);
             setState(() => _altPressed = false);
           }
-          final prefix = modifiers.join('-');
-          widget.onSpecialKeyPressed('$prefix-${char.toLowerCase()}');
+          widget.onSpecialKeyPressed(sequence);
           _lastComposingText = null;
           _resetToSentinel();
           return;
@@ -160,13 +201,6 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
 
     // 実際のテキストがあれば送信
     if (actualText.isNotEmpty) {
-      // 外付けキーボードの二重入力防止: _handleKeyEventで処理済みならスキップ
-      if (_isRecentKeyEventHandled()) {
-        _lastComposingText = null;
-        _resetToSentinel();
-        return;
-      }
-
       // iOS重複検出: 確定テキストがcomposingテキストより長く、
       // composingテキストで始まる場合、iOSの重複挿入とみなしcomposingテキストを使用
       String textToSend = actualText;
@@ -179,24 +213,23 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
 
       // Send modifier+key when CTRL/ALT is active (non-composing path)
       // This handles IMEs that commit without composing (e.g. Gboard English)
-      // tmux format: C-c (Ctrl+C), M-a (Alt+A), C-M-x (Ctrl+Alt+X)
+      // VT100 format: Ctrl+letter -> control char, Alt+key -> ESC prefix
       if ((_ctrlPressed || _altPressed) &&
           textToSend.length == 1 &&
           RegExp(r'^[A-Za-z]$').hasMatch(textToSend)) {
         if (widget.hapticFeedback) {
           HapticFeedback.lightImpact();
         }
-        final List<String> modifiers = [];
+        String sequence = textToSend;
         if (_ctrlPressed) {
-          modifiers.add('C');
+          sequence = Vt100Keys.ctrl(textToSend);
           setState(() => _ctrlPressed = false);
         }
         if (_altPressed) {
-          modifiers.add('M');
+          sequence = Vt100Keys.alt(sequence);
           setState(() => _altPressed = false);
         }
-        final prefix = modifiers.join('-');
-        widget.onSpecialKeyPressed('$prefix-${textToSend.toLowerCase()}');
+        widget.onSpecialKeyPressed(sequence);
       } else {
         widget.onKeyPressed(textToSend);
       }
@@ -208,13 +241,10 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
 
   /// DirectInput: ソフトウェアキーボードのEnter（送信）で呼ばれる
   void _onDirectInputSubmitted(String value) {
-    // 外付けキーボードの二重入力防止: _handleKeyEventで処理済みならスキップ
-    if (_isRecentKeyEventHandled()) return;
-
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
     }
-    widget.onSpecialKeyPressed('Enter');
+    widget.onSpecialKeyPressed(Vt100Keys.enter);
     _resetToSentinel();
   }
 
@@ -223,7 +253,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
     }
-    widget.onSpecialKeyPressed('BSpace');
+    widget.onSpecialKeyPressed(Vt100Keys.backspace);
   }
 
   /// DirectInput: sentinelにリセット（Backspace検出用）
@@ -251,147 +281,6 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       }
       _isResettingController = false;
     });
-  }
-
-  /// 二重入力防止: _handleKeyEventで処理したことをマーク
-  void _markKeyEventHandled() {
-    _lastKeyEventHandledAt = DateTime.now();
-  }
-
-  /// 二重入力防止: 直近100ms以内に_handleKeyEventで処理されたか
-  bool _isRecentKeyEventHandled() {
-    if (_lastKeyEventHandledAt == null) return false;
-    return DateTime.now().difference(_lastKeyEventHandledAt!) <
-        const Duration(milliseconds: 100);
-  }
-
-  /// 外付けキーボードの修飾子を検出してtmux形式キー名に変換
-  String _applyHardwareModifiers(String baseKey) {
-    final isShift = HardwareKeyboard.instance.isShiftPressed;
-    final isCtrl = HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed;
-    final isAlt = HardwareKeyboard.instance.isAltPressed;
-
-    // 特殊ケース: Shift+Tab → BTab
-    if (isShift && baseKey == 'Tab') return 'BTab';
-
-    final mods = <String>[];
-    if (isShift) mods.add('S');
-    if (isCtrl) mods.add('C');
-    if (isAlt) mods.add('M');
-    if (mods.isEmpty) return baseKey;
-    return '${mods.join('-')}-$baseKey';
-  }
-
-  /// 外付けキーボード → tmuxキー名マッピング
-  static final _hwSpecialKeyMap = <LogicalKeyboardKey, String>{
-    LogicalKeyboardKey.escape: 'Escape',
-    LogicalKeyboardKey.tab: 'Tab',
-    LogicalKeyboardKey.arrowUp: 'Up',
-    LogicalKeyboardKey.arrowDown: 'Down',
-    LogicalKeyboardKey.arrowLeft: 'Left',
-    LogicalKeyboardKey.arrowRight: 'Right',
-    LogicalKeyboardKey.home: 'Home',
-    LogicalKeyboardKey.end: 'End',
-    LogicalKeyboardKey.pageUp: 'PPage',
-    LogicalKeyboardKey.pageDown: 'NPage',
-    LogicalKeyboardKey.delete: 'DC',
-    LogicalKeyboardKey.f1: 'F1',
-    LogicalKeyboardKey.f2: 'F2',
-    LogicalKeyboardKey.f3: 'F3',
-    LogicalKeyboardKey.f4: 'F4',
-    LogicalKeyboardKey.f5: 'F5',
-    LogicalKeyboardKey.f6: 'F6',
-    LogicalKeyboardKey.f7: 'F7',
-    LogicalKeyboardKey.f8: 'F8',
-    LogicalKeyboardKey.f9: 'F9',
-    LogicalKeyboardKey.f10: 'F10',
-    LogicalKeyboardKey.f11: 'F11',
-    LogicalKeyboardKey.f12: 'F12',
-  };
-
-  /// 外付けキーボード用の特殊キー送信（デバウンス付き）
-  void _sendHwSpecialKey(String baseKey) {
-    _markKeyEventHandled();
-    if (widget.hapticFeedback) {
-      HapticFeedback.lightImpact();
-    }
-    widget.onSpecialKeyPressed(_applyHardwareModifiers(baseKey));
-    // 外付けキーボード使用時はソフトウェア修飾子トグルをリセット
-    _resetSoftwareModifiers();
-  }
-
-  /// ソフトウェア修飾子ボタンの状態をリセット
-  void _resetSoftwareModifiers() {
-    if (_shiftPressed || _ctrlPressed || _altPressed) {
-      setState(() {
-        _shiftPressed = false;
-        _ctrlPressed = false;
-        _altPressed = false;
-      });
-    }
-  }
-
-  /// キーイベントハンドラ（外付けキーボード用: 全特殊キーをキャプチャ）
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
-
-    // IME変換中はキーイベントを処理しない
-    if (_isComposing) {
-      return KeyEventResult.ignored;
-    }
-
-    final key = event.logicalKey;
-
-    // Ctrl/Meta + A-Z のショートカット処理
-    final isCtrlPressed = HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed;
-    if (isCtrlPressed) {
-      final keyLabel = key.keyLabel;
-      if (keyLabel.length == 1 && RegExp(r'^[A-Za-z]$').hasMatch(keyLabel)) {
-        _markKeyEventHandled();
-        if (widget.hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        widget.onSpecialKeyPressed('C-${keyLabel.toLowerCase()}');
-        _resetSoftwareModifiers();
-        return KeyEventResult.handled;
-      }
-    }
-
-    // Enterキー
-    if (key == LogicalKeyboardKey.enter ||
-        key == LogicalKeyboardKey.numpadEnter) {
-      _markKeyEventHandled();
-      _sendDirectEnterAndClear();
-      _resetSoftwareModifiers();
-      return KeyEventResult.handled;
-    }
-
-    // Backspaceキー: sentinelアプローチで_onDirectInputChangedにて処理
-    if (key == LogicalKeyboardKey.backspace) {
-      return KeyEventResult.ignored;
-    }
-
-    // マップに登録された特殊キー（Escape/Tab/矢印/Nav/F1-F12）
-    final tmuxKey = _hwSpecialKeyMap[key];
-    if (tmuxKey != null) {
-      _sendHwSpecialKey(tmuxKey);
-      return KeyEventResult.handled;
-    }
-
-    return KeyEventResult.ignored;
-  }
-
-  /// DirectInput: Enterキー送信して入力欄をリセット
-  void _sendDirectEnterAndClear() {
-    if (widget.hapticFeedback) {
-      HapticFeedback.lightImpact();
-    }
-    widget.onSpecialKeyPressed('Enter');
-    _resetToSentinel();
   }
 
   @override
@@ -448,8 +337,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       color: isDark ? DesignColors.surfaceDark : DesignColors.surfaceLight,
       child: Row(
         children: [
-          _buildSpecialKeyButton('ESC', 'Escape'),
-          _buildSpecialKeyButton('TAB', 'Tab'),
+          _buildSpecialKeyButton('ESC', Vt100Keys.escape),
+          _buildSpecialKeyButton('TAB', Vt100Keys.tab),
           _buildModifierButton('CTRL', _ctrlPressed, () {
             setState(() => _ctrlPressed = !_ctrlPressed);
           }),
@@ -477,7 +366,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             HapticFeedback.lightImpact();
           }
         },
-        onTap: () => _sendSpecialKey('S-Enter'),
+        onTap: () => _sendSpecialKey(Vt100Keys.enter),
         child: Container(
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -519,7 +408,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             HapticFeedback.lightImpact();
           }
         },
-        onTap: () => _sendSpecialKey('Enter'),
+        onTap: () => _sendSpecialKey(Vt100Keys.enter),
         child: Container(
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -570,13 +459,13 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       child: Row(
         children: [
           // 矢印キー横並び: 左・上・下・右
-          _buildArrowButton(Icons.arrow_left, 'Left'),
+          _buildArrowButton(Icons.arrow_left, Vt100Keys.left),
           const SizedBox(width: 2),
-          _buildArrowButton(Icons.arrow_drop_up, 'Up'),
+          _buildArrowButton(Icons.arrow_drop_up, Vt100Keys.up),
           const SizedBox(width: 2),
-          _buildArrowButton(Icons.arrow_drop_down, 'Down'),
+          _buildArrowButton(Icons.arrow_drop_down, Vt100Keys.down),
           const SizedBox(width: 2),
-          _buildArrowButton(Icons.arrow_right, 'Right'),
+          _buildArrowButton(Icons.arrow_right, Vt100Keys.right),
           const SizedBox(width: 8),
           // DirectInputモードトグルボタン
           _buildDirectInputToggle(),
@@ -648,9 +537,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   /// DirectInput用テキストフィールド（リアルタイム送信）
   Widget _buildDirectInputField() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Focus(
-      onKeyEvent: _handleKeyEvent,
-      child: Container(
+    return Container(
         height: 40,
         decoration: BoxDecoration(
           color: DesignColors.success.withValues(alpha: 0.1),
@@ -723,12 +610,11 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             ),
           ],
         ),
-      ),
     );
   }
 
-  /// 特殊キーボタン（tmux形式で送信）
-  Widget _buildSpecialKeyButton(String label, String tmuxKey) {
+  /// 特殊キーボタン（VT100エスケープシーケンスで送信）
+  Widget _buildSpecialKeyButton(String label, String vt100Key) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
@@ -738,7 +624,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             HapticFeedback.lightImpact();
           }
         },
-        onTap: () => _sendSpecialKey(tmuxKey),
+        onTap: () => _sendSpecialKey(vt100Key),
         child: Container(
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -861,7 +747,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  Widget _buildArrowButton(IconData icon, String tmuxKey) {
+  Widget _buildArrowButton(IconData icon, String vt100Key) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
@@ -870,7 +756,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           HapticFeedback.lightImpact();
         }
       },
-      onTap: () => _sendSpecialKey(tmuxKey),
+      onTap: () => _sendSpecialKey(vt100Key),
       child: Container(
         width: 36,
         height: 36,
@@ -970,47 +856,43 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// 特殊キーを送信（tmux形式）
-  void _sendSpecialKey(String tmuxKey) {
+  /// 特殊キーを送信（VT100エスケープシーケンス）
+  void _sendSpecialKey(String key) {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
     }
 
-    String key = tmuxKey;
+    String sequence = key; // Already a VT100 sequence from button tap
 
-    // 特殊なケース: Shift+Tab → BTab (Back Tab)
-    if (_shiftPressed && tmuxKey == 'Tab') {
+    // 特殊なケース: Shift+Tab → Back Tab (ESC [ Z)
+    if (_shiftPressed && key == Vt100Keys.tab) {
       setState(() => _shiftPressed = false);
-      // Ctrl/Altの状態もリセット
       if (_ctrlPressed) setState(() => _ctrlPressed = false);
       if (_altPressed) setState(() => _altPressed = false);
-      widget.onSpecialKeyPressed('BTab');
+      widget.onSpecialKeyPressed(Vt100Keys.backTab);
       return;
     }
 
-    // 修飾子を組み合わせる（Shift, Ctrl, Alt順）
-    final List<String> modifiers = [];
+    // Apply sticky modifiers
     if (_shiftPressed) {
-      modifiers.add('S');
       setState(() => _shiftPressed = false);
+      // Shift is consumed but does not alter the VT100 sequence for most keys
+      // (arrow keys, function keys, etc. don't have a standard shift variant
+      // in basic VT100; the key is sent as-is)
     }
     if (_ctrlPressed) {
-      modifiers.add('C');
+      // Ctrl+letter -> control character
+      if (key.length == 1 && RegExp(r'[a-zA-Z]').hasMatch(key)) {
+        sequence = Vt100Keys.ctrl(key);
+      }
       setState(() => _ctrlPressed = false);
     }
     if (_altPressed) {
-      modifiers.add('M');
+      sequence = Vt100Keys.alt(sequence);
       setState(() => _altPressed = false);
     }
 
-    // tmux形式で修飾子を適用
-    if (modifiers.isNotEmpty) {
-      // 例: S-Enter, C-M-a など
-      final prefix = modifiers.join('-');
-      key = '$prefix-$tmuxKey';
-    }
-
-    widget.onSpecialKeyPressed(key);
+    widget.onSpecialKeyPressed(sequence);
   }
 
   /// リテラルキーを送信（文字そのまま）
@@ -1019,29 +901,32 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       HapticFeedback.lightImpact();
     }
 
-    // 修飾子を組み合わせる
-    final List<String> modifiers = [];
+    String data = key;
+
+    // Reset shift (literal keys don't need shift VT100 encoding)
     if (_shiftPressed) {
-      modifiers.add('S');
       setState(() => _shiftPressed = false);
     }
-    if (_ctrlPressed) {
-      modifiers.add('C');
+
+    if (_ctrlPressed && key.length == 1 && RegExp(r'[a-zA-Z]').hasMatch(key)) {
+      data = Vt100Keys.ctrl(key);
       setState(() => _ctrlPressed = false);
-    }
-    if (_altPressed) {
-      modifiers.add('M');
-      setState(() => _altPressed = false);
+      if (_altPressed) {
+        data = Vt100Keys.alt(data);
+        setState(() => _altPressed = false);
+      }
+      widget.onSpecialKeyPressed(data);
+      return;
     }
 
-    // 修飾子がある場合はtmux形式で送信
-    if (modifiers.isNotEmpty && key.length == 1) {
-      final prefix = modifiers.join('-');
-      widget.onSpecialKeyPressed('$prefix-$key');
+    if (_altPressed && key.length == 1) {
+      data = Vt100Keys.alt(key);
+      setState(() => _altPressed = false);
+      widget.onSpecialKeyPressed(data);
       return;
     }
 
     // 修飾子なしの場合はリテラル送信
-    widget.onKeyPressed(key);
+    widget.onKeyPressed(data);
   }
 }
