@@ -64,9 +64,6 @@ class SpecialKeysBar extends StatefulWidget {
 
   final VoidCallback? onInputTap;
 
-  /// Raw input mode: opens TerminalView's native soft keyboard
-  final VoidCallback? onRawInputTap;
-
   final bool hapticFeedback;
 
   /// Whether DirectInput mode is enabled
@@ -80,7 +77,6 @@ class SpecialKeysBar extends StatefulWidget {
     required this.onKeyPressed,
     required this.onSpecialKeyPressed,
     this.onInputTap,
-    this.onRawInputTap,
     this.hapticFeedback = true,
     this.directInputEnabled = false,
     this.onDirectInputToggle,
@@ -96,6 +92,11 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   bool _shiftPressed = false;
   final TextEditingController _directInputController = TextEditingController();
   final FocusNode _directInputFocusNode = FocusNode();
+
+  // RAW input mode — IME-free keyboard that sends each keystroke directly
+  bool _rawInputEnabled = false;
+  final TextEditingController _rawInputController = TextEditingController();
+  final FocusNode _rawInputFocusNode = FocusNode();
 
   /// Whether IME composition is currently active
   bool _isComposing = false;
@@ -142,6 +143,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     _directInputController.removeListener(_onDirectInputChanged);
     _directInputController.dispose();
     _directInputFocusNode.dispose();
+    _rawInputController.dispose();
+    _rawInputFocusNode.dispose();
     super.dispose();
   }
 
@@ -367,7 +370,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             _buildNavigationKeysRow(),
             _buildModifierKeysRow(),
             _buildArrowKeysRow(),
-            if (widget.directInputEnabled) _buildDirectInputRow(),
+            if (_rawInputEnabled) _buildRawInputRow(),
+            if (widget.directInputEnabled && !_rawInputEnabled) _buildDirectInputRow(),
             const SizedBox(height: 4),
           ],
         ),
@@ -558,6 +562,88 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
+  /// RAW input row — IME-free keyboard, each keystroke sent immediately
+  Widget _buildRawInputRow() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: DesignColors.warning.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: DesignColors.warning.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            // RAW indicator
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: DesignColors.warning.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'RAW',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: DesignColors.warning,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Hidden input field — no IME, no suggestions, each key sent immediately
+            Expanded(
+              child: Focus(
+                onKeyEvent: _handleDirectInputKeyEvent,
+                child: TextField(
+                  controller: _rawInputController,
+                  focusNode: _rawInputFocusNode,
+                  autofocus: true,
+                  keyboardType: TextInputType.visiblePassword,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  enableIMEPersonalizedLearning: false,
+                  onChanged: (text) {
+                    if (text.isEmpty) {
+                      // Backspace was pressed
+                      widget.onSpecialKeyPressed(Vt100Keys.backspace);
+                    } else {
+                      // Send each character immediately
+                      widget.onKeyPressed(text);
+                      _rawInputController.clear();
+                    }
+                  },
+                  onSubmitted: (_) {
+                    widget.onSpecialKeyPressed(Vt100Keys.enter);
+                    _rawInputFocusNode.requestFocus();
+                  },
+                  textInputAction: TextInputAction.send,
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 14,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Raw input...',
+                    hintStyle: GoogleFonts.jetBrainsMono(
+                      fontSize: 14,
+                      color: DesignColors.warning.withValues(alpha: 0.5),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    isDense: true,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// DirectInput dedicated row (input field only)
   /// RET/BS use the native keyboard keys
   Widget _buildDirectInputRow() {
@@ -567,24 +653,40 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// Raw input button — opens TerminalView's native soft keyboard
-  /// Each keystroke goes directly to terminal without IME/dictionary
+  /// Raw input button — toggles IME-free keyboard mode
+  /// Each keystroke goes directly to terminal without composing/dictionary
   Widget _buildRawInputButton() {
     return GestureDetector(
       onTap: () {
         if (widget.hapticFeedback) {
           HapticFeedback.selectionClick();
         }
-        widget.onRawInputTap?.call();
+        setState(() {
+          _rawInputEnabled = !_rawInputEnabled;
+          // Disable LIVE mode when RAW is activated
+          if (_rawInputEnabled && widget.directInputEnabled) {
+            widget.onDirectInputToggle?.call();
+          }
+        });
+        if (_rawInputEnabled) {
+          // Focus the raw input field after build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _rawInputFocusNode.requestFocus();
+          });
+        }
       },
       child: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: DesignColors.keyBackground,
+          color: _rawInputEnabled
+              ? DesignColors.warning.withValues(alpha: 0.3)
+              : DesignColors.keyBackground,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: _rawInputEnabled
+                ? DesignColors.warning.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.05),
           ),
         ),
         child: Center(
@@ -593,7 +695,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             style: GoogleFonts.jetBrainsMono(
               fontSize: 8,
               fontWeight: FontWeight.w700,
-              color: Colors.white70,
+              color: _rawInputEnabled ? DesignColors.warning : Colors.white70,
             ),
           ),
         ),
