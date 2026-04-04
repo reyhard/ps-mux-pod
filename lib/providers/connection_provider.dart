@@ -4,7 +4,7 @@ import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 接続設定
+/// Connection settings
 class Connection {
   final String id;
   final String name;
@@ -17,19 +17,19 @@ class Connection {
   final DateTime createdAt;
   final DateTime? lastConnectedAt;
 
-  /// ディープリンク用の識別子（外部スクリプトと共有可能）
+  /// Identifier for deep links (can be shared with external scripts)
   final String? deepLinkId;
 
-  /// マルチプレクサ種別: 'tmux' | 'psmux' | 'auto'
+  /// Multiplexer type: 'tmux' | 'psmux' | 'auto'
   final String muxType;
 
-  /// トランスポート種別: 'ssh' | 'local' | 'wslBridge'
+  /// Transport type: 'ssh' | 'local' | 'wslBridge'
   final String transport;
 
-  /// WSLディストリビューション名（transport が 'wslBridge' の場合のみ使用）
+  /// WSL distribution name (used only when transport is 'wslBridge')
   final String? wslDistro;
 
-  /// WSLペイン内でtmuxを探索するか
+  /// Whether to search for tmux inside the WSL pane
   final bool nestedTmux;
 
   const Connection({
@@ -131,7 +131,7 @@ class Connection {
   }
 }
 
-/// 接続一覧の状態
+/// State of the connections list
 class ConnectionsState {
   final List<Connection> connections;
   final bool isLoading;
@@ -156,13 +156,13 @@ class ConnectionsState {
   }
 }
 
-/// 接続一覧を管理するNotifier
+/// Notifier that manages the connections list
 class ConnectionsNotifier extends Notifier<ConnectionsState> {
   static const String _storageKey = 'connections';
 
   @override
   ConnectionsState build() {
-    // 初期状態
+    // Initial state
     _loadConnections();
     return const ConnectionsState(isLoading: true);
   }
@@ -182,7 +182,7 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
 
         developer.log('Loaded ${connections.length} connections from storage', name: 'ConnectionsProvider');
 
-        // 最終接続日時で並び替え（降順）
+        // Sort by last connection time (descending)
         connections.sort((a, b) {
           final aTime = a.lastConnectedAt ?? a.createdAt;
           final bTime = b.lastConnectedAt ?? b.createdAt;
@@ -207,7 +207,7 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     await prefs.setString(_storageKey, jsonEncode(jsonList));
   }
 
-  /// 接続を追加
+  /// Add a connection
   Future<void> add(Connection connection) async {
     developer.log('add() called: ${connection.name} (${connection.id})', name: 'ConnectionsProvider');
     developer.log('Current connections count: ${state.connections.length}', name: 'ConnectionsProvider');
@@ -222,7 +222,7 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     developer.log('Connections saved. Final count: ${state.connections.length}', name: 'ConnectionsProvider');
   }
 
-  /// 接続を削除
+  /// Delete a connection
   Future<void> remove(String id) async {
     developer.log('remove() called: $id', name: 'ConnectionsProvider');
     final connections = state.connections.where((c) => c.id != id).toList();
@@ -231,7 +231,7 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     developer.log('Connection removed. Remaining: ${state.connections.length}', name: 'ConnectionsProvider');
   }
 
-  /// 接続を更新
+  /// Update a connection
   Future<void> update(Connection connection) async {
     developer.log('update() called: ${connection.name} (${connection.id})', name: 'ConnectionsProvider');
     final connections = state.connections.map((c) {
@@ -242,7 +242,7 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     developer.log('Connection updated and saved', name: 'ConnectionsProvider');
   }
 
-  /// 最終接続日時を更新
+  /// Update the last connection time
   Future<void> updateLastConnected(String id) async {
     final connections = state.connections.map((c) {
       if (c.id == id) {
@@ -254,7 +254,7 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     await _saveConnections();
   }
 
-  /// 接続を取得
+  /// Get a connection
   Connection? getById(String id) {
     try {
       return state.connections.firstWhere((c) => c.id == id);
@@ -263,21 +263,21 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     }
   }
 
-  /// deepLinkIdまたは接続名でサーバーを検索
+  /// Find a server by deepLinkId or connection name
   Connection? findByDeepLinkIdOrName(String serverIdentifier) {
-    // まずdeepLinkIdで完全一致
+    // First, exact match by deepLinkId
     for (final c in state.connections) {
       if (c.deepLinkId != null && c.deepLinkId == serverIdentifier) {
         return c;
       }
     }
-    // 次に接続名で完全一致
+    // Next, exact match by connection name
     for (final c in state.connections) {
       if (c.name == serverIdentifier) {
         return c;
       }
     }
-    // 最後に接続名で大文字小文字無視の一致
+    // Finally, case-insensitive match by connection name
     final lower = serverIdentifier.toLowerCase();
     for (final c in state.connections) {
       if (c.name.toLowerCase() == lower) {
@@ -287,20 +287,20 @@ class ConnectionsNotifier extends Notifier<ConnectionsState> {
     return null;
   }
 
-  /// リロード
+  /// Reload
   Future<void> reload() async {
     state = state.copyWith(isLoading: true, error: null);
     await _loadConnections();
   }
 }
 
-/// 接続一覧プロバイダー
+/// Connections list provider
 final connectionsProvider =
     NotifierProvider<ConnectionsNotifier, ConnectionsState>(() {
   return ConnectionsNotifier();
 });
 
-/// 選択中接続IDを管理するNotifier
+/// Notifier that manages the selected connection ID
 class SelectedConnectionIdNotifier extends Notifier<String?> {
   @override
   String? build() => null;
@@ -310,7 +310,7 @@ class SelectedConnectionIdNotifier extends Notifier<String?> {
   }
 }
 
-/// 検索クエリを管理するNotifier
+/// Notifier that manages the search query
 class ConnectionSearchNotifier extends Notifier<String> {
   @override
   String build() => '';
@@ -324,13 +324,13 @@ class ConnectionSearchNotifier extends Notifier<String> {
   }
 }
 
-/// 検索クエリプロバイダー
+/// Search query provider
 final connectionSearchProvider =
     NotifierProvider<ConnectionSearchNotifier, String>(() {
   return ConnectionSearchNotifier();
 });
 
-/// ソートオプション
+/// Sort options
 enum ConnectionSortOption {
   nameAsc,
   nameDesc,
@@ -340,7 +340,7 @@ enum ConnectionSortOption {
   hostDesc,
 }
 
-/// ソートオプションを管理するNotifier
+/// Notifier that manages sort options
 class ConnectionSortNotifier extends Notifier<ConnectionSortOption> {
   @override
   ConnectionSortOption build() => ConnectionSortOption.lastConnectedDesc;
@@ -350,19 +350,19 @@ class ConnectionSortNotifier extends Notifier<ConnectionSortOption> {
   }
 }
 
-/// ソートオプションプロバイダー
+/// Sort options provider
 final connectionSortProvider =
     NotifierProvider<ConnectionSortNotifier, ConnectionSortOption>(() {
   return ConnectionSortNotifier();
 });
 
-/// フィルタリング・ソート済み接続リストプロバイダー
+/// Filtered and sorted connections list provider
 final filteredConnectionsProvider = Provider<List<Connection>>((ref) {
   final connectionsState = ref.watch(connectionsProvider);
   final searchQuery = ref.watch(connectionSearchProvider).toLowerCase();
   final sortOption = ref.watch(connectionSortProvider);
 
-  // 検索フィルタリング（元のリストを変更しないようコピーを作成）
+  // Search filtering (copy so the original list is not modified)
   var connections = List.of(connectionsState.connections);
   if (searchQuery.isNotEmpty) {
     connections = connections.where((c) {
@@ -373,7 +373,7 @@ final filteredConnectionsProvider = Provider<List<Connection>>((ref) {
     }).toList();
   }
 
-  // ソート
+  // Sort
   switch (sortOption) {
     case ConnectionSortOption.nameAsc:
       connections.sort((a, b) => a.name.compareTo(b.name));
@@ -400,13 +400,13 @@ final filteredConnectionsProvider = Provider<List<Connection>>((ref) {
   return connections;
 });
 
-/// 現在選択中の接続IDプロバイダー
+/// Currently selected connection ID provider
 final selectedConnectionIdProvider =
     NotifierProvider<SelectedConnectionIdNotifier, String?>(() {
   return SelectedConnectionIdNotifier();
 });
 
-/// 現在選択中の接続プロバイダー
+/// Currently selected connection provider
 final selectedConnectionProvider = Provider<Connection?>((ref) {
   final id = ref.watch(selectedConnectionIdProvider);
   if (id == null) return null;

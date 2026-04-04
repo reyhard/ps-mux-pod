@@ -7,94 +7,94 @@
 
 ### 1.1 AppSettings
 
-アプリケーション全体の設定を保持するエンティティ。
+appallsettingsretain。
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| darkMode | bool | true | ダークモード有効 |
-| fontSize | double | 14.0 | ターミナルフォントサイズ（pt） |
-| fontFamily | String | "JetBrains Mono" | ターミナルフォントファミリー |
-| requireBiometricAuth | bool | false | 生体認証必須 |
-| enableNotifications | bool | true | 通知有効 |
-| enableVibration | bool | true | バイブレーション有効 |
-| scrollbackLines | int | 10000 | スクロールバック行数 |
+| darkMode | bool | true | modeenabled |
+| fontSize | double | 14.0 | terminalfont size（pt） |
+| fontFamily | String | "JetBrains Mono" | terminalfont family |
+| requireBiometricAuth | bool | false | authenticationrequired |
+| enableNotifications | bool | true | notificationenabled |
+| enableVibration | bool | true | enabled |
+| scrollbackLines | int | 10000 | scrollbackrows |
 
 **Validation Rules**:
 - fontSize: 10.0 <= value <= 20.0
-- fontFamily: 許可リスト ["JetBrains Mono", "Fira Code", "Source Code Pro", "Roboto Mono"]
+- fontFamily: list ["JetBrains Mono", "Fira Code", "Source Code Pro", "Roboto Mono"]
 
 **Storage**: SharedPreferences
 - Key prefix: `settings_`
-- 各フィールドは個別キーで保存
+- eachseparatekeysave
 
 ### 1.2 NotificationRule
 
-通知ルールを表すエンティティ。
+Notification Rules。
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| id | String | UUID | ルール一意識別子 |
-| name | String | required | ルール表示名 |
-| pattern | String | required | マッチパターン |
-| isRegex | bool | false | 正規表現として扱う |
-| enabled | bool | true | ルール有効 |
-| caseSensitive | bool | false | 大文字小文字区別 |
-| sound | String? | null | サウンドファイル名 |
-| vibrate | bool | true | バイブレーション有効 |
-| priority | NotificationPriority | normal | 通知優先度 |
-| targetSession | String? | null | 対象セッション（nullで全て） |
-| rateLimitSeconds | int | 5 | 同一ルール通知間隔（秒） |
-| createdAt | DateTime | now | 作成日時 |
-| lastMatchedAt | DateTime? | null | 最終マッチ日時 |
+| id | String | UUID | ruleseparate |
+| name | String | required | ruledisplay |
+| pattern | String | required | pattern |
+| isRegex | bool | false |  |
+| enabled | bool | true | ruleenabled |
+| caseSensitive | bool | false | characterscharactersseparate |
+| sound | String? | null | file |
+| vibrate | bool | true | enabled |
+| priority | NotificationPriority | normal | notificationpriority |
+| targetSession | String? | null | targetsession（nullall） |
+| rateLimitSeconds | int | 5 | samerulenotification（） |
+| createdAt | DateTime | now | create |
+| lastMatchedAt | DateTime? | null | final |
 
 **Validation Rules**:
-- name: 1文字以上
-- pattern: 1文字以上、isRegex=trueの場合は有効な正規表現
+- name: 1characters
+- pattern: 1characters、isRegex=truewhenenabled
 - rateLimitSeconds: 0 <= value <= 3600
 
 **Storage**: SharedPreferences
 - Key: `notification_rules`
-- Format: JSON配列
+- Format: JSONcolumn
 
 ### 1.3 NotificationPriority (Enum)
 
-通知の優先度を表す列挙型。
+notificationprioritycolumn。
 
 | Value | Index | Description |
 |-------|-------|-------------|
-| low | 0 | 低優先度 |
-| normal | 1 | 通常優先度 |
-| high | 2 | 高優先度 |
-| urgent | 3 | 緊急（最高優先度） |
+| low | 0 | low priority |
+| normal | 1 | normal priority |
+| high | 2 | high priority |
+| urgent | 3 | urgent（high priority） |
 
-### 1.4 ThemeMode (Flutter標準)
+### 1.4 ThemeMode (Flutterstandard)
 
-テーマモードを表す列挙型（Flutter標準）。
+thememodecolumn（Flutterstandard）。
 
 | Value | Description |
 |-------|-------------|
-| system | システム設定に従う |
-| light | ライトモード |
-| dark | ダークモード |
+| system | settings |
+| light | mode |
+| dark | mode |
 
 **Mapping**:
 - AppSettings.darkMode = true → ThemeMode.dark
 - AppSettings.darkMode = false → ThemeMode.light
-- 拡張: darkMode を themeMode (String) に変更検討
+- extension: darkMode  themeMode (String) changeconsider
 
 ## 2. State Classes
 
 ### 2.1 NotificationState
 
-通知プロバイダーの状態を表すクラス。
+notificationproviderstateclass。
 
 | Field | Type | Description |
 |-------|------|-------------|
-| rules | List\<NotificationRule\> | 全ルールリスト |
-| recentEvents | List\<NotificationEvent\> | 最近の通知イベント |
-| globalEnabled | bool | グローバル通知有効 |
-| isLoading | bool | 読み込み中フラグ |
-| error | String? | エラーメッセージ |
+| rules | List\<NotificationRule\> | allrulelist |
+| recentEvents | List\<NotificationEvent\> | notification |
+| globalEnabled | bool | notificationenabled |
+| isLoading | bool | loadin progress |
+| error | String? | error message |
 
 ## 3. Relationships
 
@@ -113,7 +113,7 @@
 ┌──────────────────┐
 │ NotificationRule │
 │                  │
-│  - vibrate       │ ← AppSettings.enableVibration がグローバル設定
+│  - vibrate       │ ← AppSettings.enableVibration settings
 │  - priority      │
 │  - enabled       │
 └──────────────────┘
@@ -152,21 +152,21 @@ User Action ──► Provider Method ──► SharedPreferences ──► Stat
 
 | Value (pt) | Use Case |
 |------------|----------|
-| 10 | 高密度表示 |
-| 12 | コンパクト |
-| 14 | 標準（デフォルト） |
-| 16 | 読みやすい |
-| 18 | 大きめ |
-| 20 | 最大 |
+| 10 | high-densitydisplay |
+| 12 |  |
+| 14 | standard（default） |
+| 16 |  |
+| 18 | larger |
+| 20 | maximum |
 
 ### 5.2 Available Font Families
 
 | Font | Package | Notes |
 |------|---------|-------|
-| JetBrains Mono | google_fonts | デフォルト、リガチャ対応 |
-| Fira Code | google_fonts | 人気のコーディングフォント |
-| Source Code Pro | google_fonts | Adobe製 |
-| Roboto Mono | google_fonts | Android標準 |
+| JetBrains Mono | google_fonts | default、support |
+| Fira Code | google_fonts | font |
+| Source Code Pro | google_fonts | Adobe |
+| Roboto Mono | google_fonts | Androidstandard |
 
 ## 6. Theme Options
 
@@ -174,6 +174,9 @@ User Action ──► Provider Method ──► SharedPreferences ──► Stat
 |--------|-----------|---------------------|
 | Dark | ThemeMode.dark | true |
 | Light | ThemeMode.light | false |
-| System | ThemeMode.system | (要拡張) |
+| System | ThemeMode.system | (extension) |
 
-**Note**: System対応には AppSettings を拡張して themeMode フィールドを追加する必要がある。初期実装では Dark/Light のみをサポート。
+**Note**: Systemsupport AppSettings extension themeMode addrequired。initialimplement Dark/Light support。
+
+
+

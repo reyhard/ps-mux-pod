@@ -1,0 +1,53 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-03-terminal-latency-optimization.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 0: Create scrollback buffer service",
+      "status": "pending",
+      "description": "**Goal:** Build a ring buffer that accumulates terminal history client-side.\n\n**Files:**\n- Create: `lib/services/terminal/scrollback_buffer.dart`\n- Test: `test/services/terminal/scrollback_buffer_test.dart`\n\n```json:metadata\n{\"files\": [\"lib/services/terminal/scrollback_buffer.dart\", \"test/services/terminal/scrollback_buffer_test.dart\"], \"verifyCommand\": \"flutter test test/services/terminal/scrollback_buffer_test.dart\", \"acceptanceCriteria\": [\"ring buffer with configurable max lines\", \"detects scrolled-off lines\", \"seed history for bulk load\", \"clear on pane switch\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: Reduce capture-pane to visible area only",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** Change polling loop to capture only visible pane area instead of 1000 lines.\n\n**Files:**\n- Modify: `lib/screens/terminal/terminal_screen.dart`\n\n```json:metadata\n{\"files\": [\"lib/screens/terminal/terminal_screen.dart\"], \"verifyCommand\": \"flutter run -d android\", \"acceptanceCriteria\": [\"capture-pane visible only\", \"scrollback buffer integrated\", \"buffer cleared on pane switch\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Use persistent shell for keystrokes",
+      "status": "pending",
+      "description": "**Goal:** Switch keystroke sending from exec() to execPersistent().\n\n**Files:**\n- Modify: `lib/screens/terminal/terminal_screen.dart:1289`\n\n```json:metadata\n{\"files\": [\"lib/screens/terminal/terminal_screen.dart\"], \"verifyCommand\": \"flutter run -d android\", \"acceptanceCriteria\": [\"execPersistent for keystrokes\", \"no SSH channel overhead per keystroke\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Add dedicated input shell to eliminate serialization",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "**Goal:** Add second persistent shell for input so keystrokes never wait for poll cycle.\n\n**Files:**\n- Modify: `lib/services/ssh/ssh_client.dart`\n- Modify: `lib/screens/terminal/terminal_screen.dart`\n\n```json:metadata\n{\"files\": [\"lib/services/ssh/ssh_client.dart\", \"lib/screens/terminal/terminal_screen.dart\"], \"verifyCommand\": \"flutter run -d android\", \"acceptanceCriteria\": [\"second persistent shell for input\", \"execInput method\", \"no serialization with polling\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Immediate poll after keystroke + fire-and-forget send-keys",
+      "status": "pending",
+      "blockedBy": [2, 3],
+      "description": "**Goal:** Trigger immediate poll after keystroke, make send-keys fire-and-forget.\n\n**Files:**\n- Modify: `lib/screens/terminal/terminal_screen.dart`\n\n```json:metadata\n{\"files\": [\"lib/screens/terminal/terminal_screen.dart\"], \"verifyCommand\": \"flutter run -d android\", \"acceptanceCriteria\": [\"immediate poll on keystroke\", \"fire-and-forget send-keys\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Add on-demand scrollback fetch for scroll-up",
+      "status": "pending",
+      "blockedBy": [0, 1],
+      "description": "**Goal:** When user scrolls to top, one-time bulk capture-pane -S -1000 to seed scrollback.\n\n**Files:**\n- Modify: `lib/screens/terminal/terminal_screen.dart`\n\n```json:metadata\n{\"files\": [\"lib/screens/terminal/terminal_screen.dart\"], \"verifyCommand\": \"flutter run -d android\", \"acceptanceCriteria\": [\"scroll-to-top triggers history fetch\", \"scrollback seeded\", \"once per scroll\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Verify latency improvement with user",
+      "status": "pending",
+      "blockedBy": [1, 4, 5],
+      "description": "**Goal:** User confirms latency improved from 2000+ms baseline.\n\n```json:metadata\n{\"files\": [], \"verifyCommand\": \"\", \"acceptanceCriteria\": [\"user confirms latency reduction\"], \"requiresUserVerification\": true, \"userVerificationPrompt\": \"What latency do you see now when connected to a Claude Code session? (baseline was 2000+ms / ~2-3s refresh)\"}\n```"
+    }
+  ],
+  "lastUpdated": "2026-04-03T00:00:00Z"
+}

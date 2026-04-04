@@ -1,20 +1,20 @@
 /**
  * ConnectionStore Actions Contract
  *
- * connectionStoreに追加する再接続関連アクションの定義。
- * 実装は src/stores/connectionStore.ts に追加する。
+ * Definitions for reconnect-related actions added to connectionStore.
+ * Implementation goes in src/stores/connectionStore.ts.
  */
 
 import type { Connection, ConnectionState } from '@/types/connection';
 
 /**
- * 再接続関連のアクション（既存のConnectionStoreActionsに追加）
+ * Reconnect-related actions (added to the existing ConnectionStoreActions)
  */
 export interface ReconnectStoreActions {
   /**
-   * 接続の再接続設定を更新する
-   * @param id 接続ID
-   * @param settings 再接続設定
+   * Update reconnect settings for a connection.
+   * @param id Connection ID
+   * @param settings Reconnect settings
    */
   updateReconnectSettings: (
     id: string,
@@ -26,9 +26,9 @@ export interface ReconnectStoreActions {
   ) => void;
 
   /**
-   * 切断状態に更新する（理由と時刻を記録）
-   * @param id 接続ID
-   * @param reason 切断理由
+   * Update to disconnected state and record the reason and time.
+   * @param id Connection ID
+   * @param reason Disconnect reason
    */
   setDisconnected: (
     id: string,
@@ -36,17 +36,17 @@ export interface ReconnectStoreActions {
   ) => void;
 
   /**
-   * 再接続中状態に更新する
-   * @param id 接続ID
-   * @param attemptNumber 現在の試行番号
-   * @param maxAttempts 最大試行回数
+   * Update to reconnecting state.
+   * @param id Connection ID
+   * @param attemptNumber Current attempt number
+   * @param maxAttempts Maximum attempt count
    */
   setReconnecting: (id: string, attemptNumber: number, maxAttempts: number) => void;
 
   /**
-   * 再接続試行結果を記録する
-   * @param id 接続ID
-   * @param result 試行結果
+   * Record a reconnect attempt result.
+   * @param id Connection ID
+   * @param result Attempt result
    */
   recordReconnectAttempt: (
     id: string,
@@ -58,25 +58,25 @@ export interface ReconnectStoreActions {
   ) => void;
 
   /**
-   * 再接続状態をクリアする（成功・断念・キャンセル時）
-   * @param id 接続ID
+   * Clear reconnect state after success, give up, or cancel.
+   * @param id Connection ID
    */
   clearReconnectState: (id: string) => void;
 }
 
 /**
- * 拡張されたセレクター
+ * Extended selectors
  */
 export interface ReconnectSelectors {
   /**
-   * 自動再接続が有効かどうかを取得
-   * @param connectionId 接続ID
+   * Get whether auto-reconnect is enabled.
+   * @param connectionId Connection ID
    */
   selectAutoReconnect: (connectionId: string) => boolean;
 
   /**
-   * 再接続試行情報を取得
-   * @param connectionId 接続ID
+   * Get reconnect attempt information.
+   * @param connectionId Connection ID
    */
   selectReconnectAttempt: (connectionId: string) => {
     current: number;
@@ -85,18 +85,18 @@ export interface ReconnectSelectors {
   } | null;
 
   /**
-   * 切断理由を取得
-   * @param connectionId 接続ID
+   * Get the disconnect reason.
+   * @param connectionId Connection ID
    */
   selectDisconnectReason: (connectionId: string) => string | null;
 }
 
 /**
- * 期待される動作
+ * Expected behavior
  *
  * 1. setDisconnected: status='disconnected', disconnectedAt=now, disconnectReason=reason
- * 2. setReconnecting: status='reconnecting', reconnectAttempt を初期化
- * 3. recordReconnectAttempt: reconnectAttempt.history に追加
- * 4. clearReconnectState: status を維持したまま reconnectAttempt をクリア
- * 5. 全ての更新は connectionStates の該当エントリを更新
+ * 2. setReconnecting: status='reconnecting', initialize reconnectAttempt
+ * 3. recordReconnectAttempt: append to reconnectAttempt.history
+ * 4. clearReconnectState: clear reconnectAttempt while keeping status
+ * 5. All updates modify the relevant entry in connectionStates
  */

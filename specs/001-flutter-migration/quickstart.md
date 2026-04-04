@@ -15,13 +15,13 @@
 ### 1. Create Flutter Project
 
 ```bash
-# リポジトリルートで実行
+# routerun
 cd /home/mox/Projects/mux-pod
 
-# Flutter プロジェクト作成
+# Flutter projectcreate
 flutter create --org com.muxpod --project-name muxpod flutter
 
-# プロジェクトディレクトリへ移動
+# project
 cd flutter
 ```
 
@@ -121,8 +121,8 @@ linter:
 ### 4. Create Directory Structure
 
 ```bash
-mkdir -p lib/{router,models,providers,services/{ssh,tmux,terminal,keychain,notification},screens/{connections,terminal,keys,notifications,settings},widgets,theme}
-mkdir -p test/{unit/{services,providers},widget/screens,integration}
+mkdir -p lib/{router,models,providers,services/{ssh,tmux,terminal,keychain,notification},screens/{connections,terminal,keys,notifications,settings},Widgets,theme}
+mkdir -p test/{unit/{services,providers},Widget/screens,integration}
 mkdir -p integration_test
 mkdir -p assets/fonts
 ```
@@ -138,10 +138,10 @@ flutter pub get
 ### Code Generation (Freezed/Riverpod)
 
 ```bash
-# 一回実行
+# run
 dart run build_runner build --delete-conflicting-outputs
 
-# 監視モード（開発中推奨）
+# mode（in progressrecommended）
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
@@ -161,23 +161,23 @@ flutter test --coverage
 ### Lint & Analyze
 
 ```bash
-# 静的解析
+# staticparse
 dart analyze
 
-# フォーマット
+# format
 dart format lib test
 ```
 
 ### Build & Run
 
 ```bash
-# 開発ビルド（デバッグ）
+# build（debug）
 flutter run
 
-# リリースビルド
+# releasebuild
 flutter build apk --release
 
-# APK 分割ビルド（サイズ最適化）
+# APK build（sizeoptimal）
 flutter build apk --split-per-abi
 ```
 
@@ -192,10 +192,10 @@ class SshConnectionController extends _$SshConnectionController {
   @override
   FutureOr<SshShellSession?> build(String connectionId) async {
     ref.onDispose(() async {
-      // クリーンアップ
+      // cleanup
       await state.value?.close();
     });
-    return null; // 初期状態は未接続
+    return null; // initialstateconnection
   }
 
   Future<void> connect() async {
@@ -233,7 +233,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sshState = ref.watch(sshConnectionControllerProvider(widget.connectionId));
+    final sshState = ref.watch(sshConnectionControllerProvider(Widget.connectionId));
 
     return sshState.when(
       data: (session) => TerminalView(
@@ -303,7 +303,7 @@ void main() {
 ### Widget Tests (screens/)
 
 ```dart
-// test/widget/screens/connections_screen_test.dart
+// test/Widget/screens/connections_screen_test.dart
 void main() {
   testWidgets('ConnectionsScreen displays connection list', (tester) async {
     await tester.pumpWidget(
@@ -362,3 +362,6 @@ cd ..
 flutter clean
 flutter pub get
 ```
+
+
+

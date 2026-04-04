@@ -5,14 +5,14 @@
 
 ## Summary
 
-ペイン選択時にtmuxのpane_widthに合わせてターミナル表示幅を自動調整する機能。最小フォントサイズ制限を設定可能とし、制限を超える場合は水平スクロールを有効化。ピンチジェスチャーによる拡大縮小も対応。
+paneselecttmuxpane_widthTerminal Displaywidthautomaticadjustfeature。minimumfont sizesettingspossible、whenscrollenabled。pinchsupport。
 
 ## Technical Context
 
 **Language/Version**: Dart 3.x / Flutter 3.24+
-**Primary Dependencies**: flutter_riverpod (状態管理), xterm (ターミナル表示), dartssh2 (SSH接続)
-**Storage**: shared_preferences (設定保存)
-**Testing**: flutter test (widget tests, unit tests)
+**Primary Dependencies**: flutter_riverpod (statemanagement), xterm (Terminal Display), dartssh2 (SSH connection)
+**Storage**: shared_preferences (settingssave)
+**Testing**: flutter test (Widget tests, unit tests)
 **Target Platform**: Android (primary), iOS (secondary)
 **Project Type**: mobile (Flutter cross-platform)
 **Performance Goals**: 60fps for pinch zoom, 500ms for pane selection → display adjustment
@@ -54,19 +54,19 @@ specs/001-terminal-width-resize/
 ```text
 lib/
 ├── providers/
-│   ├── settings_provider.dart       # 既存: minFontSize追加
-│   └── terminal_display_provider.dart  # 新規: 表示状態管理
+│   ├── settings_provider.dart       # existing: minFontSizeadd
+│   └── terminal_display_provider.dart  # new: displaystatemanagement
 ├── screens/
 │   └── terminal/
-│       ├── terminal_screen.dart     # 既存: TerminalView wrapper変更
-│       └── widgets/
-│           └── scalable_terminal.dart  # 新規: ピンチ対応TerminalView
+│       ├── terminal_screen.dart     # existing: TerminalView wrapperchange
+│       └── Widgets/
+│           └── scalable_terminal.dart  # new: pinchsupportTerminalView
 ├── services/
 │   └── terminal/
-│       └── font_calculator.dart     # 新規: フォントサイズ計算ロジック
-└── widgets/
+│       └── font_calculator.dart     # new: font size
+└── Widgets/
     └── dialogs/
-        └── min_font_size_dialog.dart   # 新規: 最小フォントサイズ設定
+        └── min_font_size_dialog.dart   # new: minimumfont sizesettings
 
 test/
 ├── providers/
@@ -79,8 +79,11 @@ test/
         └── scalable_terminal_test.dart
 ```
 
-**Structure Decision**: Flutter mobile project structure。既存の`providers/`, `screens/`, `services/`パターンに従い、新規ファイルを追加。
+**Structure Decision**: Flutter mobile project structure。existing`providers/`, `screens/`, `services/`pattern、newfileadd。
 
 ## Complexity Tracking
 
 > No violations to justify - all gates passed.
+
+
+

@@ -4,57 +4,57 @@ import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 
-/// 持続的シェルセッション
+/// Persistent shell session
 ///
-/// コマンドを書き込み、マーカーで出力終了を検知して結果を返す。
-/// チャネル開閉のオーバーヘッドを排除し、1 RTT程度でコマンド実行可能。
+/// Writes commands and returns the result by detecting the output end marker.
+/// Removes channel open/close overhead and can execute commands in about one RTT.
 class PersistentShell {
   final SSHClient _sshClient;
   SSHSession? _session;
 
-  /// マーカーのコアテキスト
+  /// Core marker text
   static const String _markerId = '7f3d8a2b';
 
-  /// コマンド開始検知用マーカー（\x01プレフィックス/サフィックス付き）
+  /// Start marker for command detection (with \x01 prefix/suffix)
   ///
-  /// \x01（SOH制御文字）を含めることで、シェルのエコーバックテキスト内の
-  /// リテラル文字列（`\x01`=4文字）と区別する。
-  /// printfの実出力のみがバイト0x01を含むため、エコーバック内では一致しない。
+  /// Including \x01 (SOH control character) distinguishes the marker from
+  /// literal text in shell echo-back output (`\x01` = 4 characters).
+  /// Only the real printf output contains byte 0x01, so it will not match in the echo-back.
   static const String _startMarker = '\x01###START_$_markerId###\x01';
 
-  /// コマンド終了検知用マーカー
+  /// End marker for command detection
   static const String _endMarker = '\x01###END_$_markerId###\x01';
 
-  /// printf用のマーカー文字列（シェルコマンド内で使用）
+  /// Marker string for printf (used inside shell commands)
   static const String _printfStartMarker = r'\x01###START_' '$_markerId' r'###\x01';
   static const String _printfEndMarker = r'\x01###END_' '$_markerId' r'###\x01';
 
-  /// 出力バッファ（バイト列として蓄積し、UTF-8マルチバイト境界分割を防ぐ）
+  /// Output buffer (accumulates bytes to avoid splitting UTF-8 multibyte boundaries)
   final _rawBuffer = <int>[];
 
-  /// コマンド実行中のCompleter
+  /// Completer while a command is executing
   Completer<String>? _pendingCommand;
 
-  /// シェルが開始されているかどうか
+  /// Whether the shell has started
   bool get isStarted => _session != null;
 
-  /// セッション切断検知用
+  /// Detects session disconnects
   bool _isClosed = false;
 
-  /// stdoutサブスクリプション
+  /// stdout subscription
   StreamSubscription<Uint8List>? _stdoutSubscription;
 
   PersistentShell(this._sshClient);
 
-  /// シェルセッションを開始
+  /// Start the shell session
   Future<void> start() async {
     if (_session != null) {
-      return; // すでに開始済み
+      return; // already started
     }
 
     _session = await _sshClient.shell(
       pty: SSHPtyConfig(
-        type: 'dumb', // 最小限のPTY（エスケープシーケンスを抑制）
+        type: 'dumb', // minimal PTY (suppresses escape sequences)
         width: 200,
         height: 50,
       ),
@@ -62,20 +62,20 @@ class PersistentShell {
 
     _isClosed = false;
 
-    // stdout監視を開始
+    // Start watching stdout
     _stdoutSubscription = _session!.stdout.listen(
       _onData,
       onDone: _onDone,
       onError: _onError,
     );
 
-    // シェル初期化を待つ（プロンプトが出力されるまで少し待機）
+    // Wait for shell initialization (pause briefly until the prompt appears)
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // ヒストリー記録を無効化（Bash/Zsh/fish対応）し、プロンプトを抑制
-    // - export HISTFILE=... : Bash/Zsh用（スタートアップファイル後に上書き）
-    // - set fish_history ... : fish用（exportはfishで構文エラーになるため別途）
-    // - 2>/dev/null で未対応シェルのエラーを抑制
+    // Disable history recording (Bash/Zsh/fish) and suppress prompts
+    // - export HISTFILE=... : for Bash/Zsh (overrides after startup files)
+    // - set fish_history ... : for fish (export would be a syntax error in fish)
+    // - 2>/dev/null suppresses errors from unsupported shells
     _session!.write(utf8.encode(
       'export HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0 SAVEHIST=0 2>/dev/null;'
       ' set fish_history "" 2>/dev/null; true;'
@@ -83,15 +83,15 @@ class PersistentShell {
     ));
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // バッファをクリア（初期化出力を破棄）
+    // Clear the buffer and discard initialization output
     _rawBuffer.clear();
   }
 
-  /// コマンドを実行して結果を取得
+  /// Execute a command and return the result
   ///
-  /// [command] 実行するコマンド
-  /// [timeout] タイムアウト（デフォルト: 5秒）
-  /// 戻り値: コマンドの標準出力
+  /// [command] Command to execute
+  /// [timeout] Timeout (default: 5 seconds)
+  /// Returns: command stdout
   Future<String> exec(String command, {Duration? timeout}) async {
     if (_session == null) {
       throw PersistentShellError('Shell not started');
@@ -108,15 +108,15 @@ class PersistentShell {
     _pendingCommand = Completer<String>();
     _rawBuffer.clear();
 
-    // printfでマーカーを出力（\x01バイトを含む）
-    // echoではなくprintfを使用: シェルのエコーバック内ではリテラル'\x01'（4文字）が
-    // 表示されるが、printfの実出力はバイト0x01を含む。
-    // これによりエコーバック内のマーカーと実出力のマーカーを確実に区別できる。
+    // Output markers with printf (includes the \x01 byte)
+    // Use printf instead of echo: shell echo-back shows the literal '\x01' (4 characters),
+    // while the actual printf output contains byte 0x01.
+    // This reliably distinguishes the marker in echo-back text from the real output marker.
     final commandWithMarkers =
         "printf '$_printfStartMarker\\n'; $command; printf '$_printfEndMarker\\n'\n";
     _session!.write(utf8.encode(commandWithMarkers));
 
-    // タイムアウト付きで結果を待機
+    // Wait for the result with a timeout
     final effectiveTimeout = timeout ?? const Duration(seconds: 5);
     try {
       return await _pendingCommand!.future.timeout(effectiveTimeout);
@@ -126,15 +126,15 @@ class PersistentShell {
     }
   }
 
-  /// stdout受信時の処理
+  /// Handle stdout data
   void _onData(Uint8List data) {
-    // 待機中のコマンドがない、または完了済みの場合は無視
+    // Ignore if there is no pending command or it is already complete
     final pending = _pendingCommand;
     if (pending == null || pending.isCompleted) {
       return;
     }
 
-    // デバッグ: UTF-8境界分割の検出（debugビルドのみ）
+    // Debug: detect UTF-8 boundary splits (debug builds only)
     assert(() {
       final chunkDecoded = utf8.decode(data, allowMalformed: true);
       if (chunkDecoded.contains('\uFFFD')) {
@@ -150,26 +150,26 @@ class PersistentShell {
       return true;
     }());
 
-    // バイト列として蓄積（チャンク単位デコードによるUTF-8境界分割を防止）
+    // Accumulate as bytes to avoid UTF-8 boundary splits caused by chunk-level decoding
     _rawBuffer.addAll(data);
 
-    // 蓄積したバイト列全体を一度にデコード
+    // Decode the full accumulated byte buffer at once
     final content = utf8.decode(_rawBuffer, allowMalformed: true);
 
-    // 開始マーカーと終了マーカーの両方が揃っているかチェック
+    // Check that both the start and end markers are present
     final startIndex = content.indexOf(_startMarker);
     final endIndex = content.indexOf(_endMarker);
 
     if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
-      // 開始マーカーの次の行から終了マーカーの前までを抽出
+      // Extract from the line after the start marker to before the end marker
       final startPos = startIndex + _startMarker.length;
       var result = content.substring(startPos, endIndex);
 
-      // PTYの出力変換で\r\nや\rが使われる場合があるため正規化
-      // 事実: macOS PTYではnewlines=0, CRs=19（\nが\rに変換されている）
+      // Normalize because PTY output conversion may use \r\n or \r
+      // Fact: on macOS PTY, newlines=0 and CRs=19 (\n is converted to \r)
       result = result.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 
-      // 先頭と末尾の改行を削除
+      // Remove leading and trailing newlines
       if (result.startsWith('\n')) {
         result = result.substring(1);
       }
@@ -177,14 +177,14 @@ class PersistentShell {
         result = result.substring(0, result.length - 1);
       }
 
-      // Completerを先にnullにしてから完了（再入防止）
+      // Null out the completer before completing it (prevents reentry)
       _pendingCommand = null;
       _rawBuffer.clear();
       pending.complete(result);
     }
   }
 
-  /// セッション終了時の処理
+  /// Handle session completion
   void _onDone() {
     _isClosed = true;
     if (_pendingCommand != null && !_pendingCommand!.isCompleted) {
@@ -192,7 +192,7 @@ class PersistentShell {
     }
   }
 
-  /// エラー発生時の処理
+  /// Handle errors
   void _onError(Object error) {
     _isClosed = true;
     if (_pendingCommand != null && !_pendingCommand!.isCompleted) {
@@ -200,15 +200,15 @@ class PersistentShell {
     }
   }
 
-  /// シェルセッションを再起動
+  /// Restart the shell session
   ///
-  /// セッションが切断された場合に呼び出す
+  /// Call this when the session has disconnected
   Future<void> restart() async {
     await dispose();
     await start();
   }
 
-  /// リソースを解放
+  /// Release resources
   Future<void> dispose() async {
     _isClosed = true;
 
@@ -227,7 +227,7 @@ class PersistentShell {
   }
 }
 
-/// PersistentShellのエラー
+/// PersistentShell error
 class PersistentShellError implements Exception {
   final String message;
 

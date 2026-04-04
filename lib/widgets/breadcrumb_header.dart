@@ -6,10 +6,10 @@ import '../providers/mux_provider.dart';
 import '../services/mux/mux_node.dart';
 import '../theme/design_colors.dart';
 
-/// パンくずナビゲーションヘッダー
+/// Breadcrumb navigation header
 ///
-/// 表示例: [psmux:work] -> [wsl:Ubuntu] -> [tmux:dev] -> window:editor -> pane:0
-/// 各セグメントをタップすると MuxProvider 経由でナビゲートする。
+/// Example: [psmux:work] -> [wsl:Ubuntu] -> [tmux:dev] -> window:editor -> pane:0
+/// Tap each segment to navigate through MuxProvider.
 class BreadcrumbHeader extends ConsumerWidget {
   const BreadcrumbHeader({super.key});
 

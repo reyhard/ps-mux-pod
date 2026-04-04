@@ -12,7 +12,7 @@ import '../../widgets/dialogs/theme_dialog.dart';
 import '../../services/version_info.dart';
 import 'licenses_screen.dart';
 
-/// 設定画面
+/// Settings screen
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -160,8 +160,8 @@ class SettingsScreen extends ConsumerWidget {
                 const _SectionHeader(title: 'Connection'),
                 SwitchListTile(
                   secondary: const Icon(Icons.battery_saver),
-                  title: const Text('バッテリー最適化の無効化を確認'),
-                  subtitle: const Text('接続時にバッテリー最適化の無効化を確認します'),
+                  title: const Text('Check battery optimization exclusion'),
+                  subtitle: const Text('Check battery optimization exclusion when connecting'),
                   value: settings.askBatteryOptimization,
                   onChanged: (value) {
                     ref.read(settingsProvider.notifier).setAskBatteryOptimization(value);

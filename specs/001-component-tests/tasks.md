@@ -34,18 +34,18 @@
 
 ## Phase 2: User Story 1 - ConnectionCard Test Coverage (Priority: P1) 🎯 MVP
 
-**Goal**: 開発者がConnectionCardの動作を検証できるテストを実装
+**Goal**: Implement tests that allow developers to verify ConnectionCard behavior
 
-**Independent Test**: `pnpm test ConnectionCard` でConnectionCardのみテスト実行可能
+**Independent Test**: `pnpm test ConnectionCard` can run only the ConnectionCard tests
 
 ### Implementation for User Story 1
 
 - [x] T003 [P] [US1] Create test file with mock data setup at `__tests__/components/ConnectionCard.test.tsx`
-- [x] T004 [US1] Implement test: 接続情報が表示される at `__tests__/components/ConnectionCard.test.tsx`
-- [x] T005 [US1] Implement test: connected状態でステータスドットが緑色 at `__tests__/components/ConnectionCard.test.tsx`
-- [x] T006 [US1] Implement test: タップでセッション一覧が展開 at `__tests__/components/ConnectionCard.test.tsx`
-- [x] T007 [US1] Implement test: セッション選択でコールバック呼び出し at `__tests__/components/ConnectionCard.test.tsx`
-- [x] T008 [US1] Implement test: エラー状態でエラーメッセージ表示 at `__tests__/components/ConnectionCard.test.tsx`
+- [x] T004 [US1] Implement test: connection info is displayed at `__tests__/components/ConnectionCard.test.tsx`
+- [x] T005 [US1] Implement test: green status dot in connected state at `__tests__/components/ConnectionCard.test.tsx`
+- [x] T006 [US1] Implement test: session list expands on tap at `__tests__/components/ConnectionCard.test.tsx`
+- [x] T007 [US1] Implement test: callback invoked on session selection at `__tests__/components/ConnectionCard.test.tsx`
+- [x] T008 [US1] Implement test: error message displayed in error state at `__tests__/components/ConnectionCard.test.tsx`
 
 **Checkpoint**: ConnectionCard tests pass - `pnpm test ConnectionCard`
 
@@ -53,18 +53,18 @@
 
 ## Phase 3: User Story 2 - SpecialKeys Test Coverage (Priority: P1)
 
-**Goal**: 開発者がSpecialKeysの動作を検証できるテストを実装
+**Goal**: Implement tests that allow developers to verify SpecialKeys behavior
 
-**Independent Test**: `pnpm test SpecialKeys` でSpecialKeysのみテスト実行可能
+**Independent Test**: `pnpm test SpecialKeys` can run only the SpecialKeys tests
 
 ### Implementation for User Story 2
 
 - [x] T009 [P] [US2] Create test file with mock callbacks at `__tests__/components/SpecialKeys.test.tsx`
-- [x] T010 [US2] Implement test: ESCボタンでonSendSpecialKey呼び出し at `__tests__/components/SpecialKeys.test.tsx`
-- [x] T011 [US2] Implement test: TABボタンでonSendSpecialKey呼び出し at `__tests__/components/SpecialKeys.test.tsx`
-- [x] T012 [US2] Implement test: CTRLモード切替 at `__tests__/components/SpecialKeys.test.tsx`
-- [x] T013 [US2] Implement test: CTRLモードでリテラルキーがonSendCtrl呼び出し at `__tests__/components/SpecialKeys.test.tsx`
-- [x] T014 [US2] Implement test: disabled状態でコールバック無効 at `__tests__/components/SpecialKeys.test.tsx`
+- [x] T010 [US2] Implement test: ESC button invokes onSendSpecialKey at `__tests__/components/SpecialKeys.test.tsx`
+- [x] T011 [US2] Implement test: TAB button invokes onSendSpecialKey at `__tests__/components/SpecialKeys.test.tsx`
+- [x] T012 [US2] Implement test: CTRL mode toggle at `__tests__/components/SpecialKeys.test.tsx`
+- [x] T013 [US2] Implement test: literal key in CTRL mode invokes onSendCtrl at `__tests__/components/SpecialKeys.test.tsx`
+- [x] T014 [US2] Implement test: callbacks disabled in disabled state at `__tests__/components/SpecialKeys.test.tsx`
 
 **Checkpoint**: SpecialKeys tests pass - `pnpm test SpecialKeys`
 
@@ -72,18 +72,18 @@
 
 ## Phase 4: User Story 3 - SessionTabs Test Coverage (Priority: P2)
 
-**Goal**: 開発者がSessionTabsの動作を検証できるテストを実装
+**Goal**: Implement tests that allow developers to verify SessionTabs behavior
 
-**Independent Test**: `pnpm test SessionTabs` でSessionTabsのみテスト実行可能
+**Independent Test**: `pnpm test SessionTabs` can run only the SessionTabs tests
 
 ### Implementation for User Story 3
 
 - [x] T015 [P] [US3] Create test file with mock session data at `__tests__/components/SessionTabs.test.tsx`
-- [x] T016 [US3] Implement test: 全セッション名がタブ表示 at `__tests__/components/SessionTabs.test.tsx`
-- [x] T017 [US3] Implement test: タブタップでonSelect呼び出し at `__tests__/components/SessionTabs.test.tsx`
-- [x] T018 [US3] Implement test: 選択中タブがアクティブスタイル at `__tests__/components/SessionTabs.test.tsx`
-- [x] T019 [US3] Implement test: attachedバッジ表示 at `__tests__/components/SessionTabs.test.tsx`
-- [x] T020 [US3] Implement test: 空セッション時のメッセージ表示 at `__tests__/components/SessionTabs.test.tsx`
+- [x] T016 [US3] Implement test: all session names displayed as tabs at `__tests__/components/SessionTabs.test.tsx`
+- [x] T017 [US3] Implement test: onSelect invoked on tab tap at `__tests__/components/SessionTabs.test.tsx`
+- [x] T018 [US3] Implement test: selected tab shows active style at `__tests__/components/SessionTabs.test.tsx`
+- [x] T019 [US3] Implement test: attached badge display at `__tests__/components/SessionTabs.test.tsx`
+- [x] T020 [US3] Implement test: message displayed when no sessions at `__tests__/components/SessionTabs.test.tsx`
 
 **Checkpoint**: SessionTabs tests pass - `pnpm test SessionTabs`
 
@@ -91,18 +91,18 @@
 
 ## Phase 5: User Story 4 - TerminalView Test Coverage (Priority: P2)
 
-**Goal**: 開発者がTerminalViewの動作を検証できるテストを実装
+**Goal**: Implement tests that allow developers to verify TerminalView behavior
 
-**Independent Test**: `pnpm test TerminalView` でTerminalViewのみテスト実行可能
+**Independent Test**: `pnpm test TerminalView` can run only the TerminalView tests
 
 ### Implementation for User Story 4
 
 - [x] T021 [P] [US4] Create test file with mock line/span data at `__tests__/components/TerminalView.test.tsx`
-- [x] T022 [US4] Implement test: テキスト内容が表示される at `__tests__/components/TerminalView.test.tsx`
-- [x] T023 [US4] Implement test: 前景色が適用される at `__tests__/components/TerminalView.test.tsx`
-- [x] T024 [US4] Implement test: bold属性が適用される at `__tests__/components/TerminalView.test.tsx`
-- [x] T025 [US4] Implement test: 空行の高さ at `__tests__/components/TerminalView.test.tsx`
-- [x] T026 [US4] Implement test: カスタムテーマの背景色 at `__tests__/components/TerminalView.test.tsx`
+- [x] T022 [US4] Implement test: text content is displayed at `__tests__/components/TerminalView.test.tsx`
+- [x] T023 [US4] Implement test: foreground color is applied at `__tests__/components/TerminalView.test.tsx`
+- [x] T024 [US4] Implement test: bold attribute is applied at `__tests__/components/TerminalView.test.tsx`
+- [x] T025 [US4] Implement test: empty line height at `__tests__/components/TerminalView.test.tsx`
+- [x] T026 [US4] Implement test: custom theme background color at `__tests__/components/TerminalView.test.tsx`
 
 **Checkpoint**: TerminalView tests pass - `pnpm test TerminalView`
 
@@ -110,7 +110,7 @@
 
 ## Phase 6: Polish & Validation
 
-**Purpose**: 全体検証とクリーンアップ
+**Purpose**: Validation and cleanup
 
 - [x] T027 Run all tests with `pnpm test` and verify all pass
 - [x] T028 Verify test coverage meets requirements (20 test cases minimum)
@@ -167,17 +167,17 @@ Task: "Create TerminalView.test.tsx" (US4)
 1. Complete Phase 1: Setup
 2. Complete Phase 2: ConnectionCard tests (P1)
 3. Complete Phase 3: SpecialKeys tests (P1)
-4. **STOP and VALIDATE**: `pnpm test` で2コンポーネントのテストがパス
+4. **STOP and VALIDATE**: `pnpm test` passes for both component test groups
 5. Deploy/demo if ready
 
 ### Incremental Delivery
 
 1. Setup → Foundation ready
-2. Add US1 (ConnectionCard) → `pnpm test ConnectionCard` パス
-3. Add US2 (SpecialKeys) → `pnpm test SpecialKeys` パス
-4. Add US3 (SessionTabs) → `pnpm test SessionTabs` パス
-5. Add US4 (TerminalView) → `pnpm test TerminalView` パス
-6. Final: `pnpm test` で全テストパス
+2. Add US1 (ConnectionCard) → `pnpm test ConnectionCard` passes
+3. Add US2 (SpecialKeys) → `pnpm test SpecialKeys` passes
+4. Add US3 (SessionTabs) → `pnpm test SessionTabs` passes
+5. Add US4 (TerminalView) → `pnpm test TerminalView` passes
+6. Final: `pnpm test` passes for all tests
 
 ### Parallel Team Strategy
 
@@ -193,8 +193,8 @@ With multiple developers:
 
 ## Notes
 
-- 各テストファイルは独立して実行可能
-- モックデータは各ファイル内にインラインで定義（DRY: 3回重複したら共通化検討）
-- テストID(T001-T029)は実行順序を示す
-- [P]マークは異なるファイルで並列実行可能なタスク
-- [USn]マークはユーザーストーリー帰属を示す
+- Each test file can run independently
+- Mock data is defined inline in each file (consider consolidation if it repeats three times)
+- Test IDs (T001-T029) indicate execution order
+- The [P] marker indicates tasks that can run in parallel in different files
+- The [USn] marker indicates the user story ownership

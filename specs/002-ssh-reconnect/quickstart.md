@@ -1,36 +1,36 @@
-# Quickstart: SSH再接続機能
+# Quickstart: SSH Reconnection
 
 **Feature**: 002-ssh-reconnect
 **Date**: 2026-01-10
 
-## 概要
+## Overview
 
-SSH接続が切断された際に、ユーザーが迅速に状況を把握し、スムーズに再接続できる機能を実装する。
+Implement a feature that helps users quickly understand when an SSH connection drops and reconnect smoothly.
 
-## 主要コンポーネント
+## Key Components
 
 ### 1. ReconnectService (`src/services/ssh/reconnect.ts`)
 
-再接続ロジックを管理するサービス。
+Service that manages reconnect logic.
 
 ```typescript
 import { createReconnectService } from '@/services/ssh/reconnect';
 
 const reconnectService = createReconnectService();
 
-// 切断検出時に呼び出し
+// Called when a disconnect is detected
 reconnectService.handleDisconnection(connection, state);
 
-// 手動で再接続を開始
+// Start reconnect manually
 await reconnectService.startReconnect(connection, { password: '...' });
 
-// 再接続をキャンセル
+// Cancel reconnect
 reconnectService.cancelReconnect(connectionId);
 ```
 
 ### 2. ReconnectDialog (`src/components/connection/ReconnectDialog.tsx`)
 
-再接続確認ダイアログ。
+Reconnect confirmation dialog.
 
 ```tsx
 import { ReconnectDialog } from '@/components/connection';
@@ -47,7 +47,7 @@ import { ReconnectDialog } from '@/components/connection';
 
 ### 3. ConnectionStatusIndicator (`src/components/connection/ConnectionStatusIndicator.tsx`)
 
-接続状態を視覚的に表示するインジケーター。
+Indicator that visually shows connection state.
 
 ```tsx
 import { ConnectionStatusIndicator } from '@/components/connection';
@@ -60,43 +60,43 @@ import { ConnectionStatusIndicator } from '@/components/connection';
 />
 ```
 
-## 状態管理
+## State Management
 
-### connectionStore の拡張
+### Extend `connectionStore`
 
 ```typescript
-// 再接続設定の更新
+// Update reconnect settings
 useConnectionStore.getState().updateReconnectSettings(id, {
   autoReconnect: true,
   maxReconnectAttempts: 3,
   reconnectInterval: 5000,
 });
 
-// 切断状態に設定
+// Mark as disconnected
 useConnectionStore.getState().setDisconnected(id, 'network_error');
 
-// 再接続中状態に設定
+// Mark as reconnecting
 useConnectionStore.getState().setReconnecting(id, 1, 3);
 ```
 
-## 実装手順
+## Implementation Steps
 
-### Step 1: 型定義の拡張
+### Step 1: Extend type definitions
 
-`src/types/connection.ts` に再接続関連の型を追加:
+Add reconnect-related types to `src/types/connection.ts`:
 
 ```typescript
-// Connection に追加
+// Add to Connection
 autoReconnect: boolean;
 maxReconnectAttempts: number;
 reconnectInterval: number;
 
-// ConnectionState に追加
+// Add to ConnectionState
 disconnectedAt?: number;
 disconnectReason?: DisconnectReason;
 reconnectAttempt?: ReconnectAttempt;
 
-// 新規型
+// New types
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 type DisconnectReason = 'network_error' | 'server_closed' | 'auth_failed' | 'timeout' | 'user_disconnect' | 'unknown';
 
@@ -109,67 +109,67 @@ interface ReconnectAttempt {
 }
 ```
 
-### Step 2: ReconnectService の実装
+### Step 2: Implement `ReconnectService`
 
-1. `src/services/ssh/reconnect.ts` を作成
-2. `IReconnectService` インターフェースを実装
-3. SSHクライアントの`onClose`イベントと連携
-4. 再試行ロジックを実装（タイマー管理）
+1. Create `src/services/ssh/reconnect.ts`
+2. Implement the `IReconnectService` interface
+3. Hook into the SSH client's `onClose` event
+4. Implement retry logic with timer management
 
-### Step 3: connectionStore の拡張
+### Step 3: Extend `connectionStore`
 
-1. 再接続関連アクションを追加
-2. セレクターを追加
-3. 永続化設定を更新（再接続設定をAsyncStorageに保存）
+1. Add reconnect-related actions
+2. Add selectors
+3. Update persistence so reconnect settings are stored in AsyncStorage
 
-### Step 4: UI コンポーネントの実装
+### Step 4: Implement UI components
 
-1. `ConnectionStatusIndicator.tsx` を作成
-2. `ReconnectDialog.tsx` を作成
-3. `TerminalHeader.tsx` にインジケーターを統合
-4. ターミナル画面でダイアログを表示するロジックを追加
+1. Create `ConnectionStatusIndicator.tsx`
+2. Create `ReconnectDialog.tsx`
+3. Integrate the indicator into `TerminalHeader.tsx`
+4. Add logic to show the dialog from the terminal screen
 
-### Step 5: テストの作成
+### Step 5: Write tests
 
-1. ReconnectService のユニットテスト
-2. connectionStore の再接続アクションテスト
-3. コンポーネントのスナップショットテスト
+1. Unit tests for `ReconnectService`
+2. Reconnect action tests for `connectionStore`
+3. Component snapshot tests
 
-## ファイル構成
+## File Structure
 
 ```
 src/
 ├── components/
 │   └── connection/
-│       ├── ConnectionStatusIndicator.tsx  # 新規
-│       ├── ReconnectDialog.tsx            # 新規
-│       └── index.ts                        # 更新
+│       ├── ConnectionStatusIndicator.tsx  # New
+│       ├── ReconnectDialog.tsx            # New
+│       └── index.ts                        # Updated
 ├── services/
 │   └── ssh/
-│       ├── reconnect.ts                   # 新規
-│       └── index.ts                        # 更新
+│       ├── reconnect.ts                   # New
+│       └── index.ts                        # Updated
 ├── stores/
-│   └── connectionStore.ts                 # 更新
+│   └── connectionStore.ts                 # Updated
 └── types/
-    └── connection.ts                      # 更新
+    └── connection.ts                      # Updated
 ```
 
-## テスト実行
+## Test Run
 
 ```bash
-# ユニットテスト
+# Unit tests
 pnpm test src/services/ssh/reconnect.test.ts
 pnpm test src/stores/connectionStore.test.ts
 
-# 型チェック
+# Type check
 pnpm typecheck
 
 # Lint
 pnpm lint
 ```
 
-## 注意事項
+## Notes
 
-- 認証情報はセキュアストレージから取得（平文保存禁止）
-- バックグラウンド処理はフォアグラウンド優先
-- 最大試行回数到達後は手動確認に切り替え
+- Retrieve credentials from secure storage; never store them in plain text
+- Prefer foreground processing for reconnect
+- After the maximum number of attempts, switch to manual confirmation

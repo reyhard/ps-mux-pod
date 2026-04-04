@@ -23,13 +23,13 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        // コールドスタート時のインテントを処理
+        // Handle the intent on cold start
         initialLink = intent?.data?.toString()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // ホットリンク（アプリが既に起動中）
+        // Hot link (app already running)
         val uri = intent.data?.toString()
         if (uri != null) {
             methodChannel?.invokeMethod("onDeepLink", uri)

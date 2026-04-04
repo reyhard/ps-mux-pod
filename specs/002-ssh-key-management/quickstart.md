@@ -1,138 +1,138 @@
-# Quickstart: SSH鍵管理機能
+# Quickstart: SSH Key Management
 
 **Feature**: 002-ssh-key-management
 
-## 依存パッケージの追加
+## dependenciesadd
 
 ```bash
 pnpm add expo-document-picker expo-local-authentication
 ```
 
-## ファイル構成
+## file structure
 
 ```
 src/
 ├── types/
-│   └── sshKey.ts              # SSHKey, KnownHost 型定義
+│ └── sshKey.ts # SSHKey, KnownHost type definitions
 ├── services/
-│   └── ssh/
-│       ├── keyManager.ts      # SSH鍵の生成・インポート・管理
-│       ├── knownHostManager.ts # 既知ホスト管理
-│       └── index.ts           # エクスポート追加
+│ └── ssh/
+│ ├── keyManager.ts # SSH key generation, import, and management
+│ ├── knownHostManager.ts # known host management
+│ └── index.ts # add
 ├── stores/
-│   └── keyStore.ts            # SSH鍵の状態管理 (Zustand)
+│ └── keyStore.ts # SSHkeymanagement (Zustand)
 ├── components/
-│   └── connection/
-│       ├── KeySelector.tsx    # 鍵選択UI
-│       ├── AuthMethodSelector.tsx # 認証方法選択
-│       └── HostKeyDialog.tsx  # ホスト鍵確認ダイアログ
+│ └── connection/
+│ ├── KeySelector.tsx # keyselectUI
+│ ├── AuthMethodSelector.tsx # authentication methodselect
+│ └── HostKeyDialog.tsx # host key confirmation dialog
 └── app/
-    └── keys/
-        ├── index.tsx          # 鍵一覧画面
-        ├── [id].tsx           # 鍵詳細画面
-        └── import.tsx         # 鍵インポート画面
+ └── keys/
+ ├── index.tsx # key list screen
+ ├── [id].tsx # key details screen
+ └── import.tsx # key import screen
 ```
 
-## 実装順序
+## implementation
 
-### Phase 1: コア機能 (P1)
+### Phase 1: feature (P1)
 
-1. **型定義** (`src/types/sshKey.ts`)
-   - `SSHKey`, `KnownHost`, 定数
+1. **type definitions** (`src/types/sshKey.ts`)
+ - `SSHKey`, `KnownHost`, 
 
-2. **鍵管理サービス** (`src/services/ssh/keyManager.ts`)
-   - `generateKey()` - ED25519鍵生成
-   - `importKey()` - 鍵インポート
-   - `getAllKeys()` / `getKeyById()` - 取得
-   - `deleteKey()` - 削除
+2. **key management service** (`src/services/ssh/keyManager.ts`)
+ - `generateKey()` - ED25519keygenerate
+ - `importKey()` - keyimport
+ - `getAllKeys()` / `getKeyById()` - retrieve
+ - `deleteKey()` - delete
 
-3. **鍵ストア** (`src/stores/keyStore.ts`)
-   - Zustand store でリアクティブな状態管理
+3. **key** (`src/stores/keyStore.ts`)
+ - Zustand store management
 
-4. **接続フォーム拡張** (`src/components/connection/ConnectionForm.tsx`)
-   - 認証方法選択UI追加
-   - 鍵選択ドロップダウン
+4. **connection** (`src/components/connection/ConnectionForm.tsx`)
+ - authentication methodselectUIadd
+ - keyselect
 
-### Phase 2: 管理UI (P2)
+### Phase 2: managementUI (P2)
 
-5. **鍵一覧画面** (`app/keys/index.tsx`)
-   - 鍵リスト表示
-   - 生成・インポートボタン
+5. **key list screen** (`app/keys/index.tsx`)
+ - keydisplay
+ - generateimport
 
-6. **鍵詳細画面** (`app/keys/[id].tsx`)
-   - 公開鍵表示・コピー
-   - 削除機能
+6. **key details screen** (`app/keys/[id].tsx`)
+ - public keydisplay
+ - deletefeature
 
-7. **鍵選択コンポーネント** (`src/components/connection/KeySelector.tsx`)
-   - ボトムシート形式の鍵選択
+7. **key selector component** (`src/components/connection/KeySelector.tsx`)
+ - formatkeyselect
 
-### Phase 3: セキュリティ (P3)
+### Phase 3: (P3)
 
-8. **既知ホスト管理** (`src/services/ssh/knownHostManager.ts`)
-   - ホスト鍵検証
-   - 信頼済みホスト保存
+8. **known host management** (`src/services/ssh/knownHostManager.ts`)
+ - hostkeyverification
+ - hostsave
 
-9. **ホスト鍵ダイアログ** (`src/components/connection/HostKeyDialog.tsx`)
-   - 初回接続時の確認
-   - 鍵変更警告
+9. **host key dialog** (`src/components/connection/HostKeyDialog.tsx`)
+ - firstat connection timeconfirmation
+ - keychangewarning
 
-## 使用例
+## usage examples
 
-### 鍵生成
+### keygenerate
 
 ```typescript
 import { keyManager } from '@/services/ssh/keyManager';
 
 const result = await keyManager.generateKey({
-  name: 'My Server Key',
-  keyType: 'ed25519',
-  requireBiometrics: true,
+ name: 'My Server Key',
+ keyType: 'ed25519',
+ requireBiometrics: true,
 });
 
 console.log(result.publicKey);
 // ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... muxpod-key
 ```
 
-### 鍵インポート
+### keyimport
 
 ```typescript
 import { keyManager } from '@/services/ssh/keyManager';
 
 const key = await keyManager.importKey({
-  name: 'Existing Key',
-  privateKey: `-----BEGIN OPENSSH PRIVATE KEY-----
+ name: 'Existing Key',
+ privateKey: `-----BEGIN OPENSSH PRIVATE KEY-----
 ...
 -----END OPENSSH PRIVATE KEY-----`,
-  passphrase: 'optional-passphrase',
+ passphrase: 'optional-passphrase',
 });
 ```
 
-### ホスト鍵検証
+### hostkeyverification
 
 ```typescript
 import { knownHostManager } from '@/services/ssh/knownHostManager';
 
 const result = await knownHostManager.verifyHostKey({
-  host: 'example.com',
-  port: 22,
-  keyType: 'ssh-ed25519',
-  publicKey: 'AAAAC3NzaC1lZDI1NTE5...',
-  fingerprint: 'SHA256:abcd1234...',
+ host: 'example.com',
+ port: 22,
+ keyType: 'ssh-ed25519',
+ publicKey: 'AAAAC3NzaC1lZDI1NTE5...',
+ fingerprint: 'SHA256:abcd1234...',
 });
 
 if (result.status === 'unknown') {
-  // 初回接続: ユーザーに確認を求める
+ // firstconnection: confirmation
 } else if (result.status === 'changed') {
-  // 警告: ホスト鍵が変更された
+ // warning: hostkeychange
 }
 ```
 
-## テスト
+## test
 
 ```bash
-# ユニットテスト
+# test
 pnpm test src/services/ssh/keyManager.test.ts
 
-# 型チェック
+# 
 pnpm typecheck
 ```

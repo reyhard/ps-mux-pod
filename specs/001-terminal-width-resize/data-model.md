@@ -8,41 +8,41 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         AppSettings                         │
-│  (既存 - 拡張)                                               │
+│  (existing - extension)                                               │
 ├─────────────────────────────────────────────────────────────┤
-│ + fontSize: double (既存)                                   │
-│ + fontFamily: String (既存)                                 │
-│ + minFontSize: double (新規) ─── Default: 8.0              │
-│ + autoFitEnabled: bool (新規) ─── Default: true            │
+│ + fontSize: double (existing)                                   │
+│ + fontFamily: String (existing)                                 │
+│ + minFontSize: double (new) ─── Default: 8.0              │
+│ + autoFitEnabled: bool (new) ─── Default: true            │
 └─────────────────────────────────────────────────────────────┘
                               │
                               │ provides settings
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   TerminalDisplayState                      │
-│  (新規 - Riverpod State)                                    │
+│  (new - Riverpod State)                                    │
 ├─────────────────────────────────────────────────────────────┤
-│ + paneWidth: int              ─── tmux pane_width (文字数)  │
-│ + paneHeight: int             ─── tmux pane_height (行数)   │
-│ + screenWidth: double         ─── 利用可能なスクリーン幅     │
-│ + calculatedFontSize: double  ─── 計算されたフォントサイズ   │
-│ + effectiveFontSize: double   ─── 適用されるフォントサイズ   │
-│ + needsHorizontalScroll: bool ─── 水平スクロール必要か       │
-│ + horizontalScrollOffset: double ─── 水平スクロール位置     │
-│ + zoomScale: double           ─── ピンチズーム倍率 (1.0=等倍)│
-│ + isZooming: bool             ─── ズーム操作中か            │
+│ + paneWidth: int              ─── tmux pane_width (characterscount)  │
+│ + paneHeight: int             ─── tmux pane_height (rows)   │
+│ + screenWidth: double         ─── usepossiblewidth     │
+│ + calculatedFontSize: double  ─── font size   │
+│ + effectiveFontSize: double   ─── font size   │
+│ + needsHorizontalScroll: bool ─── scrollrequired       │
+│ + horizontalScrollOffset: double ─── scroll     │
+│ + zoomScale: double           ─── pinchzoom (1.0=)│
+│ + isZooming: bool             ─── zoomoperationin progress            │
 └─────────────────────────────────────────────────────────────┘
                               │
                               │ uses
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      TmuxPane (既存)                        │
+│                      TmuxPane (existing)                        │
 ├─────────────────────────────────────────────────────────────┤
 │ + index: int                                                │
 │ + id: String                                                │
 │ + active: bool                                              │
-│ + width: int      ◄── pane_width (文字数)                   │
-│ + height: int     ◄── pane_height (行数)                    │
+│ + width: int      ◄── pane_width (characterscount)                   │
+│ + height: int     ◄── pane_height (rows)                    │
 │ + cursorX: int                                              │
 │ + cursorY: int                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -50,45 +50,45 @@
 
 ## Entity Definitions
 
-### AppSettings (既存 - 拡張)
+### AppSettings (existing - extension)
 
-アプリケーション全体の設定を管理する。
+appallsettingsmanagement。
 
-**新規フィールド**:
+**new**:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| minFontSize | double | 8.0 | 自動調整時の最小フォントサイズ (px) |
-| autoFitEnabled | bool | true | ペイン幅に自動フィットするか |
+| minFontSize | double | 8.0 | automaticadjustminimumfont size (px) |
+| autoFitEnabled | bool | true | panewidthautomatic |
 
 **Validation Rules**:
 - minFontSize: 4.0 <= value <= 24.0
 - autoFitEnabled: boolean
 
-**Persistence**: shared_preferences (既存パターン)
+**Persistence**: shared_preferences (existingpattern)
 
 ---
 
-### TerminalDisplayState (新規)
+### TerminalDisplayState (new)
 
-ターミナル表示の動的状態を管理する。Riverpod の StateNotifier で管理。
+Terminal Displaydynamicstatemanagement。Riverpod  StateNotifier management。
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| paneWidth | int | 80 | tmux ペインの横幅（文字数） |
-| paneHeight | int | 24 | tmux ペインの縦幅（行数） |
-| screenWidth | double | 0.0 | 利用可能なスクリーン幅（ピクセル） |
-| calculatedFontSize | double | 14.0 | 計算されたフォントサイズ |
-| effectiveFontSize | double | 14.0 | 実際に適用されるフォントサイズ |
-| needsHorizontalScroll | bool | false | 水平スクロールが必要か |
-| horizontalScrollOffset | double | 0.0 | 水平スクロール位置 |
-| zoomScale | double | 1.0 | ピンチズーム倍率 |
-| isZooming | bool | false | ズーム操作中フラグ |
+| paneWidth | int | 80 | tmux panewidth（characterscount） |
+| paneHeight | int | 24 | tmux paneheight（rows） |
+| screenWidth | double | 0.0 | usepossiblewidth（） |
+| calculatedFontSize | double | 14.0 | font size |
+| effectiveFontSize | double | 14.0 | font size |
+| needsHorizontalScroll | bool | false | scrollrequired |
+| horizontalScrollOffset | double | 0.0 | scroll |
+| zoomScale | double | 1.0 | pinchzoom |
+| isZooming | bool | false | zoomoperationin progress |
 
 **Computed Properties**:
 
 ```dart
-/// 実際に適用されるフォントサイズ
+/// font size
 double get effectiveFontSize {
   if (isZooming) {
     return calculatedFontSize * zoomScale;
@@ -96,12 +96,12 @@ double get effectiveFontSize {
   return max(calculatedFontSize, minFontSize);
 }
 
-/// 水平スクロールが必要か
+/// scrollrequired
 bool get needsHorizontalScroll {
   return calculatedFontSize < minFontSize;
 }
 
-/// ターミナルの表示幅（ピクセル）
+/// terminaldisplaywidth（）
 double get terminalWidth {
   return paneWidth * charWidth * effectiveFontSize;
 }
@@ -123,17 +123,17 @@ double get terminalWidth {
 
 ---
 
-### TmuxPane (既存 - 変更なし)
+### TmuxPane (existing - change)
 
-tmux ペインの情報。既存の `width` と `height` フィールドを使用。
+tmux paneinformation。existing `width`  `height` 。
 
 ---
 
 ## Relationships
 
-1. **AppSettings → TerminalDisplayState**: 設定値（minFontSize, autoFitEnabled）を提供
-2. **TmuxPane → TerminalDisplayState**: pane_width, pane_height を提供
-3. **TerminalDisplayState → TerminalView**: effectiveFontSize を提供
+1. **AppSettings → TerminalDisplayState**: settings（minFontSize, autoFitEnabled）
+2. **TmuxPane → TerminalDisplayState**: pane_width, pane_height 
+3. **TerminalDisplayState → TerminalView**: effectiveFontSize 
 
 ## State Flow
 
@@ -162,3 +162,6 @@ effectiveFontSize = max(calculatedFontSize, minFontSize)
        ▼
 TerminalView rebuilds with new fontSize
 ```
+
+
+

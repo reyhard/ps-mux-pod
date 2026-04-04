@@ -1,130 +1,130 @@
-# Research: SSH再接続機能
+# Research: SSH Reconnection
 
 **Feature**: 002-ssh-reconnect
 **Date**: 2026-01-10
 
-## 1. SSH切断検出メカニズム
+## 1. SSH Disconnect Detection
 
 ### Decision
-react-native-ssh-sftpの`Disconnect`イベントと既存のKeepAlive機能を組み合わせて切断を検出する。
+Use the `Disconnect` event from `react-native-ssh-sftp` together with the existing keep-alive behavior to detect disconnects.
 
 ### Rationale
-- 既存の`SSHClient`クラスが`onClose`イベントハンドラをサポート済み（`client.ts:39`）
-- `startShell`メソッド内で`Disconnect`イベントをリッスン済み（`client.ts:186-187`）
-- 追加のポーリングは不要で、イベント駆動で即座に検出可能
+- The existing `SSHClient` class already supports an `onClose` event handler (`client.ts:39`)
+- `startShell` already listens for the `Disconnect` event (`client.ts:186-187`)
+- No extra polling is needed, so detection can be immediate and event-driven
 
 ### Alternatives Considered
-1. **定期的なpingコマンド実行**: オーバーヘッドが大きく、バッテリー消費が増加
-2. **TCP接続状態の監視**: React Native環境では低レベルAPIへのアクセスが制限される
-3. **KeepAliveタイムアウトのみ**: 既に`connection.keepAliveInterval`で設定可能だが、即時検出には不十分
+1. **Periodic ping commands**: Adds overhead and increases battery usage
+2. **Monitoring TCP connection state**: Low-level APIs are limited in React Native
+3. **Keep-alive timeout only**: Already configurable via `connection.keepAliveInterval`, but not enough for immediate detection
 
-## 2. 再接続ダイアログ実装パターン
+## 2. Reconnect Dialog Pattern
 
 ### Decision
-React NativeのModalコンポーネントを使用し、`connectionStore`の状態変化をトリガーとして表示する。
+Use React Native's `Modal` component and show it when `connectionStore` state changes.
 
 ### Rationale
-- 既存の`ConnectionErrorScreen.tsx`コンポーネントがエラー表示のパターンを確立
-- Zustandの`connectionStates`でリアクティブに状態管理可能
-- モーダルは画面遷移なしでオーバーレイ表示でき、ユーザーの作業コンテキストを維持
+- The existing `ConnectionErrorScreen.tsx` establishes an error-display pattern
+- Zustand `connectionStates` makes the state reactive
+- A modal can overlay the current screen without navigation and preserve the user's context
 
 ### Alternatives Considered
-1. **Alert.alert()**: カスタマイズ性が低く、進捗状態の表示ができない
-2. **フルスクリーン遷移**: 接続復帰後に元の画面に戻る処理が複雑になる
-3. **トースト通知のみ**: ユーザーアクションが必要な場合に不適切
+1. **`Alert.alert()`**: Too little customization and cannot show progress
+2. **Full-screen navigation**: Makes returning to the original screen after reconnect more complex
+3. **Toast notifications only**: Not appropriate when user action is required
 
-## 3. 自動再接続の実装戦略
+## 3. Auto-Reconnect Strategy
 
 ### Decision
-`ReconnectService`クラスを新設し、再試行ロジックを`connectionStore`から分離する。
+Create a new `ReconnectService` class and keep retry logic separate from `connectionStore`.
 
 ### Rationale
-- Single Responsibility Principle: `connectionStore`は接続状態管理に専念
-- テスト容易性: 再接続ロジックを独立してユニットテスト可能
-- 設定の柔軟性: 接続ごとに異なる再接続ポリシーを適用可能
+- Single Responsibility Principle: `connectionStore` should focus on connection state
+- Testability: reconnect logic can be unit-tested independently
+- Flexibility: different reconnect policies can be applied per connection
 
 ### Implementation Details
 ```
-再接続フロー:
-1. 切断検出 → connectionStore.setConnectionState(id, { status: 'disconnected' })
+Reconnect flow:
+1. Disconnect detected -> `connectionStore.setConnectionState(id, { status: 'disconnected' })`
 2. ReconnectService.handleDisconnection(connectionId)
-3. 自動再接続有効? → 即座に再接続試行開始
-4. 自動再接続無効? → ReconnectDialogを表示
-5. 再接続試行 → status: 'reconnecting' + attemptCount表示
-6. 成功 → status: 'connected', ダイアログ閉じる
-7. 失敗(max回数未満) → 間隔を空けて再試行
-8. 失敗(max回数到達) → 手動確認ダイアログに切り替え
+3. Auto-reconnect enabled? -> start reconnect immediately
+4. Auto-reconnect disabled? -> show `ReconnectDialog`
+5. Reconnect attempt -> show `status: 'reconnecting'` and attempt count
+6. Success -> `status: 'connected'`, close the dialog
+7. Failure before max attempts -> retry after the interval
+8. Failure after max attempts -> switch to the manual confirmation dialog
 ```
 
 ### Retry Policy
-- 最大試行回数: 3回（デフォルト、接続設定で変更可能）
-- 試行間隔: 5秒（固定、指数バックオフは初期実装では行わない - spec.md Assumptions参照）
-- キャンセル可能: 任意のタイミングでユーザーが中断可能
+- Maximum attempts: 3 by default, configurable in connection settings
+- Retry interval: 5 seconds, fixed; exponential backoff is not part of the initial implementation
+- Cancellable: the user can stop reconnect at any time
 
-## 4. 接続状態インジケーター設計
+## 4. Connection Status Indicator Design
 
 ### Decision
-`ConnectionStatusIndicator`コンポーネントを作成し、`TerminalHeader`に統合する。
+Create a `ConnectionStatusIndicator` component and integrate it into `TerminalHeader`.
 
 ### Rationale
-- 既存の`TerminalHeader.tsx`がヘッダー表示を担当
-- `ConnectionCard`の`ServerIcon`コンポーネントが状態表示パターンを確立（`ConnectionCard.tsx:38-74`）
-- 再利用可能なインジケーターコンポーネントとして設計
+- `TerminalHeader.tsx` already owns the header area
+- `ConnectionCard`'s `ServerIcon` established the status display pattern (`ConnectionCard.tsx:38-74`)
+- The component should be reusable
 
 ### Visual States
-| 状態 | 色 | アイコン | アニメーション |
+| State | Color | Icon | Animation |
 |------|-----|---------|---------------|
-| connected | 緑 (#22c55e) | ● (ドット) | なし |
-| connecting | 黄 (#eab308) | ○ (リング) | パルス |
-| reconnecting | 黄 (#eab308) | ↻ (矢印) | 回転 |
-| disconnected | 赤 (#ef4444) | ● (ドット) | なし |
-| error | 赤 (#ef4444) | ⚠ (警告) | なし |
+| connected | green (#22c55e) | ● (dot) | none |
+| connecting | yellow (#eab308) | ○ (ring) | pulse |
+| reconnecting | yellow (#eab308) | ↻ (arrow) | rotation |
+| disconnected | red (#ef4444) | ● (dot) | none |
+| error | red (#ef4444) | ⚠ (warning) | none |
 
-## 5. 認証情報の再取得
+## 5. Credential Retrieval
 
 ### Decision
-再接続時に`expo-secure-store`から認証情報を取得し、存在しない場合はパスワード入力ダイアログを表示する。
+Retrieve credentials from `expo-secure-store` during reconnect, and show a password dialog when nothing is stored.
 
 ### Rationale
-- 既存の`auth.ts`が認証情報の取得ロジックを提供
-- セキュリティ原則（Constitution IV）に準拠: 認証情報は暗号化保存
-- パスワードが保存されていないケース（ユーザーが「保存しない」を選択）に対応必要
+- Existing `auth.ts` already provides credential retrieval logic
+- This follows the security principle that credentials must be stored encrypted
+- We must handle cases where the password was not saved
 
 ### Flow
-1. 再接続開始時に`getStoredCredentials(connectionId)`を呼び出し
-2. 認証情報が存在 → そのまま接続試行
-3. 認証情報が不存在 → `PasswordInputDialog`を表示
-4. ユーザー入力後 → 接続試行（オプションで保存）
+1. Call `getStoredCredentials(connectionId)` when reconnect starts
+2. If credentials exist -> try to reconnect
+3. If credentials do not exist -> show `PasswordInputDialog`
+4. After user input -> retry reconnect, optionally saving the credential
 
-## 6. バックグラウンド処理
+## 6. Background Handling
 
 ### Decision
-フォアグラウンド時の再接続を優先し、バックグラウンド移行時は再接続処理を継続するが、成功/失敗時にローカル通知で結果を通知する。
+Prioritize reconnect while foregrounded, and continue reconnecting in the background while notifying the user locally on success or failure.
 
 ### Rationale
-- モバイルOSのバックグラウンド制限（iOS: 30秒、Android: 10分）
-- 仕様のAssumptionsに「フォアグラウンド時の再接続を優先」と明記
-- 完全なバックグラウンド対応は将来的なスコープ
+- Mobile OS background limits apply (iOS: 30 seconds, Android: 10 minutes)
+- The spec already says foreground reconnect takes priority
+- Full background support is out of scope for now
 
 ### Implementation
-- `AppState`イベントリスナーでフォアグラウンド/バックグラウンド状態を監視
-- バックグラウンド移行時: 再接続タイマーは継続、結果をキャッシュ
-- フォアグラウンド復帰時: キャッシュされた結果をUIに反映
+- Use `AppState` listeners to track foreground/background transitions
+- When moving to background: keep the reconnect timer running and cache the result
+- When returning to foreground: apply the cached result to the UI
 
-## 7. テスト戦略
+## 7. Test Strategy
 
 ### Decision
-切断検出と再接続ロジックはモックを使用してユニットテストし、E2Eテストは手動で行う。
+Unit test disconnect detection and reconnect logic with mocks, and run E2E tests manually.
 
 ### Test Cases
-1. **切断検出**: `onClose`イベント発火時に状態が`disconnected`に変化
-2. **自動再接続**: 有効時に自動で`reconnecting`状態に遷移
-3. **手動再接続**: ダイアログ表示と選択肢の動作
-4. **最大試行回数**: 3回失敗後に手動確認に切り替え
-5. **キャンセル**: 再接続中のキャンセル操作
-6. **認証情報なし**: パスワード入力ダイアログ表示
+1. **Disconnect detection**: state changes to `disconnected` when `onClose` fires
+2. **Auto reconnect**: transitions to `reconnecting` when enabled
+3. **Manual reconnect**: dialog display and option handling
+4. **Max attempts**: switch to manual confirmation after 3 failed attempts
+5. **Cancel**: cancel while reconnecting
+6. **No credentials**: show the password dialog
 
 ### Mocking Strategy
 - `SSHClient`: `jest.mock('react-native-ssh-sftp')`
 - `expo-secure-store`: `jest.mock('expo-secure-store')`
-- タイマー: `jest.useFakeTimers()`
+- Timers: `jest.useFakeTimers()`

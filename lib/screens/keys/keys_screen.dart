@@ -10,7 +10,7 @@ import 'key_generate_screen.dart';
 import 'key_import_screen.dart';
 import 'widgets/key_tile.dart';
 
-/// SSH鍵一覧画面
+/// SSH key list screen
 class KeysScreen extends ConsumerWidget {
   const KeysScreen({super.key});
 
@@ -75,14 +75,14 @@ class KeysScreen extends ConsumerWidget {
   }
 
   Widget _buildBody(BuildContext context, WidgetRef ref, KeysState state) {
-    // ローディング中
+    // Loading
     if (state.isLoading) {
       return const SliverFillRemaining(
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // エラー
+    // Error
     if (state.error != null) {
       return SliverFillRemaining(
         child: Center(
@@ -109,7 +109,7 @@ class KeysScreen extends ConsumerWidget {
       );
     }
 
-    // 空状態
+    // Empty state
     if (state.keys.isEmpty) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       return SliverFillRemaining(
@@ -155,7 +155,7 @@ class KeysScreen extends ConsumerWidget {
       );
     }
 
-    // 鍵一覧
+    // Key list
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -223,15 +223,15 @@ class KeysScreen extends ConsumerWidget {
       final storage = ref.read(secureStorageProvider);
       final keysNotifier = ref.read(keysProvider.notifier);
 
-      // SecureStorageから秘密鍵を削除
+      // Delete the private key from SecureStorage
       await storage.deletePrivateKey(keyMeta.id);
 
-      // パスフレーズがあれば削除
+      // Delete the passphrase if present
       if (keyMeta.hasPassphrase) {
         await storage.deletePassphrase(keyMeta.id);
       }
 
-      // メタデータを削除
+      // Delete the metadata
       await keysNotifier.remove(keyMeta.id);
 
       if (context.mounted) {

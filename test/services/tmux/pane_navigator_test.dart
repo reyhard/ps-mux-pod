@@ -7,13 +7,13 @@ import 'package:flutter_muxpod/services/tmux/tmux_parser.dart';
 void main() {
   group('PaneNavigator', () {
     group('findAdjacentPane', () {
-      test('水平2分割でleft/rightナビゲーション', () {
+      test('left/right navigation in horizontal 2-split', () {
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 40, height: 24),
           const TmuxPane(index: 1, id: '%1', left: 41, top: 0, width: 39, height: 24),
         ];
 
-        // pane0から右 → pane1
+        // pane0 right → pane1
         final right = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[0],
@@ -21,7 +21,7 @@ void main() {
         );
         expect(right?.id, '%1');
 
-        // pane1から左 → pane0
+        // pane1 left → pane0
         final left = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[1],
@@ -29,7 +29,7 @@ void main() {
         );
         expect(left?.id, '%0');
 
-        // pane0から左 → null（端）
+        // pane0 left → null (edge)
         final noLeft = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[0],
@@ -37,7 +37,7 @@ void main() {
         );
         expect(noLeft, isNull);
 
-        // pane1から右 → null（端）
+        // pane1 right → null (edge)
         final noRight = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[1],
@@ -46,13 +46,13 @@ void main() {
         expect(noRight, isNull);
       });
 
-      test('垂直2分割でup/downナビゲーション', () {
+      test('up/down navigation in vertical 2-split', () {
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 80, height: 12),
           const TmuxPane(index: 1, id: '%1', left: 0, top: 13, width: 80, height: 11),
         ];
 
-        // pane0から下 → pane1
+        // pane0 down → pane1
         final down = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[0],
@@ -60,7 +60,7 @@ void main() {
         );
         expect(down?.id, '%1');
 
-        // pane1から上 → pane0
+        // pane1 up → pane0
         final up = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[1],
@@ -68,7 +68,7 @@ void main() {
         );
         expect(up?.id, '%0');
 
-        // pane0から上 → null
+        // pane0 up → null
         expect(
           PaneNavigator.findAdjacentPane(
             panes: panes,
@@ -79,14 +79,14 @@ void main() {
         );
       });
 
-      test('垂直3分割で最も近いペインを返す', () {
+      test('returns the nearest pane in vertical 3-split', () {
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 80, height: 12),
           const TmuxPane(index: 1, id: '%1', left: 0, top: 13, width: 80, height: 12),
           const TmuxPane(index: 2, id: '%2', left: 0, top: 26, width: 80, height: 11),
         ];
 
-        // pane0から下 → pane1（pane2ではなく最も近いpane1）
+        // pane0 down → pane1 (nearest pane1, not pane2)
         final down = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[0],
@@ -94,7 +94,7 @@ void main() {
         );
         expect(down?.id, '%1');
 
-        // pane2から上 → pane1
+        // pane2 up → pane1
         final up = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[2],
@@ -103,16 +103,16 @@ void main() {
         expect(up?.id, '%1');
       });
 
-      test('T字レイアウトで重なり条件が機能する', () {
-        // 上: 1つの幅広ペイン
-        // 下: 左右2つのペイン
+      test('overlap condition works in T-shaped layout', () {
+        // Top: one wide pane
+        // Bottom: two panes left and right
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 80, height: 12),
           const TmuxPane(index: 1, id: '%1', left: 0, top: 13, width: 40, height: 11),
           const TmuxPane(index: 2, id: '%2', left: 41, top: 13, width: 39, height: 11),
         ];
 
-        // pane0から下: pane1またはpane2（両方重なりあり、最も近いものを返す）
+        // pane0 down: pane1 or pane2 (both overlap, returns nearest)
         final down = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[0],
@@ -121,7 +121,7 @@ void main() {
         expect(down, isNotNull);
         expect(['%1', '%2'], contains(down?.id));
 
-        // pane1から上 → pane0（重なりあり）
+        // pane1 up → pane0 (overlap exists)
         final up = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[1],
@@ -129,7 +129,7 @@ void main() {
         );
         expect(up?.id, '%0');
 
-        // pane1から右 → pane2
+        // pane1 right → pane2
         final right = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[1],
@@ -138,17 +138,17 @@ void main() {
         expect(right?.id, '%2');
       });
 
-      test('L字レイアウトで重なりがない方向はnull', () {
-        // 左上: pane0
-        // 右上: pane1
-        // 左下: pane2（右下にはペインなし）
+      test('returns null for directions with no overlap in L-shaped layout', () {
+        // Top-left: pane0
+        // Top-right: pane1
+        // Bottom-left: pane2 (no pane in bottom-right)
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 40, height: 12),
           const TmuxPane(index: 1, id: '%1', left: 41, top: 0, width: 39, height: 24),
           const TmuxPane(index: 2, id: '%2', left: 0, top: 13, width: 40, height: 11),
         ];
 
-        // pane2から右 → pane1（垂直方向の重なりあり）
+        // pane2 right → pane1 (vertical overlap exists)
         final right = PaneNavigator.findAdjacentPane(
           panes: panes,
           current: panes[2],
@@ -157,7 +157,7 @@ void main() {
         expect(right?.id, '%1');
       });
 
-      test('ペインが1つのみの場合は全方向null', () {
+      test('returns null in all directions when only one pane', () {
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 80, height: 24),
         ];
@@ -174,7 +174,7 @@ void main() {
         }
       });
 
-      test('ペインリストが空の場合はnull', () {
+      test('returns null when pane list is empty', () {
         const current = TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 80, height: 24);
         for (final direction in SwipeDirection.values) {
           expect(
@@ -190,7 +190,7 @@ void main() {
     });
 
     group('getNavigableDirections', () {
-      test('水平2分割で正しい方向マップを返す', () {
+      test('returns correct direction map for horizontal 2-split', () {
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 40, height: 24),
           const TmuxPane(index: 1, id: '%1', left: 41, top: 0, width: 39, height: 24),
@@ -207,7 +207,7 @@ void main() {
         expect(dirs[SwipeDirection.down], isFalse);
       });
 
-      test('ペイン1つの場合は全方向false', () {
+      test('all directions are false when only one pane', () {
         final panes = [
           const TmuxPane(index: 0, id: '%0', left: 0, top: 0, width: 80, height: 24),
         ];
@@ -224,35 +224,35 @@ void main() {
     });
 
     group('detectSwipeDirection', () {
-      test('右方向のスワイプを検出', () {
+      test('detects rightward swipe', () {
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(60, 10)),
           SwipeDirection.right,
         );
       });
 
-      test('左方向のスワイプを検出', () {
+      test('detects leftward swipe', () {
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(-60, -10)),
           SwipeDirection.left,
         );
       });
 
-      test('下方向のスワイプを検出', () {
+      test('detects downward swipe', () {
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(10, 60)),
           SwipeDirection.down,
         );
       });
 
-      test('上方向のスワイプを検出', () {
+      test('detects upward swipe', () {
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(-10, -60)),
           SwipeDirection.up,
         );
       });
 
-      test('閾値未満の移動はnull', () {
+      test('returns null for movement below threshold', () {
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(30, 10)),
           isNull,
@@ -267,8 +267,8 @@ void main() {
         );
       });
 
-      test('カスタム閾値で検出', () {
-        // デフォルト閾値(50)では検出されないが、閾値20なら検出される
+      test('detects with custom threshold', () {
+        // Not detected with default threshold (50), but detected with threshold 20
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(30, 5)),
           isNull,
@@ -279,8 +279,8 @@ void main() {
         );
       });
 
-      test('dx == dyの場合は垂直方向優先', () {
-        // abs(dx) == abs(dy)の場合、dy側のelse分岐に入る
+      test('vertical direction takes priority when dx == dy', () {
+        // When abs(dx) == abs(dy), falls into the dy else branch
         expect(
           PaneNavigator.detectSwipeDirection(const Offset(60, 60)),
           SwipeDirection.down,
@@ -293,23 +293,23 @@ void main() {
     });
 
     group('SwipeDirectionExtension.inverted', () {
-      test('upの反転はdown', () {
+      test('inverse of up is down', () {
         expect(SwipeDirection.up.inverted, SwipeDirection.down);
       });
 
-      test('downの反転はup', () {
+      test('inverse of down is up', () {
         expect(SwipeDirection.down.inverted, SwipeDirection.up);
       });
 
-      test('leftの反転はright', () {
+      test('inverse of left is right', () {
         expect(SwipeDirection.left.inverted, SwipeDirection.right);
       });
 
-      test('rightの反転はleft', () {
+      test('inverse of right is left', () {
         expect(SwipeDirection.right.inverted, SwipeDirection.left);
       });
 
-      test('二重反転で元に戻る', () {
+      test('double inversion returns to original', () {
         for (final dir in SwipeDirection.values) {
           expect(dir.inverted.inverted, dir);
         }

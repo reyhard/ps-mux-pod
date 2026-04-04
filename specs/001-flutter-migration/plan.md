@@ -5,19 +5,19 @@
 
 ## Summary
 
-MuxPodをReact Native (Expo)からFlutterへ完全移行する。react-native-ssh-sftpのメンテナンス放棄問題を解決し、Pure Dart実装のdartssh2 + xterm.dartを採用することで、ネイティブ依存を排除しビルド安定性を向上させる。
+MuxPodReact Native (Expo)Fluttercompleteline。react-native-ssh-sftpissueresolve、Pure Dartimplementdartssh2 + xterm.dart、dependencybuildstable。
 
 ## Technical Context
 
 **Language/Version**: Dart 3.x / Flutter 3.24+
 **Primary Dependencies**: dartssh2 2.13+, xterm 4.0+, flutter_riverpod, flutter_secure_storage, shared_preferences
-**Storage**: SharedPreferences (接続設定), flutter_secure_storage (秘密鍵/パスワード暗号化)
+**Storage**: SharedPreferences (connection settings), flutter_secure_storage (private key/passwordencrypted)
 **Testing**: flutter_test, mockito, integration_test
-**Target Platform**: Android (API 21+) ※iOS/デスクトップは将来フェーズ
+**Target Platform**: Android (API 21+) ※iOS/desktopfuturephase
 **Project Type**: mobile
-**Performance Goals**: SSH接続5秒以内、入力レイテンシ200ms以下、1000行/秒でUIフリーズなし
-**Constraints**: ネイティブパッチなしでビルド成功、ANSIカラー256色対応、CJK文字正常表示
-**Scale/Scope**: 6画面 (接続一覧、ターミナル、鍵管理、通知ルール、設定、接続編集)
+**Performance Goals**: SSH connection5、inputlatency200ms、1000line/UI
+**Constraints**: build、ANSIcolor256colorsupport、CJKcharactersnormaldisplay
+**Scale/Scope**: 6screen (connection list、terminal、keymanagement、Notification Rules、settings、connectionedit)
 
 ## Constitution Check
 
@@ -27,13 +27,13 @@ MuxPodをReact Native (Expo)からFlutterへ完全移行する。react-native-ss
 
 | Principle | Status | Notes |
 |-----------|--------|-------|
-| I. Type Safety | ✅ PASS | Dart は静的型付け言語、`analysis_options.yaml` で strict mode 設定可能 |
-| II. KISS & YAGNI | ✅ PASS | 既存RN実装の機能のみ移植、新機能追加なし |
-| III. Test-First (TDD) | ✅ PASS | flutter_test + mockito でTDD可能 |
-| IV. Security-First | ✅ PASS | flutter_secure_storage で暗号化保存、biometrics対応 |
-| V. SOLID | ✅ PASS | Riverpod による DI、サービス層分離で対応 |
-| VI. DRY | ✅ PASS | 共通ロジックはサービス層に集約 |
-| Prohibited Naming | ✅ PASS | utils/, helpers/ 不使用、ドメイン名で命名 |
+| I. Type Safety | ✅ PASS | Dart static、`analysis_options.yaml`  strict mode settingspossible |
+| II. KISS & YAGNI | ✅ PASS | existingRNimplementfeature、newfeatureadd |
+| III. Test-First (TDD) | ✅ PASS | flutter_test + mockito TDDpossible |
+| IV. Security-First | ✅ PASS | flutter_secure_storage encryptedsave、biometricssupport |
+| V. SOLID | ✅ PASS | Riverpod  DI、servicesupport |
+| VI. DRY | ✅ PASS | sharedservice |
+| Prohibited Naming | ✅ PASS | utils/, helpers/ 、main |
 
 ### Quality Gates Mapping (TypeScript → Dart)
 
@@ -41,19 +41,19 @@ MuxPodをReact Native (Expo)からFlutterへ完全移行する。react-native-ss
 |------------|------------------------|
 | `pnpm typecheck` | `dart analyze` |
 | `pnpm lint` | `dart analyze` (lint rules in analysis_options.yaml) |
-| 新機能テスト | `flutter test` |
+| newfeaturetest | `flutter test` |
 
 ### Post-Phase 1 Check (Design Validation)
 
 | Principle | Status | Notes |
 |-----------|--------|-------|
-| I. Type Safety | ✅ PASS | Freezedでイミュータブルモデル、strict mode設定 |
-| II. KISS & YAGNI | ✅ PASS | 既存RN機能のみ移植、過度な抽象化なし |
-| III. Test-First (TDD) | ✅ PASS | contracts/でインターフェース定義、mockitoでモック可能 |
-| IV. Security-First | ✅ PASS | flutter_secure_storageで秘密鍵暗号化、biometrics対応設計 |
-| V. SOLID | ✅ PASS | サービス層分離、Riverpod DI、インターフェース定義 |
-| VI. DRY | ✅ PASS | Freezed codegen、共通Widget分離 |
-| Prohibited Naming | ✅ PASS | services/ssh/, services/tmux/等ドメイン名で命名 |
+| I. Type Safety | ✅ PASS | Freezedtabmodel、strict modesettings |
+| II. KISS & YAGNI | ✅ PASS | existingRNfeature、 |
+| III. Test-First (TDD) | ✅ PASS | contracts/interface、mockitomockpossible |
+| IV. Security-First | ✅ PASS | flutter_secure_storageprivate keyencrypted、biometricssupport |
+| V. SOLID | ✅ PASS | service、Riverpod DI、interface |
+| VI. DRY | ✅ PASS | Freezed codegen、sharedWidget |
+| Prohibited Naming | ✅ PASS | services/ssh/, services/tmux/main |
 
 **Conclusion**: All Constitution gates passed. Ready for Phase 2 (tasks generation).
 
@@ -74,19 +74,19 @@ specs/001-flutter-migration/
 ### Source Code (repository root)
 
 ```text
-flutter/                     # 新規Flutter プロジェクト
+flutter/                     # newFlutter project
 ├── lib/
 │   ├── main.dart
 │   ├── app.dart
-│   ├── router/              # GoRouter ルーティング
+│   ├── router/              # GoRouter routing
 │   │   └── app_router.dart
-│   ├── models/              # データモデル (Freezed)
+│   ├── models/              # datamodel (Freezed)
 │   │   ├── connection.dart
 │   │   ├── ssh_key.dart
 │   │   ├── tmux.dart
 │   │   ├── notification_rule.dart
 │   │   └── app_settings.dart
-│   ├── providers/           # Riverpod プロバイダー
+│   ├── providers/           # Riverpod provider
 │   │   ├── connection_provider.dart
 │   │   ├── ssh_provider.dart
 │   │   ├── tmux_provider.dart
@@ -94,7 +94,7 @@ flutter/                     # 新規Flutter プロジェクト
 │   │   ├── key_provider.dart
 │   │   ├── notification_provider.dart
 │   │   └── settings_provider.dart
-│   ├── services/            # ビジネスロジック
+│   ├── services/            # 
 │   │   ├── ssh/
 │   │   │   ├── ssh_client.dart
 │   │   │   └── ssh_auth.dart
@@ -108,35 +108,35 @@ flutter/                     # 新規Flutter プロジェクト
 │   │   └── notification/
 │   │       ├── notification_engine.dart
 │   │       └── pattern_matcher.dart
-│   ├── screens/             # 画面 Widget
+│   ├── screens/             # screen Widget
 │   │   ├── connections/
 │   │   │   ├── connections_screen.dart
 │   │   │   ├── connection_form_screen.dart
-│   │   │   └── widgets/
+│   │   │   └── Widgets/
 │   │   ├── terminal/
 │   │   │   ├── terminal_screen.dart
-│   │   │   └── widgets/
+│   │   │   └── Widgets/
 │   │   ├── keys/
 │   │   │   ├── keys_screen.dart
 │   │   │   ├── key_generate_screen.dart
 │   │   │   ├── key_import_screen.dart
-│   │   │   └── widgets/
+│   │   │   └── Widgets/
 │   │   ├── notifications/
 │   │   │   └── notification_rules_screen.dart
 │   │   └── settings/
 │   │       └── settings_screen.dart
-│   ├── widgets/             # 共通 Widget
+│   ├── Widgets/             # shared Widget
 │   │   ├── terminal_view.dart
 │   │   ├── special_keys_bar.dart
 │   │   └── session_tree.dart
-│   └── theme/               # テーマ定義
+│   └── theme/               # theme
 │       ├── app_theme.dart
 │       └── terminal_colors.dart
 ├── test/
 │   ├── unit/
 │   │   ├── services/
 │   │   └── providers/
-│   ├── widget/
+│   ├── Widget/
 │   │   └── screens/
 │   └── integration/
 ├── integration_test/
@@ -145,7 +145,7 @@ flutter/                     # 新規Flutter プロジェクト
 └── analysis_options.yaml
 ```
 
-**Structure Decision**: モバイルアプリ構成。lib/ 配下にドメイン駆動の構造を採用。既存RNの src/ 構造を Flutter 規約に適合させ、providers/ (Riverpod) で状態管理、services/ でビジネスロジック、screens/ でUI を分離。
+**Structure Decision**: mobileapp。lib/ main。existingRN src/  Flutter 、providers/ (Riverpod) statemanagement、services/ 、screens/ UI 。
 
 ## Complexity Tracking
 
@@ -154,3 +154,6 @@ flutter/                     # 新規Flutter プロジェクト
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
 | (none) | - | - |
+
+
+

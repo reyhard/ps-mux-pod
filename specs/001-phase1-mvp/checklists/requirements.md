@@ -31,7 +31,10 @@
 
 ## Notes
 
-- 仕様書はPhase 1 MVPのスコープを明確に定義
-- Phase 2以降の機能（SSH鍵生成、Secure Enclave、通知機能）は明示的にスコープ外として記載
-- 設計書 docs/tmux-mobile-design-v2.md に基づいて詳細を補完
-- すべてのチェック項目がパス - `/speckit.plan` への準備完了
+- specificationPhase 1 MVPclear
+- Phase 2feature（SSHkeygenerate、Secure Enclave、notificationfeature）
+-  docs/tmux-mobile-design-v2.md details
+- checkitems - `/speckit.plan` setupcomplete
+
+
+

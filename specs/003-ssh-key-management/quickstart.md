@@ -1,4 +1,4 @@
-# Quickstart: SSH鍵管理機能
+# Quickstart: SSH Key Management
 
 **Feature**: 003-ssh-key-management
 **Date**: 2026-01-11
@@ -7,35 +7,35 @@
 
 - Flutter SDK 3.24+
 - Android Studio / VS Code with Flutter extension
-- Android実機またはエミュレータ（API 23+）
+- Android device or emulator (API 23+)
 
 ## Setup
 
-### 1. 依存関係の追加
+### 1. add dependencies
 
 ```bash
 flutter pub add file_picker cryptography pointycastle
 ```
 
-または `pubspec.yaml` に直接追加:
+ `pubspec.yaml` add:
 
 ```yaml
 dependencies:
-  file_picker: ^8.0.3
-  cryptography: ^2.7.0
-  pointycastle: ^3.9.1
+ file_picker: ^8.0.3
+ cryptography: ^2.7.0
+ pointycastle: ^3.9.1
 ```
 
-### 2. Android権限（すでに設定済みの場合は不要）
+### 2. Android permissions (not needed if already configured)
 
 `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
-<!-- ファイルピッカー用（Android 10以下の場合） -->
+<!-- for file picker (Android 10 or below) -->
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 ```
 
-### 3. 依存関係のインストール
+### 3. dependencies
 
 ```bash
 flutter pub get
@@ -43,66 +43,66 @@ flutter pub get
 
 ## Quick Verification
 
-### 鍵生成のテスト
+### keygeneratetest
 
 ```dart
 import 'package:cryptography/cryptography.dart';
 
 void main() async {
-  // Ed25519鍵生成テスト
-  final ed25519 = Ed25519();
-  final keyPair = await ed25519.newKeyPair();
+ // Ed25519keygeneratetest
+ final ed25519 = Ed25519();
+ final keyPair = await ed25519.newKeyPair();
 
-  final privateKeyBytes = await keyPair.extractPrivateKeyBytes();
-  final publicKey = await keyPair.extractPublicKey();
+ final privateKeyBytes = await keyPair.extractPrivateKeyBytes();
+ final publicKey = await keyPair.extractPublicKey();
 
-  print('Private key length: ${privateKeyBytes.length}'); // 32
-  print('Public key length: ${publicKey.bytes.length}');   // 32
+ print('Private key length: ${privateKeyBytes.length}'); // 32
+ print('Public key length: ${publicKey.bytes.length}'); // 32
 }
 ```
 
-### ファイルピッカーのテスト
+### file picker test
 
 ```dart
 import 'package:file_picker/file_picker.dart';
 
 void pickFile() async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles();
+ FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-  if (result != null) {
-    print('Selected: ${result.files.single.name}');
-  } else {
-    print('Cancelled');
-  }
+ if (result != null) {
+ print('Selected: ${result.files.single.name}');
+ } else {
+ print('Cancelled');
+ }
 }
 ```
 
 ## Development Flow
 
-### 1. SshKeyServiceの実装
+### 1. SshKeyService implementation
 
 ```bash
-# 新規ファイル作成
+# newfilecreate
 touch lib/services/keychain/ssh_key_service.dart
 ```
 
-### 2. 画面のTODO解決
+### 2. screenTODO
 
 ```bash
-# 修正対象ファイル
-lib/screens/keys/keys_screen.dart       # 画面遷移追加
-lib/screens/keys/key_generate_screen.dart  # 鍵生成ロジック
-lib/screens/keys/key_import_screen.dart # ファイルピッカー・インポート
+# targetfile
+lib/screens/keys/keys_screen.dart # navigationadd
+lib/screens/keys/key_generate_screen.dart # keygenerate
+lib/screens/keys/key_import_screen.dart # file pickerimport
 ```
 
-### 3. テスト実行
+### 3. testrun
 
 ```bash
 flutter test test/services/keychain/ssh_key_service_test.dart
 flutter test test/screens/keys/
 ```
 
-### 4. 動作確認
+### 4. behaviorconfirmation
 
 ```bash
 flutter run -d android
@@ -112,36 +112,36 @@ flutter run -d android
 
 | File | Purpose |
 |------|---------|
-| `lib/services/keychain/ssh_key_service.dart` | 鍵生成・パースロジック（新規） |
-| `lib/services/keychain/secure_storage.dart` | セキュアストレージ（既存） |
-| `lib/providers/key_provider.dart` | 状態管理（既存） |
-| `lib/screens/keys/keys_screen.dart` | 鍵一覧画面（修正） |
-| `lib/screens/keys/key_generate_screen.dart` | 鍵生成画面（修正） |
-| `lib/screens/keys/key_import_screen.dart` | インポート画面（修正） |
+| `lib/services/keychain/ssh_key_service.dart` | keygenerate（new） |
+| `lib/services/keychain/secure_storage.dart` | secure storage（existing） |
+| `lib/providers/key_provider.dart` | management（existing） |
+| `lib/screens/keys/keys_screen.dart` | key list screen（） |
+| `lib/screens/keys/key_generate_screen.dart` | key generation screen（） |
+| `lib/screens/keys/key_import_screen.dart` | importscreen（） |
 
 ## Troubleshooting
 
-### file_pickerがクラッシュする
+### file_picker
 
-Android 11以上でスコープストレージの問題が発生する場合:
+Android 11scope:
 
 ```xml
 <!-- AndroidManifest.xml -->
 <application
-    android:requestLegacyExternalStorage="true"
-    ...>
+ android:requestLegacyExternalStorage="true"
+ ...>
 ```
 
-### cryptographyパッケージのビルドエラー
+### cryptographyerror
 
 ```bash
 flutter clean
 flutter pub get
 ```
 
-### RSA鍵生成が遅い
+### RSAkeygenerate
 
-RSA-4096は計算量が多いため、UIスレッドをブロックしないよう`compute()`を使用:
+RSA-4096、UI`compute()`use:
 
 ```dart
 final keyPair = await compute(_generateRsaKeyPair, bits);

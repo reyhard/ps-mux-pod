@@ -6,7 +6,7 @@ import '../services/mux/mux_backend.dart';
 import '../services/mux/mux_models.dart';
 import '../services/mux/mux_node.dart';
 
-/// MuxBackend経由のマルチプレクサ状態
+/// Multiplexer state via MuxBackend
 class MuxState {
   final List<MuxSession> sessions;
   final String? activeSessionName;
@@ -56,7 +56,7 @@ class MuxState {
     );
   }
 
-  /// アクティブセッションを取得
+  /// Get the active session
   MuxSession? get activeSession {
     if (activeSessionName == null) return null;
     try {
@@ -66,7 +66,7 @@ class MuxState {
     }
   }
 
-  /// アクティブウィンドウを取得
+  /// Get the active window
   MuxWindow? get activeWindow {
     final session = activeSession;
     if (session == null || activeWindowIndex == null) return null;
@@ -77,7 +77,7 @@ class MuxState {
     }
   }
 
-  /// アクティブペインを取得
+  /// Get the active pane
   MuxPane? get activePane {
     final window = activeWindow;
     if (window == null || activePaneId == null) return null;
@@ -88,28 +88,28 @@ class MuxState {
     }
   }
 
-  /// 現在のバックエンドを取得
+  /// Get the current backend
   MuxBackend? get currentBackend => currentNode?.backend;
 }
 
-/// MuxBackendを使用したマルチプレクサ状態管理
+/// Multiplexer state management using MuxBackend
 class MuxNotifier extends Notifier<MuxState> {
   @override
   MuxState build() => const MuxState();
 
-  /// ルートノードを設定
+  /// Set the root node
   void setRootNode(MuxNode node) {
     developer.log('setRootNode: ${node.label}', name: 'MuxProvider');
     state = state.copyWith(rootNode: node, currentNode: node);
   }
 
-  /// 現在のノードを設定
+  /// Set the current node
   void setCurrentNode(MuxNode node) {
     developer.log('setCurrentNode: ${node.label}', name: 'MuxProvider');
     state = state.copyWith(currentNode: node);
   }
 
-  /// セッション一覧をリフレッシュ
+  /// Refresh the session list
   Future<void> refreshSessions() async {
     final backend = state.currentNode?.backend;
     if (backend == null) {
@@ -130,7 +130,7 @@ class MuxNotifier extends Notifier<MuxState> {
     }
   }
 
-  /// アクティブセッションを設定
+  /// Set the active session
   void setActiveSession(String sessionName) {
     developer.log('setActiveSession: $sessionName', name: 'MuxProvider');
     state = state.copyWith(
@@ -140,7 +140,7 @@ class MuxNotifier extends Notifier<MuxState> {
     );
   }
 
-  /// アクティブウィンドウを設定
+  /// Set the active window
   void setActiveWindow(int windowIndex) {
     developer.log('setActiveWindow: $windowIndex', name: 'MuxProvider');
     state = state.copyWith(
@@ -149,13 +149,13 @@ class MuxNotifier extends Notifier<MuxState> {
     );
   }
 
-  /// アクティブペインを設定
+  /// Set the active pane
   void setActivePane(String paneId) {
     developer.log('setActivePane: $paneId', name: 'MuxProvider');
     state = state.copyWith(activePaneId: paneId);
   }
 
-  /// 子ノードへナビゲート
+  /// Navigate to a child node
   void navigateToChild(MuxNode child) {
     developer.log('navigateToChild: ${child.label}', name: 'MuxProvider');
     state = state.copyWith(
@@ -167,7 +167,7 @@ class MuxNotifier extends Notifier<MuxState> {
     );
   }
 
-  /// 親ノードへナビゲート
+  /// Navigate to the parent node
   void navigateToParent() {
     final parent = state.currentNode?.parent;
     if (parent != null) {
@@ -182,19 +182,19 @@ class MuxNotifier extends Notifier<MuxState> {
     }
   }
 
-  /// パンくずリストのパスを取得
+  /// Get the breadcrumb path
   List<MuxNode> get breadcrumbPath {
     return state.currentNode?.breadcrumbPath() ?? [];
   }
 
-  /// 状態をクリア
+  /// Clear the state
   void clear() {
     developer.log('clear()', name: 'MuxProvider');
     state = const MuxState();
   }
 }
 
-/// MuxBackend状態プロバイダー
+/// MuxBackend state provider
 final muxProvider = NotifierProvider<MuxNotifier, MuxState>(() {
   return MuxNotifier();
 });

@@ -48,57 +48,57 @@
 
 ## Entities
 
-### Connection (永続化)
+### Connection (persistence)
 
-SSH接続設定を表す。AsyncStorageに保存される。
+SSH connection settings。AsyncStoragesave。
 
 ```typescript
 interface Connection {
   id: string;                      // UUID v4
-  name: string;                    // 表示名 (e.g., "Production Server")
-  host: string;                    // ホスト名 or IPアドレス
-  port: number;                    // SSHポート (default: 22)
-  username: string;                // SSHユーザー名
-  authMethod: 'password' | 'key';  // 認証方式
-  keyId?: string;                  // SSH鍵ID (key認証時)
-  timeout: number;                 // 接続タイムアウト秒 (default: 30)
-  keepAliveInterval: number;       // Keepalive間隔秒 (default: 60)
+  name: string;                    // display (e.g., "Production Server")
+  host: string;                    // host name or IP
+  port: number;                    // SSHport (default: 22)
+  username: string;                // SSHuser
+  authMethod: 'password' | 'key';  // authentication
+  keyId?: string;                  // SSHkeyID (keyauthentication)
+  timeout: number;                 // connection (default: 30)
+  keepAliveInterval: number;       // Keepalive (default: 60)
 
-  // メタ情報
-  icon?: string;                   // カスタムアイコン名
-  color?: string;                  // カード色 (#RRGGBB)
-  tags?: string[];                 // タグ
-  lastConnected?: number;          // 最終接続日時 (Unix timestamp ms)
-  createdAt: number;               // 作成日時 (Unix timestamp ms)
-  updatedAt: number;               // 更新日時 (Unix timestamp ms)
+  // information
+  icon?: string;                   // custom
+  color?: string;                  // color (#RRGGBB)
+  tags?: string[];                 // 
+  lastConnected?: number;          // finalconnection (Unix timestamp ms)
+  createdAt: number;               // create (Unix timestamp ms)
+  updatedAt: number;               // update (Unix timestamp ms)
 }
 ```
 
 **Validation Rules**:
-- `id`: 必須、UUID v4形式
-- `name`: 必須、1-50文字
-- `host`: 必須、有効なホスト名またはIPアドレス
-- `port`: 必須、1-65535の整数
-- `username`: 必須、1-32文字
-- `authMethod`: 必須、'password' | 'key'
-- `timeout`: 1-300の整数
-- `keepAliveInterval`: 0-300の整数 (0 = 無効)
+- `id`: required、UUID v4format
+- `name`: required、1-50characters
+- `host`: required、enabledhost nameIP
+- `port`: required、1-65535count
+- `username`: required、1-32characters
+- `authMethod`: required、'password' | 'key'
+- `timeout`: 1-300count
+- `keepAliveInterval`: 0-300count (0 = disabled)
 
 **Storage Key**: `muxpod-connections`
 
 ---
 
-### ConnectionState (ランタイム)
+### ConnectionState ()
 
-接続のランタイム状態を表す。永続化されない。
+connectionstate。persistence。
 
 ```typescript
 interface ConnectionState {
   connectionId: string;
   status: 'disconnected' | 'connecting' | 'connected' | 'error';
-  error?: string;                  // エラーメッセージ
+  error?: string;                  // errormessage
   latency?: number;                // RTT (ms)
-  connectedAt?: number;            // 接続開始日時
+  connectedAt?: number;            // connectionstart
 }
 ```
 
@@ -115,17 +115,17 @@ connected ──disconnect()──> disconnected <────┘        │
 
 ---
 
-### TmuxSession (ランタイム)
+### TmuxSession ()
 
-tmuxセッションを表す。SSH経由で取得。
+tmux session。SSHretrieve。
 
 ```typescript
 interface TmuxSession {
-  name: string;                    // セッション名 (unique per server)
-  created: number;                 // 作成日時 (Unix timestamp ms)
-  attached: boolean;               // 他クライアントがアタッチ中か
-  windowCount: number;             // ウィンドウ数
-  windows: TmuxWindow[];           // 所属ウィンドウ (lazy load)
+  name: string;                    // session (unique per server)
+  created: number;                 // create (Unix timestamp ms)
+  attached: boolean;               // clientattachin progress
+  windowCount: number;             // windowcount
+  windows: TmuxWindow[];           // window (lazy load)
 }
 ```
 
@@ -133,17 +133,17 @@ interface TmuxSession {
 
 ---
 
-### TmuxWindow (ランタイム)
+### TmuxWindow ()
 
-tmuxウィンドウを表す。
+tmux window。
 
 ```typescript
 interface TmuxWindow {
-  index: number;                   // ウィンドウインデックス (0-based)
-  name: string;                    // ウィンドウ名
-  active: boolean;                 // アクティブウィンドウか
-  paneCount: number;               // ペイン数
-  panes: TmuxPane[];               // 所属ペイン (lazy load)
+  index: number;                   // window (0-based)
+  name: string;                    // window
+  active: boolean;                 // activewindow
+  paneCount: number;               // panecount
+  panes: TmuxPane[];               // pane (lazy load)
 }
 ```
 
@@ -151,21 +151,21 @@ interface TmuxWindow {
 
 ---
 
-### TmuxPane (ランタイム)
+### TmuxPane ()
 
-tmuxペインを表す。
+tmux pane。
 
 ```typescript
 interface TmuxPane {
-  index: number;                   // ペインインデックス (0-based)
-  id: string;                      // ペインID (%0, %1, etc.)
-  active: boolean;                 // アクティブペインか
-  currentCommand: string;          // 現在実行中のコマンド
-  title: string;                   // ペインタイトル
-  width: number;                   // 幅（カラム数）
-  height: number;                  // 高さ（行数）
-  cursorX: number;                 // カーソルX位置
-  cursorY: number;                 // カーソルY位置
+  index: number;                   // pane (0-based)
+  id: string;                      // paneID (%0, %1, etc.)
+  active: boolean;                 // activepane
+  currentCommand: string;          // currentrunin progresscommand
+  title: string;                   // pane
+  width: number;                   // width（count）
+  height: number;                  // height（rows）
+  cursorX: number;                 // X
+  cursorY: number;                 // Y
 }
 ```
 
@@ -173,28 +173,28 @@ interface TmuxPane {
 
 ---
 
-### PaneContent (ランタイム)
+### PaneContent ()
 
-ペインの表示内容を表す。ポーリングで更新。
+panedisplaycontents。pollingupdate。
 
 ```typescript
 interface PaneContent {
-  paneId: string;                  // 対応するペインID
-  lines: AnsiLine[];               // 行ごとの内容（パース済み）
-  scrollbackSize: number;          // スクロールバック行数
-  cursorX: number;                 // カーソルX位置
-  cursorY: number;                 // カーソルY位置
-  lastUpdated: number;             // 最終更新日時
+  paneId: string;                  // supportpaneID
+  lines: AnsiLine[];               // linecontents（parse）
+  scrollbackSize: number;          // scrollbackrows
+  cursorX: number;                 // X
+  cursorY: number;                 // Y
+  lastUpdated: number;             // finalupdate
 }
 
 interface AnsiLine {
-  spans: AnsiSpan[];               // 同一スタイルのテキスト断片
+  spans: AnsiSpan[];               // same
 }
 
 interface AnsiSpan {
-  text: string;                    // テキスト内容
-  fg?: number;                     // 前景色 (0-255, undefined=default)
-  bg?: number;                     // 背景色 (0-255, undefined=default)
+  text: string;                    // contents
+  fg?: number;                     // color (0-255, undefined=default)
+  bg?: number;                     // color (0-255, undefined=default)
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
@@ -266,7 +266,7 @@ interface TerminalStore {
 
 ## Data Flow
 
-### 接続フロー
+### connection
 
 ```
 1. User taps connection card
@@ -287,7 +287,7 @@ interface TerminalStore {
 7. sessionStore.setSessions(connectionId, sessions)
 ```
 
-### ターミナル更新フロー
+### terminalupdate
 
 ```
 1. useTerminal hook starts polling (100ms interval)
@@ -316,3 +316,6 @@ interface TerminalStore {
 | TmuxWindow | By index | `index` (within session's windows) |
 | TmuxPane | By index | `index` (within window's panes) |
 | PaneContent | By pane ID | `paneId` (Map key) |
+
+
+

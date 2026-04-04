@@ -1,82 +1,82 @@
-# MuxPod UI/UXガイドライン
+# MuxPod UI/UX Guidelines
 
-## カラーパレット
+## Color Palette
 
-Material Design 3 ダークテーマベース。
+Based on Material Design 3 Dark Theme.
 
-| 用途 | カラー | 説明 |
-|------|--------|------|
-| 背景 | `#1E1E1E` | メイン背景 |
-| サーフェス | `#2D3133` | カード、コンテナ |
-| プライマリ | `#00C0D1` | アクセント、ボタン、アクティブ状態 |
-| テキスト | `#FFFFFF` | 主要テキスト |
-| テキスト(サブ) | `#9E9E9E` | 補助テキスト |
-| エラー | `#CF6679` | エラー状態 |
-| 成功 | `#4CAF50` | 接続済み等 |
+| Purpose | Color | Description |
+|---------|-------|-------------|
+| Background | `#1E1E1E` | Main background |
+| Surface | `#2D3133` | Cards, containers |
+| Primary | `#00C0D1` | Accent, buttons, active state |
+| Text | `#FFFFFF` | Primary text |
+| Text (sub) | `#9E9E9E` | Secondary text |
+| Error | `#CF6679` | Error state |
+| Success | `#4CAF50` | Connected, etc. |
 
-## デザイントークン
+## Design Tokens
 
-### 角丸
-- カード/コンテナ: `40px` (MD3スタイル)
-- ボタン: `20px`
-- インプット: `12px`
-- インジケーター(ピル): `10px`
+### Border Radius
+- Cards/Containers: `40px` (MD3 style)
+- Buttons: `20px`
+- Inputs: `12px`
+- Indicators (pill): `10px`
 
-### スペーシング
+### Spacing
 - xs: `4px`
 - sm: `8px`
 - md: `16px`
 - lg: `24px`
 - xl: `32px`
 
-## 画面構成
+## Screen Layout
 
-### ボトムナビゲーション
+### Bottom Navigation
 
-| アイコン | ラベル | 画面 |
-|----------|--------|------|
-| サーバー | Net | 接続一覧 |
-| ターミナル | Term | ターミナル表示 |
-| 鍵 | Keys | SSH鍵管理 |
-| 歯車 | Settings | 設定 |
+| Icon | Label | Screen |
+|------|-------|--------|
+| Server | Net | Connection list |
+| Terminal | Term | Terminal display |
+| Key | Keys | SSH key management |
+| Gear | Settings | Settings |
 
-### 接続一覧 (Net)
-- 接続カードは展開可能
-- セッション一覧をツリー表示
-- Attached/Detached ステータスバッジ
-- "+ New Session" ボタン
+### Connection List (Net)
+- Connection cards are expandable
+- Session list displayed as tree
+- Attached/Detached status badges
+- "+ New Session" button
 
-### ターミナル (Term)
-- 上部: セッション/ウィンドウ/ペイン タブ
-- 中央: ターミナル出力
-- 下部: 特殊キーバー (ESC/TAB/CTRL/ALT)
-- 最下部: 入力欄 + cmdボタン
+### Terminal (Term)
+- Top: Session/Window/Pane tabs
+- Center: Terminal output
+- Bottom: Special key bar (ESC/TAB/CTRL/ALT)
+- Very bottom: Input field + cmd button
 
-### 通知ルール設定
-- アクティブなルール一覧
-- ルール追加フォーム
-- 条件タイプ: TEXT/REGEX/IDLE/ANY
-- パターンテスト機能
+### Notification Rule Settings
+- Active rule list
+- Rule add form
+- Condition types: TEXT/REGEX/IDLE/ANY
+- Pattern test feature
 
-## フォント
+## Fonts
 
-| 用途 | フォント |
-|------|----------|
-| ターミナル(英語) | JetBrainsMono, FiraCode |
-| ターミナル(日本語) | HackGen, PlemolJP |
-| UI | システムフォント |
+| Purpose | Font |
+|---------|------|
+| Terminal (English) | JetBrainsMono, FiraCode |
+| Terminal (Japanese) | HackGen, PlemolJP |
+| UI | System font |
 
-## 折りたたみデバイス対応
+## Foldable Device Support
 
-- 左パネル: セッションツリー
-- 右パネル: ターミナル表示
-- 縦向き時: 通常のシングルカラム
+- Left panel: Session tree
+- Right panel: Terminal display
+- Portrait mode: Normal single column
 
-## アイコン
+## Icons
 
-- Material Icons または Lucide Icons を使用
-- 接続状態: 緑丸(接続中)、グレー丸(切断)、赤丸(エラー)
+- Use Material Icons or Lucide Icons
+- Connection state: Green circle (connected), Gray circle (disconnected), Red circle (error)
 
-## ロゴ
+## Logo
 
-`docs/logo/logo.svg` を参照。
+See `docs/logo/logo.svg`.

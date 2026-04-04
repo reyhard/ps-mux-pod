@@ -6,17 +6,17 @@
 ## Prerequisites
 
 - Flutter 3.24+
-- 既存のMuxPodプロジェクトがビルド可能な状態
+- existingMuxPodprojectbuildpossiblestate
 
 ## Setup
 
-### 1. 依存関係追加
+### 1. dependenciesadd
 
 ```bash
 flutter pub add url_launcher
 ```
 
-### 2. 実行確認
+### 2. runverify
 
 ```bash
 flutter analyze
@@ -26,22 +26,22 @@ flutter run
 
 ## Implementation Overview
 
-### 修正対象ファイル
+### target for changesfile
 
 | File | Changes |
 |------|---------|
-| `lib/main.dart` | MyAppをConsumerWidgetに変更、テーマを動的に |
-| `lib/screens/settings/settings_screen.dart` | TODOコメント解決（6箇所） |
-| `lib/screens/notifications/notification_rules_screen.dart` | ルール保存実装、リスト表示 |
-| `lib/providers/settings_provider.dart` | themeMode対応（オプション） |
+| `lib/main.dart` | MyAppConsumerWidgetchange、themedynamic |
+| `lib/screens/settings/settings_screen.dart` | TODOcommentresolve（6） |
+| `lib/screens/notifications/notification_rules_screen.dart` | rulesaveimplement、listdisplay |
+| `lib/providers/settings_provider.dart` | themeModesupport（） |
 
-### 新規作成ファイル
+### newcreatefile
 
 | File | Purpose |
 |------|---------|
-| `lib/widgets/dialogs/font_size_dialog.dart` | フォントサイズ選択ダイアログ |
-| `lib/widgets/dialogs/font_family_dialog.dart` | フォントファミリー選択ダイアログ |
-| `lib/widgets/dialogs/theme_dialog.dart` | テーマ選択ダイアログ |
+| `lib/Widgets/dialogs/font_size_dialog.dart` | font sizeselect |
+| `lib/Widgets/dialogs/font_family_dialog.dart` | font familyselect |
+| `lib/Widgets/dialogs/theme_dialog.dart` | Theme Selection |
 
 ## Key Implementation Points
 
@@ -106,13 +106,13 @@ ListView.builder(
 void _save() {
   if (_formKey.currentState!.validate()) {
     final rule = NotificationRule(
-      id: widget.ruleId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: Widget.ruleId ?? DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text,
       pattern: _patternController.text,
       isRegex: _isRegex,
       vibrate: _vibrate,
     );
-    if (widget.ruleId != null) {
+    if (Widget.ruleId != null) {
       ref.read(notificationProvider.notifier).updateRule(rule);
     } else {
       ref.read(notificationProvider.notifier).addRule(rule);
@@ -161,22 +161,22 @@ flutter test test/screens/notification_rules_screen_test.dart
 
 ## Verification Checklist
 
-- [ ] Font Size変更が保存され、再起動後も保持される
-- [ ] Font Family変更が保存され、再起動後も保持される
-- [ ] Haptic Feedbackトグルが保存される
-- [ ] Keep Screen Onトグルが保存される
-- [ ] Theme変更がアプリ全体に即座に反映される
-- [ ] Source CodeタップでGitHubが外部ブラウザで開く
-- [ ] 通知ルールが作成・保存される
-- [ ] 通知ルールが編集・削除できる
-- [ ] ルールの有効/無効切り替えが保存される
-- [ ] アプリ再起動後もルールが保持される
+- [ ] Font Sizechangesave、restartretain
+- [ ] Font Familychangesave、restartretain
+- [ ] Haptic Feedbacksave
+- [ ] Keep Screen Onsave
+- [ ] Themechangethe entire appreflect
+- [ ] Source CodeGitHubexternal
+- [ ] Notification Rulescreatesave
+- [ ] Notification Ruleseditdelete
+- [ ] ruleenabled/disabledswitchsave
+- [ ] app restartruleretain
 
 ## Common Issues
 
 ### url_launcher not working
 
-Android: `AndroidManifest.xml` にintent-filter追加が必要な場合あり
+Android: `AndroidManifest.xml` intent-filteraddrequiredwhen
 
 ```xml
 <queries>
@@ -189,8 +189,11 @@ Android: `AndroidManifest.xml` にintent-filter追加が必要な場合あり
 
 ### SharedPreferences not persisting
 
-テスト環境ではモックが必要:
+testmockrequired:
 
 ```dart
 SharedPreferences.setMockInitialValues({});
 ```
+
+
+

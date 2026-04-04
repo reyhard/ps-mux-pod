@@ -5,24 +5,24 @@
 
 ## Overview
 
-この機能は、tmux ペインの横幅（文字数）に合わせてターミナルのフォントサイズを自動調整します。
+feature、tmux panewidth（characterscount）terminalfont sizeautomaticadjust。
 
 ## Key Components
 
 ### 1. FontCalculator (`lib/services/terminal/font_calculator.dart`)
 
-フォントサイズを計算するピュア関数。
+font sizecount。
 
 ```dart
 class FontCalculator {
-  /// 画面幅とペイン文字数からフォントサイズを計算
+  /// screen widthpanecharacterscountfont size
   ///
-  /// [screenWidth] 利用可能なスクリーン幅（ピクセル）
-  /// [paneCharWidth] ペインの横幅（文字数）
-  /// [fontFamily] フォントファミリー
-  /// [minFontSize] 最小フォントサイズ（下限）
+  /// [screenWidth] usepossiblewidth（）
+  /// [paneCharWidth] panewidth（characterscount）
+  /// [fontFamily] font family
+  /// [minFontSize] minimumfont size（）
   ///
-  /// Returns: (fontSize, needsScroll) のタプル
+  /// Returns: (fontSize, needsScroll) 
   static ({double fontSize, bool needsScroll}) calculate({
     required double screenWidth,
     required int paneCharWidth,
@@ -33,10 +33,10 @@ class FontCalculator {
       return (fontSize: 14.0, needsScroll: false);
     }
 
-    // TextPainter で文字幅を測定
+    // TextPainter characterswidth
     final charWidthRatio = _measureCharWidthRatio(fontFamily);
 
-    // 計算: fontSize = screenWidth / (paneWidth × charWidthRatio)
+    // : fontSize = screenWidth / (paneWidth × charWidthRatio)
     final calculatedSize = screenWidth / (paneCharWidth * charWidthRatio);
 
     if (calculatedSize >= minFontSize) {
@@ -64,7 +64,7 @@ class FontCalculator {
 
 ### 2. TerminalDisplayProvider (`lib/providers/terminal_display_provider.dart`)
 
-ターミナル表示状態を管理する Riverpod Provider。
+Terminal Displaystatemanagement Riverpod Provider。
 
 ```dart
 @freezed
@@ -85,7 +85,7 @@ class TerminalDisplayNotifier extends Notifier<TerminalDisplayState> {
   @override
   TerminalDisplayState build() => const TerminalDisplayState();
 
-  /// ペイン情報を更新
+  /// paneinformationupdate
   void updatePane(TmuxPane pane) {
     state = state.copyWith(
       paneWidth: pane.width,
@@ -94,25 +94,25 @@ class TerminalDisplayNotifier extends Notifier<TerminalDisplayState> {
     _recalculateFontSize();
   }
 
-  /// スクリーン幅を更新
+  /// widthupdate
   void updateScreenWidth(double width) {
     state = state.copyWith(screenWidth: width);
     _recalculateFontSize();
   }
 
-  /// ピンチズーム開始
+  /// pinchzoomstart
   void startZoom() {
     state = state.copyWith(isZooming: true);
   }
 
-  /// ピンチズーム更新
+  /// pinchzoomupdate
   void updateZoom(double scale) {
     state = state.copyWith(zoomScale: scale);
   }
 
-  /// ピンチズーム終了
+  /// pinchzoomclose
   void endZoom() {
-    // ズーム後のフォントサイズを確定
+    // zoomfont size
     final newFontSize = state.calculatedFontSize * state.zoomScale;
     state = state.copyWith(
       calculatedFontSize: newFontSize.clamp(minFontSize, 48.0),
@@ -146,9 +146,9 @@ final terminalDisplayProvider =
 
 ---
 
-### 3. ScalableTerminal (`lib/screens/terminal/widgets/scalable_terminal.dart`)
+### 3. ScalableTerminal (`lib/screens/terminal/Widgets/scalable_terminal.dart`)
 
-ピンチズームと水平スクロールを統合した TerminalView ラッパー。
+pinchzoomscrollintegration TerminalView 。
 
 ```dart
 class ScalableTerminal extends ConsumerWidget {
@@ -170,7 +170,7 @@ class ScalableTerminal extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // スクリーン幅を更新
+        // widthupdate
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(terminalDisplayProvider.notifier)
               .updateScreenWidth(constraints.maxWidth);
@@ -231,17 +231,17 @@ class ScalableTerminal extends ConsumerWidget {
 
 ### 4. Settings Extension
 
-`AppSettings` と設定画面の拡張。
+`AppSettings` Settings Screenextension。
 
 ```dart
-// settings_provider.dart に追加
+// settings_provider.dart add
 class AppSettings {
-  // ... 既存フィールド ...
-  final double minFontSize;        // 新規
-  final bool autoFitEnabled;       // 新規
+  // ... existing ...
+  final double minFontSize;        // new
+  final bool autoFitEnabled;       // new
 
   const AppSettings({
-    // ... 既存 ...
+    // ... existing ...
     this.minFontSize = 8.0,
     this.autoFitEnabled = true,
   });
@@ -252,20 +252,20 @@ class AppSettings {
 
 ## Usage Flow
 
-1. **ペイン選択時**:
+1. **paneselect**:
    ```dart
    final pane = tmuxState.activePane;
    ref.read(terminalDisplayProvider.notifier).updatePane(pane);
    ```
 
-2. **画面サイズ変更時**:
-   - `LayoutBuilder` が自動的に `updateScreenWidth()` を呼び出す
+2. **screensizechange**:
+   - `LayoutBuilder` automatic `updateScreenWidth()` 
 
-3. **ピンチズーム時**:
-   - `GestureDetector` が自動的にズーム状態を管理
+3. **pinchzoom**:
+   - `GestureDetector` automaticzoomstatemanagement
 
-4. **設定変更時**:
-   - `settingsProvider` の変更を watch して自動再計算
+4. **settingschange**:
+   - `settingsProvider` change watch automaticre
 
 ---
 
@@ -310,11 +310,11 @@ void main() {
 // scalable_terminal_test.dart
 void main() {
   testWidgets('pinch zoom changes font size', (tester) async {
-    // ピンチジェスチャーをシミュレートしてフォントサイズ変更を確認
+    // pinchfont sizechangeverify
   });
 
   testWidgets('horizontal scroll enabled for wide panes', (tester) async {
-    // 広いペインで水平スクロールが有効になることを確認
+    // panescrollenabledverify
   });
 }
 ```
@@ -327,11 +327,14 @@ void main() {
 |------|------|--------|
 | `lib/services/terminal/font_calculator.dart` | New | Create |
 | `lib/providers/terminal_display_provider.dart` | New | Create |
-| `lib/screens/terminal/widgets/scalable_terminal.dart` | New | Create |
+| `lib/screens/terminal/Widgets/scalable_terminal.dart` | New | Create |
 | `lib/providers/settings_provider.dart` | Modify | Add minFontSize, autoFitEnabled |
 | `lib/screens/settings/settings_screen.dart` | Modify | Add min font size setting |
-| `lib/widgets/dialogs/min_font_size_dialog.dart` | New | Create |
+| `lib/Widgets/dialogs/min_font_size_dialog.dart` | New | Create |
 | `lib/screens/terminal/terminal_screen.dart` | Modify | Use ScalableTerminal |
 | `test/services/terminal/font_calculator_test.dart` | New | Create |
 | `test/providers/terminal_display_provider_test.dart` | New | Create |
 | `test/screens/terminal/scalable_terminal_test.dart` | New | Create |
+
+
+

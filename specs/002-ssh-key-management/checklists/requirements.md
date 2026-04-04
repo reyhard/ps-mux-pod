@@ -1,4 +1,4 @@
-# Specification Quality Checklist: SSH鍵管理機能
+# Specification Quality Checklist: SSH Key Management
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-01-10

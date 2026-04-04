@@ -3,185 +3,188 @@
 **Feature Branch**: `001-flutter-migration`
 **Created**: 2026-01-11
 **Status**: Draft
-**Input**: User description: "MuxPodをFlutterに移行。dartssh2+xterm.dart使用。docs/tmux-mobile-design-v2.mdとdocs/working/flutter-vs-rn-comparison.md参照"
+**Input**: User description: "Migrate MuxPod to Flutter. Use `dartssh2` + `xterm.dart`. Refer to `docs/tmux-mobile-design-v2.md` and `docs/working/flutter-vs-rn-comparison.md`."
 
 ## Overview
 
-MuxPodをReact Native (Expo)からFlutterへ完全移行する。現在のreact-native-ssh-sftp（8年間メンテナンス放棄）の問題を解決し、アクティブにメンテナンスされているdartssh2 + xterm.dartを採用する。
+Fully migrate MuxPod from React Native (Expo) to Flutter. Resolve the problems with the current `react-native-ssh-sftp` dependency, which has been unmaintained for 8 years, and adopt the actively maintained `dartssh2` + `xterm.dart` stack.
 
-**移行理由**:
-- react-native-ssh-sftpがメンテナンス放棄状態（npm公開8年前）
-- Androidビルドに多くのパッチが必要
-- New Architecture未対応
-- dartssh2はPure Dart実装でネイティブ依存なし、アクティブにメンテナンス中
+**Migration reasons**:
+- `react-native-ssh-sftp` is unmaintained and was published to npm 8 years ago
+- Android builds require many patches
+- It does not support the New Architecture
+- `dartssh2` is a pure Dart implementation with no native dependencies and is actively maintained
 
 ## User Scenarios & Testing
 
-### User Story 1 - SSH接続・ターミナル操作 (Priority: P1)
+### User Story 1 - SSH Connection and Terminal Operation (Priority: P1)
 
-ユーザーがAndroidデバイスからリモートサーバーにSSH接続し、tmuxセッション内のペインでコマンドを実行する。
+The user can SSH into a remote server from an Android device and run commands inside a tmux pane.
 
-**Why this priority**: アプリの核心機能。これなしでは価値を提供できない。
+**Why this priority**: This is the core app feature. Without it, the app provides no value.
 
-**Independent Test**: 接続設定を追加し、サーバーに接続、tmuxペイン内でlsコマンドを実行して結果が表示される。
+**Independent Test**: Add a connection setting, connect to the server, run `ls` inside a tmux pane, and verify that the result appears.
 
 **Acceptance Scenarios**:
 
-1. **Given** 接続設定が保存済み, **When** 接続をタップ, **Then** SSH接続が確立され、tmuxセッション一覧が表示される
-2. **Given** tmuxセッションが存在, **When** ペインを選択, **Then** ペイン内容がANSIカラー対応で表示される
-3. **Given** ペイン表示中, **When** コマンドを入力, **Then** キー入力がサーバーに送信され、結果が表示される
-4. **Given** 接続中, **When** ネットワーク切断, **Then** エラーメッセージが表示され再接続オプションが提示される
+1. **Given** a connection setting is saved, **When** the user taps the connection, **Then** an SSH connection is established and the tmux session list is shown
+2. **Given** a tmux session exists, **When** the user selects a pane, **Then** the pane contents are displayed with ANSI color support
+3. **Given** a pane is displayed, **When** the user enters a command, **Then** the key input is sent to the server and the result is shown
+4. **Given** a connection is active, **When** the network disconnects, **Then** an error message is shown and a reconnect option is offered
 
 ---
 
-### User Story 2 - 接続管理 (Priority: P1)
+### User Story 2 - Connection Management (Priority: P1)
 
-ユーザーが複数のサーバー接続設定を追加・編集・削除し、管理する。
+The user can add, edit, delete, and manage multiple server connection settings.
 
-**Why this priority**: ターミナル操作と並ぶ基本機能。接続設定なしでは接続できない。
+**Why this priority**: This is a basic feature alongside terminal operations. Without connection settings, the user cannot connect.
 
-**Independent Test**: 新しい接続を追加し、一覧に表示され、その接続を使って接続できる。
+**Independent Test**: Add a new connection, verify it appears in the list, and use it to connect.
 
 **Acceptance Scenarios**:
 
-1. **Given** アプリ起動, **When** 「追加」をタップ, **Then** 接続設定フォームが表示される
-2. **Given** 接続フォーム, **When** ホスト/ユーザー名/認証方法を入力して保存, **Then** 接続一覧に追加される
-3. **Given** 接続一覧, **When** 接続をロングプレス, **Then** 編集・削除オプションが表示される
-4. **Given** パスワード認証を選択, **When** パスワードを入力, **Then** パスワードは暗号化して保存される
+1. **Given** the app launches, **When** the user taps Add, **Then** the connection settings form is shown
+2. **Given** the connection form, **When** the user enters host, username, and authentication method and saves, **Then** the connection is added to the list
+3. **Given** the connection list, **When** the user long-presses a connection, **Then** edit and delete options are shown
+4. **Given** password authentication is selected, **When** the user enters a password, **Then** the password is encrypted and saved
 
 ---
 
-### User Story 3 - SSH鍵管理 (Priority: P2)
+### User Story 3 - SSH Key Management (Priority: P2)
 
-ユーザーがSSH鍵をインポートまたは生成し、サーバー認証に使用する。
+The user can import or generate SSH keys and use them for server authentication.
 
-**Why this priority**: パスワード認証でも動作するが、鍵認証はセキュリティ上推奨される。
+**Why this priority**: The app works with password authentication, but key authentication is recommended for security.
 
-**Independent Test**: 鍵を生成し、その鍵を使用してサーバーに接続できる。
+**Independent Test**: Generate a key and use it to connect to the server.
 
 **Acceptance Scenarios**:
 
-1. **Given** 鍵管理画面, **When** 「生成」をタップ, **Then** 鍵タイプ（Ed25519/RSA）選択後、鍵ペアが生成される
-2. **Given** 鍵生成完了, **When** 公開鍵をコピー, **Then** クリップボードにコピーされる
-3. **Given** 鍵管理画面, **When** ファイルからインポート, **Then** 秘密鍵がセキュアストレージに保存される
-4. **Given** 接続設定, **When** 認証方法を「鍵」に選択, **Then** 保存済みの鍵一覧から選択できる
+1. **Given** the key management screen, **When** the user taps Generate, **Then** after choosing a key type (Ed25519/RSA), a key pair is generated
+2. **Given** key generation is complete, **When** the public key is copied, **Then** it is copied to the clipboard
+3. **Given** the key management screen, **When** a key is imported from a file, **Then** the private key is saved in secure storage
+4. **Given** a connection setting, **When** the authentication method is set to Key, **Then** the user can choose from the saved key list
 
 ---
 
-### User Story 4 - tmuxナビゲーション (Priority: P2)
+### User Story 4 - tmux Navigation (Priority: P2)
 
-ユーザーがtmuxのセッション/ウィンドウ/ペインを階層的にナビゲーションする。
+The user can navigate tmux sessions, windows, and panes hierarchically.
 
-**Why this priority**: 複数セッション/ペインを持つユーザーには必須。
+**Why this priority**: This is essential for users with multiple sessions and panes.
 
-**Independent Test**: 複数セッションがある状態で、セッション/ウィンドウ/ペイン間を移動できる。
+**Independent Test**: With multiple sessions available, the user can move between sessions, windows, and panes.
 
 **Acceptance Scenarios**:
 
-1. **Given** 接続完了, **When** セッション一覧を表示, **Then** 全セッションが名前と作成日時付きで表示される
-2. **Given** セッション選択, **When** ウィンドウをタップ, **Then** そのウィンドウのペイン一覧が表示される
-3. **Given** 複数ペインのウィンドウ, **When** ペインを選択, **Then** 選択したペインの内容が表示される
-4. **Given** ペイン表示中, **When** ジェスチャーでスワイプ, **Then** 隣のペイン/ウィンドウに切り替わる
+1. **Given** the connection is complete, **When** the session list is shown, **Then** all sessions are displayed with their names and creation times
+2. **Given** a session is selected, **When** a window is tapped, **Then** that window's pane list is shown
+3. **Given** a window with multiple panes, **When** a pane is selected, **Then** the selected pane's contents are shown
+4. **Given** a pane is displayed, **When** the user swipes with a gesture, **Then** the app switches to the adjacent pane or window
 
 ---
 
-### User Story 5 - 通知ルール (Priority: P3)
+### User Story 5 - Notification Rules (Priority: P3)
 
-ユーザーがターミナル出力にパターンマッチルールを設定し、マッチ時にアプリ内通知を受け取る。
+The user can set pattern-matching rules for terminal output and receive in-app notifications when they match.
 
-**Why this priority**: 便利機能だが、コア機能ではない。
+**Why this priority**: This is useful, but not core functionality.
 
-**Independent Test**: 「error」というテキストルールを設定し、ターミナルにerrorが表示されたら通知が発生する。
+**Independent Test**: Set a text rule for "error" and verify that a notification fires when `error` appears in the terminal.
 
 **Acceptance Scenarios**:
 
-1. **Given** 通知ルール画面, **When** 新規ルール追加, **Then** テキスト/正規表現パターンを設定できる
-2. **Given** ルール設定済み, **When** ペイン出力がパターンにマッチ, **Then** アプリ内通知が表示される
-3. **Given** 通知発生, **When** 通知をタップ, **Then** 該当ペインに移動する
+1. **Given** the notification rules screen, **When** a new rule is added, **Then** the user can configure a text or regular-expression pattern
+2. **Given** a rule has been configured, **When** the pane output matches the pattern, **Then** an in-app notification is shown
+3. **Given** a notification has been fired, **When** the notification is tapped, **Then** the app moves to the matching pane
 
 ---
 
-### User Story 6 - 表示設定 (Priority: P3)
+### User Story 6 - Display Settings (Priority: P3)
 
-ユーザーがターミナルのフォント、フォントサイズ、カラーテーマをカスタマイズする。
+The user can customize the terminal font, font size, and color theme.
 
-**Why this priority**: 使いやすさ向上の機能。デフォルト設定でも利用可能。
+**Why this priority**: This improves usability, but the app is usable with the default settings.
 
-**Independent Test**: フォントサイズを変更し、ターミナル表示に反映される。
+**Independent Test**: Change the font size and verify that it is reflected in the terminal display.
 
 **Acceptance Scenarios**:
 
-1. **Given** 設定画面, **When** フォントサイズを変更, **Then** ターミナル表示に即座に反映される
-2. **Given** 設定画面, **When** カラーテーマを選択, **Then** ターミナルの配色が変更される
-3. **Given** 日本語フォント選択, **When** ターミナル表示, **Then** 日本語が正しく表示される
+1. **Given** the settings screen, **When** the font size is changed, **Then** the terminal display updates immediately
+2. **Given** the settings screen, **When** a color theme is selected, **Then** the terminal colors change
+3. **Given** a Japanese font is selected, **When** the terminal is displayed, **Then** Japanese text is rendered correctly
 
 ---
 
 ### Edge Cases
 
-- **接続タイムアウト**: SSH接続が設定時間内に確立できない場合、明確なエラーメッセージを表示する
-- **tmux未インストール**: サーバーにtmuxがインストールされていない場合、適切なメッセージを表示する
-- **セッションなし**: tmuxセッションが存在しない場合、セッション作成オプションを提示する
-- **ネットワーク切断**: 接続中にネットワークが切断された場合、再接続機能を提供する
-- **大量出力**: 高速な出力がある場合でもUIがフリーズしない
-- **無効な鍵フォーマット**: サポートされていない鍵形式のインポート時にエラーを表示する
+- **Connection timeout**: If the SSH connection cannot be established within the configured time, show a clear error message
+- **tmux not installed**: If tmux is not installed on the server, show an appropriate message
+- **No sessions**: If no tmux session exists, present an option to create one
+- **Network disconnect**: If the network disconnects during a connection, provide a reconnect feature
+- **Heavy output**: The UI must not freeze even when output is very fast
+- **Invalid key format**: Show an error when importing an unsupported key format
 
 ## Requirements
 
 ### Functional Requirements
 
-- **FR-001**: アプリはdartssh2を使用してSSH接続を確立できなければならない
-- **FR-002**: アプリはxterm.dartを使用してターミナル表示を行わなければならない
-- **FR-003**: アプリはパスワード認証と公開鍵認証の両方をサポートしなければならない
-- **FR-004**: アプリはtmuxセッション/ウィンドウ/ペインの一覧取得と選択ができなければならない
-- **FR-005**: アプリはANSIエスケープシーケンス（256色）を正しくレンダリングしなければならない
-- **FR-006**: アプリは日本語（CJK文字）を正しく表示しなければならない
-- **FR-007**: アプリは特殊キー（ESC、Ctrl+文字、矢印キー等）を送信できなければならない
-- **FR-008**: アプリは接続設定をローカルストレージに永続化しなければならない
-- **FR-009**: アプリはパスワード/秘密鍵を暗号化して保存しなければならない
-- **FR-010**: アプリはSSH鍵（Ed25519/RSA）を生成できなければならない
-- **FR-011**: アプリはSSH鍵をファイルからインポートできなければならない
-- **FR-012**: アプリは通知ルール（テキスト/正規表現マッチ）を設定できなければならない
-- **FR-013**: アプリはマッチ時にアプリ内通知を発火しなければならない
-- **FR-014**: アプリはフォントサイズ/フォントファミリー/カラーテーマを設定できなければならない
-- **FR-015**: アプリはターミナルサイズ変更時にPTYサイズを同期しなければならない
+- **FR-001**: The app must be able to establish SSH connections using `dartssh2`
+- **FR-002**: The app must use `xterm.dart` for terminal display
+- **FR-003**: The app must support both password authentication and public-key authentication
+- **FR-004**: The app must be able to list and select tmux sessions, windows, and panes
+- **FR-005**: The app must correctly render ANSI escape sequences (256 colors)
+- **FR-006**: The app must correctly display Japanese text (CJK characters)
+- **FR-007**: The app must be able to send special keys such as ESC, Ctrl+character, and arrow keys
+- **FR-008**: The app must persist connection settings in local storage
+- **FR-009**: The app must encrypt and save passwords and private keys
+- **FR-010**: The app must be able to generate SSH keys (Ed25519/RSA)
+- **FR-011**: The app must be able to import SSH keys from a file
+- **FR-012**: The app must be able to configure notification rules for text and regular-expression matches
+- **FR-013**: The app must fire in-app notifications when a match occurs
+- **FR-014**: The app must be able to configure font size, font family, and color theme
+- **FR-015**: The app must synchronize PTY size when the terminal size changes
 
 ### Key Entities
 
-- **Connection**: SSH接続設定（ホスト、ポート、ユーザー名、認証方法、関連付けられた鍵）
-- **SSHKey**: SSH鍵ペア（タイプ、フィンガープリント、公開鍵、暗号化された秘密鍵）
-- **TmuxSession**: tmuxセッション（名前、作成日時、ウィンドウ一覧）
-- **TmuxWindow**: tmuxウィンドウ（インデックス、名前、ペイン一覧）
-- **TmuxPane**: tmuxペイン（ID、インデックス、サイズ、カーソル位置）
-- **NotificationRule**: 通知ルール（パターン、対象ペイン、アクション）
-- **AppSettings**: アプリ設定（表示設定、ターミナル設定、SSH設定、セキュリティ設定）
+- **Connection**: SSH connection settings (host, port, username, authentication method, associated key)
+- **SSHKey**: SSH key pair (type, fingerprint, public key, encrypted private key)
+- **TmuxSession**: tmux session (name, creation time, window list)
+- **TmuxWindow**: tmux window (index, name, pane list)
+- **TmuxPane**: tmux pane (ID, index, size, cursor position)
+- **NotificationRule**: Notification rule (pattern, target pane, action)
+- **AppSettings**: App settings (display settings, terminal settings, SSH settings, security settings)
 
 ## Success Criteria
 
 ### Measurable Outcomes
 
-- **SC-001**: ユーザーはSSH接続を5秒以内に確立できる（通常のネットワーク環境）
-- **SC-002**: ターミナル入力のレイテンシが200ms以下である
-- **SC-003**: ANSIカラー（256色）が正しくレンダリングされる（既存テストケースでの合格率100%）
-- **SC-004**: 日本語文字がターミナルで正しく表示される（文字化けなし）
-- **SC-005**: 1000行/秒の出力でもUIがフリーズしない
-- **SC-006**: 接続設定の追加から接続完了まで3タップ以内で完了できる
-- **SC-007**: 既存のReact Native実装と同等以上の機能を提供する
-- **SC-008**: ビルドがネイティブパッチなしで成功する
+- **SC-001**: The user can establish an SSH connection within 5 seconds under normal network conditions
+- **SC-002**: Terminal input latency stays at 200 ms or less
+- **SC-003**: ANSI colors (256 colors) render correctly, with a 100% pass rate for existing test cases
+- **SC-004**: Japanese text displays correctly in the terminal with no garbling
+- **SC-005**: The UI does not freeze even with output at 1,000 lines per second
+- **SC-006**: The flow from adding a connection setting to completing a connection takes 3 taps or fewer
+- **SC-007**: The app provides functionality equal to or better than the existing React Native implementation
+- **SC-008**: The build succeeds without native patches
 
 ## Assumptions
 
-- ユーザーのサーバーにはtmuxがインストールされている
-- ユーザーはSSHアクセス可能な認証情報を持っている
-- 対象プラットフォームはAndroidのみ（iOS/デスクトップは将来検討）
-- 既存のReact Native実装の全機能を移行対象とする
-- Pure Dart実装（dartssh2）を使用することでネイティブ依存を排除する
+- tmux is installed on the user's server
+- The user has SSH-accessible credentials
+- The target platform is Android only, with iOS and desktop considered in the future
+- All features from the existing React Native implementation are in scope for migration
+- Using the pure Dart `dartssh2` implementation removes native dependencies
 
 ## Out of Scope
 
-- iOS対応（将来のフェーズ）
-- デスクトップ対応（将来のフェーズ）
-- MOSH対応
-- SFTP（ファイル転送）
-- ポートフォワーディング
-- 外部プッシュ通知（ntfy連携）
+- iOS support (future phase)
+- Desktop support (future phase)
+- MOSH support
+- SFTP (file transfer)
+- Port forwarding
+- External push notifications (ntfy integration)
+
+
+

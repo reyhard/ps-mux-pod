@@ -1,4 +1,4 @@
-# Specification Quality Checklist: SSH鍵管理機能
+# Specification Quality Checklist: SSH Key Management
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-01-11
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- 仕様書は完成しており、`/speckit.clarify` または `/speckit.plan` に進める状態です
-- Assumptionsセクションに技術的前提を記載していますが、これは実装フェーズ向けのメモであり、仕様自体はテクノロジーニュートラルです
+- 、`/speckit.clarify` `/speckit.plan` 
+- Assumptionsassumptiondocumented、implementation、

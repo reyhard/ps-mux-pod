@@ -1,12 +1,12 @@
 /// Notification Service Contract
 ///
-/// 通知ルール管理とマッチング処理のサービス層インターフェース。
+/// Notification Rulesmanagementprocessingserviceinterface。
 
 import 'dart:async';
 
 import '../models/notification_rule.dart';
 
-/// 通知イベント
+/// notification
 class NotificationEvent {
   final String ruleId;
   final String ruleName;
@@ -29,33 +29,33 @@ class NotificationEvent {
   });
 }
 
-/// 通知サービスインターフェース
+/// notificationserviceinterface
 abstract class NotificationService {
-  /// 通知イベントストリーム
+  /// notification
   Stream<NotificationEvent> get notifications;
 
-  /// ルール一覧取得
+  /// rulelistretrieve
   Future<List<NotificationRule>> listRules();
 
-  /// ルール取得
+  /// ruleretrieve
   Future<NotificationRule?> getRule(String ruleId);
 
-  /// ルール作成
+  /// rulecreate
   Future<NotificationRule> createRule(NotificationRule rule);
 
-  /// ルール更新
+  /// ruleupdate
   Future<void> updateRule(NotificationRule rule);
 
-  /// ルール削除
+  /// ruledelete
   Future<void> deleteRule(String ruleId);
 
-  /// ルール有効/無効切り替え
+  /// ruleenabled/disabledswitch
   Future<void> toggleRule({
     required String ruleId,
     required bool enabled,
   });
 
-  /// 出力チェック（内部呼び出し用）
+  /// outputcheck（internal）
   void checkOutput({
     required String connectionId,
     required String sessionName,
@@ -64,15 +64,18 @@ abstract class NotificationService {
     required String output,
   });
 
-  /// セッションリセット（once_per_session用）
+  /// session（once_per_session）
   void resetSession(String connectionId);
 
-  /// 通知履歴取得
+  /// notificationhistoryretrieve
   Future<List<NotificationEvent>> getHistory({
     int limit = 50,
     String? connectionId,
   });
 
-  /// 通知履歴クリア
+  /// notificationhistory
   Future<void> clearHistory();
 }
+
+
+

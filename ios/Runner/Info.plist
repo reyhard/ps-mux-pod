@@ -59,8 +59,8 @@
 		</dict>
 	</array>
 	<key>NSFaceIDUsageDescription</key>
-	<string>SSH接続情報への安全なアクセスのためにFace IDを使用します</string>
+	<string>Uses Face ID for secure access to SSH connection information</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>SSH鍵ファイルのインポートに使用します</string>
+	<string>Used to import SSH key files</string>
 </dict>
 </plist>

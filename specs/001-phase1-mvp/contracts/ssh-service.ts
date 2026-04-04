@@ -1,109 +1,112 @@
 /**
  * SSH Service Contract
  *
- * SSHクライアントサービスのインターフェース定義。
- * 実装は react-native-ssh-sftp をラップする。
+ * SSHclientserviceinterface。
+ * implement react-native-ssh-sftp 。
  */
 
 import type { Connection } from '../../../src/types/connection';
 
 /**
- * SSH接続オプション
+ * SSH connection
  */
 export interface SSHConnectOptions {
-  /** パスワード認証時のパスワード */
+  /** passwordauthenticationpassword */
   password?: string;
-  /** 鍵認証時の秘密鍵（PEM形式） */
+  /** keyauthenticationprivate key（PEMformat） */
   privateKey?: string;
-  /** 秘密鍵のパスフレーズ */
+  /** private keypassphrase */
   passphrase?: string;
 }
 
 /**
- * シェルオプション
+ * shell
  */
 export interface ShellOptions {
-  /** ターミナルタイプ */
+  /** terminal */
   term?: string;
-  /** カラム数 */
+  /** count */
   cols?: number;
-  /** 行数 */
+  /** rows */
   rows?: number;
 }
 
 /**
- * SSH接続状態イベント
+ * SSH connectionstate
  */
 export interface SSHEvents {
-  /** データ受信時 */
+  /** datareceive */
   onData: (data: string) => void;
-  /** 接続クローズ時 */
+  /** connection */
   onClose: () => void;
-  /** エラー発生時 */
+  /** error */
   onError: (error: Error) => void;
 }
 
 /**
- * SSHクライアントインターフェース
+ * SSHclientinterface
  */
 export interface ISSHClient {
   /**
-   * SSH接続を確立する
-   * @param connection 接続設定
-   * @param options 認証オプション
-   * @throws 接続失敗時
+   * SSH connectionestablishment
+   * @param connection connection settings
+   * @param options authentication
+   * @throws connection
    */
   connect(connection: Connection, options: SSHConnectOptions): Promise<void>;
 
   /**
-   * 接続を切断する
+   * connectiondisconnect
    */
   disconnect(): Promise<void>;
 
   /**
-   * 接続中かどうか
+   * connectionin progress
    */
   isConnected(): boolean;
 
   /**
-   * インタラクティブシェルを開始する
-   * @param options シェルオプション
+   * shellstart
+   * @param options shell
    */
   startShell(options?: ShellOptions): Promise<void>;
 
   /**
-   * シェルにデータを書き込む
-   * @param data 送信データ
+   * shelldata
+   * @param data senddata
    */
   write(data: string): Promise<void>;
 
   /**
-   * ターミナルサイズを変更する
-   * @param cols カラム数
-   * @param rows 行数
+   * terminalsizechange
+   * @param cols count
+   * @param rows rows
    */
   resize(cols: number, rows: number): Promise<void>;
 
   /**
-   * コマンドを実行して結果を取得する
-   * @param command 実行コマンド
-   * @returns コマンド出力
+   * commandrunresultretrieve
+   * @param command runcommand
+   * @returns commandoutput
    */
   exec(command: string): Promise<string>;
 
   /**
-   * イベントハンドラを設定する
-   * @param events イベントハンドラ
+   * settings
+   * @param events 
    */
   setEventHandlers(events: Partial<SSHEvents>): void;
 }
 
 /**
- * SSHクライアントファクトリ
+ * SSHclient
  */
 export interface ISSHClientFactory {
   /**
-   * 新しいSSHクライアントインスタンスを作成する
+   * newSSHclientcreate
    */
   create(): ISSHClient;
 }
+
+
+

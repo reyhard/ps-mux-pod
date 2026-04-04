@@ -1,29 +1,29 @@
-# Research: SSH鍵管理機能
+# Research: SSH Key Management
 
 **Feature**: 003-ssh-key-management
 **Date**: 2026-01-11
 
 ## Research Tasks
 
-### 1. SSH鍵生成ライブラリの選定
+### 1. SSHkeygenerate
 
-**Question**: Dart/FlutterでEd25519/RSA鍵ペアを生成するには？
+**Question**: Dart/FlutterEd25519/RSAkeygenerate？
 
-**Decision**: `cryptography`パッケージ（Ed25519）と `pointycastle`パッケージ（RSA）を使用
+**Decision**: `cryptography`（Ed25519） `pointycastle`（RSA）use
 
 **Rationale**:
-- `dartssh2`は鍵のパース/ロードのみサポートし、生成機能はない
-- `cryptography`はEd25519をネイティブサポート、クロスプラットフォーム対応
-- `pointycastle`はRSA鍵生成の実績あり、Pure Dartで依存関係なし
+- `dartssh2`key/、generatefeature
+- `cryptography`Ed25519、platformsupport
+- `pointycastle`RSAkeygenerate、Pure Dartdependencies
 
 **Alternatives Considered**:
 
-| パッケージ | 評価 | 却下理由 |
+| | | |
 |-----------|------|----------|
-| `ed25519_dart` | △ | Ed25519のみ、メンテナンス不活発 |
-| `basic_utils` | △ | RSAのみ、API複雑 |
-| `cryptography` | ✅ | Ed25519対応、アクティブメンテナンス |
-| `pointycastle` | ✅ | RSA対応、広く使用されている |
+| `ed25519_dart` | △ | Ed25519、 |
+| `basic_utils` | △ | RSA、API |
+| `cryptography` | ✅ | Ed25519support、 |
+| `pointycastle` | ✅ | RSAsupport、use |
 
 **Implementation Notes**:
 ```dart
@@ -39,121 +39,121 @@ final publicKey = await keyPair.extractPublicKey();
 import 'package:pointycastle/export.dart';
 
 final keyGen = RSAKeyGenerator()
-  ..init(ParametersWithRandom(
-    RSAKeyGeneratorParameters(BigInt.parse('65537'), 4096, 64),
-    secureRandom,
-  ));
+ ..init(ParametersWithRandom(
+ RSAKeyGeneratorParameters(BigInt.parse('65537'), 4096, 64),
+ secureRandom,
+ ));
 final pair = keyGen.generateKeyPair();
 ```
 
 ---
 
-### 2. ファイルピッカーの選定
+### 2. Choosing a file picker
 
-**Question**: AndroidでSSH秘密鍵ファイルを選択するには？
+**Question**: AndroidSSHprivate keyfileselect？
 
-**Decision**: `file_picker`パッケージを使用
+**Decision**: `file_picker`use
 
 **Rationale**:
-- pub.devで最も人気（5000+ likes）
-- Android/iOS/Web/Desktop対応
-- シンプルなAPI、拡張子フィルタリング対応
-- アクティブにメンテナンスされている
+- pub.dev（5000+ likes）
+- Android/iOS/Web/Desktopsupport
+- API、support
+- 
 
 **Alternatives Considered**:
 
-| パッケージ | 評価 | 却下理由 |
+| | | |
 |-----------|------|----------|
-| `native_file_picker` | △ | 新しい、実績少ない |
-| `filesystem_picker` | △ | ディレクトリ選択向け |
-| `file_picker` | ✅ | 実績豊富、APIシンプル |
+| `native_file_picker` | △ | 、 |
+| `filesystem_picker` | △ | select |
+| `file_picker` | ✅ | 、API |
 
 **Implementation Notes**:
 ```dart
 import 'package:file_picker/file_picker.dart';
 
-// 秘密鍵ファイル選択
+// private keyfileselect
 FilePickerResult? result = await FilePicker.platform.pickFiles(
-  type: FileType.any,  // SSH鍵は拡張子なしの場合あり
-  allowMultiple: false,
+ type: FileType.any, // SSHkey
+ allowMultiple: false,
 );
 
 if (result != null && result.files.single.path != null) {
-  final file = File(result.files.single.path!);
-  final content = await file.readAsString();
-  // PEM形式かどうか検証
+ final file = File(result.files.single.path!);
+ final content = await file.readAsString();
+ // PEMformatverification
 }
 ```
 
 ---
 
-### 3. 秘密鍵のPEM形式パース
+### 3. private keyPEMformat
 
-**Question**: インポートされた秘密鍵をどうパースするか？
+**Question**: importprivate key？
 
-**Decision**: `dartssh2`の`SSHKeyPair.fromPem()`を活用
+**Decision**: `dartssh2``SSHKeyPair.fromPem()`
 
 **Rationale**:
-- 既存依存関係で対応可能
-- OpenSSH形式・PEM形式両方サポート
-- パスフレーズ付き鍵の復号もサポート
+- existingdependenciessupportpossible
+- OpenSSHformatPEMformat
+- passphrasekey
 
 **Implementation Notes**:
 ```dart
 import 'package:dartssh2/dartssh2.dart';
 
-// 暗号化チェック
+// 
 final isEncrypted = SSHKeyPair.isEncryptedPem(pemContent);
 
-// パース
+// 
 final keyPair = SSHKeyPair.fromPem(
-  pemContent,
-  passphrase: isEncrypted ? userPassphrase : null,
+ pemContent,
+ passphrase: isEncrypted ? userPassphrase : null,
 );
 
-// 鍵タイプ取得
+// keyretrieve
 final keyType = keyPair.type; // 'ssh-ed25519', 'ssh-rsa', etc.
 ```
 
 ---
 
-### 4. PEM形式での鍵エクスポート
+### 4. PEMformatkey
 
-**Question**: 生成した鍵をPEM形式で保存するには？
+**Question**: generatekeyPEMformatsave？
 
-**Decision**: OpenSSH形式のPEMを手動で構築
+**Decision**: OpenSSHformatPEMmanual
 
 **Rationale**:
-- `cryptography`や`pointycastle`はPEM出力を直接サポートしない
-- OpenSSH形式が標準的で、他ツールとの互換性が高い
+- `cryptography``pointycastle`PEM
+- OpenSSHformat、high
 
 **Implementation Notes**:
 ```dart
-// Ed25519の場合
+// Ed25519
 String toPem(Uint8List privateKey, Uint8List publicKey) {
-  // OpenSSH形式のPEM構造を構築
-  // - "-----BEGIN OPENSSH PRIVATE KEY-----"
-  // - Base64エンコードされたバイナリデータ
-  // - "-----END OPENSSH PRIVATE KEY-----"
+ // OpenSSHformatPEM
+ // - "-----BEGIN OPENSSH PRIVATE KEY-----"
+ // - Base64
+ // - "-----END OPENSSH PRIVATE KEY-----"
 }
 
-// 公開鍵はauthorized_keys形式
+// public keyauthorized_keysformat
 String toAuthorizedKeys(String type, Uint8List publicKey, String comment) {
-  return '$type ${base64Encode(publicKey)} $comment';
+ return '$type ${base64Encode(publicKey)} $comment';
 }
 ```
 
 ---
 
-### 5. フィンガープリント計算
+### 5. fingerprint
 
-**Question**: 鍵のフィンガープリントをどう計算するか？
+**Question**: keyfingerprint？
 
-**Decision**: SHA-256ハッシュを使用（OpenSSH標準）
+**Decision**: SHA-256use（OpenSSH）
 
 **Rationale**:
-- OpenSSH 6.8以降のデフォルト
-- MD5より安全性が高い
+- OpenSSH 6.8later
+- MD5securehigh
 
 **Implementation Notes**:
 ```dart
@@ -161,8 +161,8 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 String calculateFingerprint(Uint8List publicKeyBlob) {
-  final hash = sha256.convert(publicKeyBlob);
-  return 'SHA256:${base64Encode(hash.bytes).replaceAll('=', '')}';
+ final hash = sha256.convert(publicKeyBlob);
+ return 'SHA256:${base64Encode(hash.bytes).replaceAll('=', '')}';
 }
 ```
 
@@ -171,23 +171,23 @@ String calculateFingerprint(Uint8List publicKeyBlob) {
 ## Dependencies to Add
 
 ```yaml
-# pubspec.yaml に追加
+# pubspec.yaml add
 dependencies:
-  file_picker: ^8.0.3
-  cryptography: ^2.7.0
-  pointycastle: ^3.9.1
+ file_picker: ^8.0.3
+ cryptography: ^2.7.0
+ pointycastle: ^3.9.1
 ```
 
 ## Security Considerations
 
-1. **秘密鍵の扱い**:
-   - メモリ上での保持を最小限に
-   - ログ出力に鍵データを含めない
-   - 使用後は変数をクリア
+1. **Private key handling**:
+ - minimum
+ - key
+ - use
 
-2. **パスフレーズの扱い**:
-   - flutter_secure_storageに暗号化保存
-   - UIでの表示はマスク処理
+2. **Passphrase handling**:
+ - flutter_secure_storagesave
+ - UIdisplay
 
-3. **一時ファイル**:
-   - ファイルピッカー経由のファイルは読み取り後即座にパス参照を破棄
+3. **file**:
+ - file pickerviafile

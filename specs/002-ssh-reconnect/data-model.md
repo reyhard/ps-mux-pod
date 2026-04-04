@@ -1,4 +1,4 @@
-# Data Model: SSH再接続機能
+# Data Model: SSH Reconnection
 
 **Feature**: 002-ssh-reconnect
 **Date**: 2026-01-10
@@ -8,33 +8,33 @@
 ```
 ┌─────────────────────┐      ┌──────────────────────┐
 │     Connection      │ 1  1 │   ReconnectSettings  │
-│ (既存エンティティ)   │──────│   (新規追加フィールド)│
+│ (existing entity)     │──────│   (new fields)        │
 └─────────────────────┘      └──────────────────────┘
           │ 1
           │
           │ *
 ┌─────────────────────┐
 │   ConnectionState   │
-│ (既存、拡張)         │
+│ (existing, extended)  │
 └─────────────────────┘
           │ 1
           │
           │ 0..1
 ┌─────────────────────┐
 │  ReconnectAttempt   │
-│ (新規、ランタイム)   │
+│ (new, runtime)        │
 └─────────────────────┘
 ```
 
 ## Entities
 
-### Connection (既存エンティティ - 拡張)
+### Connection (existing entity - extended)
 
-`src/types/connection.ts` に定義済み。再接続設定フィールドを追加。
+Defined in `src/types/connection.ts`. Add reconnect settings fields.
 
 ```typescript
 interface Connection {
-  // 既存フィールド
+  // Existing fields
   id: string;
   name: string;
   host: string;
@@ -51,122 +51,122 @@ interface Connection {
   createdAt: number;
   updatedAt: number;
 
-  // 新規追加: 再接続設定
-  autoReconnect: boolean;           // 自動再接続有効フラグ (default: true)
-  maxReconnectAttempts: number;     // 最大試行回数 (default: 3)
-  reconnectInterval: number;        // 試行間隔(ms) (default: 5000)
+  // New: reconnect settings
+  autoReconnect: boolean;           // Auto-reconnect enabled flag (default: true)
+  maxReconnectAttempts: number;     // Maximum attempt count (default: 3)
+  reconnectInterval: number;        // Retry interval in ms (default: 5000)
 }
 ```
 
 **Validation Rules**:
 - `autoReconnect`: boolean, default `true`
-- `maxReconnectAttempts`: 1-10の整数, default `3`
-- `reconnectInterval`: 1000-30000の整数(ms), default `5000`
+- `maxReconnectAttempts`: integer from 1 to 10, default `3`
+- `reconnectInterval`: integer from 1000 to 30000 ms, default `5000`
 
-**State Transitions**: N/A (設定値は静的)
+**State Transitions**: N/A (settings are static)
 
 ---
 
-### ConnectionState (既存エンティティ - 拡張)
+### ConnectionState (existing entity - extended)
 
-`src/types/connection.ts` に定義済み。状態値と詳細情報を拡張。
+Defined in `src/types/connection.ts`. Extend the status values and details.
 
 ```typescript
 interface ConnectionState {
-  // 既存フィールド
+  // Existing fields
   connectionId: string;
-  status: ConnectionStatus;   // 拡張: 'reconnecting' 追加
+  status: ConnectionStatus;   // Extended with 'reconnecting'
   error?: string;
   latency?: number;
   connectedAt?: number;
 
-  // 新規追加
-  disconnectedAt?: number;     // 切断時刻 (Unix timestamp ms)
-  disconnectReason?: DisconnectReason;  // 切断理由
-  reconnectAttempt?: ReconnectAttempt;  // 現在の再接続試行情報
+  // New fields
+  disconnectedAt?: number;     // Disconnect time (Unix timestamp ms)
+  disconnectReason?: DisconnectReason;  // Disconnect reason
+  reconnectAttempt?: ReconnectAttempt;  // Current reconnect attempt info
 }
 
 type ConnectionStatus =
   | 'disconnected'
   | 'connecting'
   | 'connected'
-  | 'reconnecting'  // 新規追加
+  | 'reconnecting'  // New
   | 'error';
 
 type DisconnectReason =
-  | 'network_error'      // ネットワーク障害
-  | 'server_closed'      // サーバー側で切断
-  | 'auth_failed'        // 認証失敗
-  | 'timeout'            // タイムアウト
-  | 'user_disconnect'    // ユーザー操作による切断
-  | 'unknown';           // 不明
+  | 'network_error'      // Network failure
+  | 'server_closed'      // Server-side disconnect
+  | 'auth_failed'        // Authentication failure
+  | 'timeout'            // Timeout
+  | 'user_disconnect'    // User-initiated disconnect
+  | 'unknown';           // Unknown
 ```
 
 **Validation Rules**:
-- `disconnectedAt`: `status === 'disconnected'` または `status === 'reconnecting'` 時のみ設定
-- `disconnectReason`: `disconnectedAt` が設定されている場合のみ有効
-- `reconnectAttempt`: `status === 'reconnecting'` 時のみ設定
+- `disconnectedAt`: Set only when `status === 'disconnected'` or `status === 'reconnecting'`
+- `disconnectReason`: Valid only when `disconnectedAt` is set
+- `reconnectAttempt`: Set only when `status === 'reconnecting'`
 
 **State Transitions**:
 ```
-connected → disconnected (切断検出)
-disconnected → connecting (手動再接続開始)
-disconnected → reconnecting (自動再接続開始)
-reconnecting → connected (再接続成功)
-reconnecting → disconnected (再接続断念/キャンセル)
-reconnecting → error (致命的エラー)
-error → connecting (再試行)
+connected → disconnected (disconnect detected)
+disconnected → connecting (manual reconnect started)
+disconnected → reconnecting (auto reconnect started)
+reconnecting → connected (reconnect successful)
+reconnecting → disconnected (reconnect abandoned/cancelled)
+reconnecting → error (fatal error)
+error → connecting (retry)
 ```
 
 ---
 
-### ReconnectAttempt (新規エンティティ - ランタイム)
+### ReconnectAttempt (new entity - runtime)
 
-再接続試行の状態を追跡。永続化されない。
+Tracks reconnect attempt state. Not persisted.
 
 ```typescript
 interface ReconnectAttempt {
-  /** 試行開始時刻 (Unix timestamp ms) */
+  /** Attempt start time (Unix timestamp ms) */
   startedAt: number;
 
-  /** 現在の試行回数 (1から開始) */
+  /** Current attempt number (starts at 1) */
   attemptNumber: number;
 
-  /** 最大試行回数 (Connection.maxReconnectAttemptsからコピー) */
+  /** Maximum attempts (copied from `Connection.maxReconnectAttempts`) */
   maxAttempts: number;
 
-  /** 次回試行予定時刻 (Unix timestamp ms, 待機中のみ) */
+  /** Next scheduled attempt time (Unix timestamp ms, only while waiting) */
   nextAttemptAt?: number;
 
-  /** 各試行の結果履歴 */
+  /** History of each attempt result */
   history: AttemptResult[];
 }
 
 interface AttemptResult {
-  /** 試行番号 */
+  /** Attempt number */
   attemptNumber: number;
 
-  /** 試行時刻 */
+  /** Attempt time */
   attemptedAt: number;
 
-  /** 結果 */
+  /** Result */
   result: 'success' | 'failed' | 'cancelled';
 
-  /** 失敗理由 (result === 'failed' の場合) */
+  /** Failure reason (when `result === 'failed'`) */
   error?: string;
 }
 ```
 
 **Validation Rules**:
-- `attemptNumber`: 1以上、`maxAttempts`以下
-- `history.length`: `attemptNumber` と一致（試行後に追加）
-- `nextAttemptAt`: 現在時刻より未来
+- `attemptNumber`: At least 1 and no greater than `maxAttempts`
+- `history.length`: Matches `attemptNumber` after each attempt
+- `nextAttemptAt`: Must be in the future
 
 **State Transitions**:
 ```
-null → ReconnectAttempt (再接続開始)
-attemptNumber++ (次の試行へ)
-ReconnectAttempt → null (成功/断念/キャンセル)
+null → ReconnectAttempt (reconnect started)
+attemptNumber++ (move to the next attempt)
+ReconnectAttempt → null (success / give up / cancel)
 ```
 
 ## Default Values
@@ -175,7 +175,7 @@ ReconnectAttempt → null (成功/断念/キャンセル)
 const DEFAULT_RECONNECT_SETTINGS = {
   autoReconnect: true,
   maxReconnectAttempts: 3,
-  reconnectInterval: 5000,  // 5秒
+  reconnectInterval: 5000,  // 5 seconds
 };
 ```
 
@@ -183,16 +183,16 @@ const DEFAULT_RECONNECT_SETTINGS = {
 
 | Entity | Storage | Persistence |
 |--------|---------|-------------|
-| Connection (再接続設定含む) | AsyncStorage | ✅ 永続化 |
-| ConnectionState | Zustand (メモリ) | ❌ ランタイムのみ |
-| ReconnectAttempt | Zustand (メモリ) | ❌ ランタイムのみ |
+| Connection (including reconnect settings) | AsyncStorage | ✅ Persistent |
+| ConnectionState | Zustand (memory) | ❌ Runtime only |
+| ReconnectAttempt | Zustand (memory) | ❌ Runtime only |
 
 ## Migration
 
-既存の`Connection`エンティティへのフィールド追加は、Zustandのpersist middlewareによって自動的にマージされる。新規フィールドが存在しない場合はデフォルト値を使用。
+Added fields on the existing `Connection` entity are merged automatically by Zustand's persist middleware. Use default values when new fields are missing.
 
 ```typescript
-// connectionStore.ts での初期化時にデフォルト値を適用
+// Apply defaults during initialization in connectionStore.ts
 const normalizeConnection = (conn: Partial<Connection>): Connection => ({
   ...DEFAULT_CONNECTION,
   ...DEFAULT_RECONNECT_SETTINGS,

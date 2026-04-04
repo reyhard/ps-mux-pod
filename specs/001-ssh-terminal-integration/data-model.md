@@ -1,9 +1,9 @@
-# Data Model: SSH/Terminal統合機能
+# Data Model: SSH/Terminal Integration
 
 **Date**: 2026-01-11
 **Branch**: `001-ssh-terminal-integration`
 
-## エンティティ関係図
+## Entity Relationship Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -12,7 +12,7 @@
 
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │  Connection  │────►│  SshClient   │────►│  SSH Server  │
-│  (設定)      │     │  (接続)      │     │  (リモート)  │
+│  (settings)      │     │  (connection)      │     │  ()  │
 └──────────────┘     └──────┬───────┘     └──────┬───────┘
                            │                     │
                            │ startShell()        │
@@ -26,115 +26,115 @@
                            ▼
                     ┌──────────────┐
                     │ TmuxSession  │
-                    │  (セッション) │
+                    │  (session) │
                     └──────┬───────┘
                            │
            ┌───────────────┼───────────────┐
            ▼               ▼               ▼
     ┌──────────┐    ┌──────────┐    ┌──────────┐
     │ TmuxPane │    │ TmuxPane │    │ TmuxPane │
-    │ (ペイン) │    │ (ペイン) │    │ (ペイン) │
+    │ (pane) │    │ (pane) │    │ (pane) │
     └──────────┘    └──────────┘    └──────────┘
 ```
 
-## 既存エンティティ
+## existing
 
-### Connection (接続設定)
+### Connection (Connection Settings)
 
-**ファイル**: `lib/providers/connection_provider.dart`
+**file**: `lib/providers/connection_provider.dart`
 
 ```dart
 class Connection {
   final String id;           // UUID
-  final String name;         // 表示名
-  final String host;         // ホスト名/IP
-  final int port;            // ポート (default: 22)
-  final String username;     // ユーザー名
+  final String name;         // display
+  final String host;         // host name/IP
+  final int port;            // port (default: 22)
+  final String username;     // user
   final String authMethod;   // 'password' | 'key'
-  final String? keyId;       // SSH鍵ID (authMethod='key'の場合)
+  final String? keyId;       // SSHkeyID (authMethod='key'when)
   final DateTime createdAt;
   final DateTime? lastConnectedAt;
 }
 ```
 
-**バリデーション**:
-- `host`: 空でないこと
+**validation**:
+- `host`: 
 - `port`: 1-65535
-- `username`: 空でないこと
-- `authMethod`: 'password' または 'key'
+- `username`: 
+- `authMethod`: 'password'  'key'
 
-### SshKeyMeta (SSH鍵メタデータ)
+### SshKeyMeta (SSH Key Metadata)
 
-**ファイル**: `lib/providers/key_provider.dart`
+**file**: `lib/providers/key_provider.dart`
 
 ```dart
 class SshKeyMeta {
   final String id;           // UUID
-  final String name;         // 表示名
+  final String name;         // display
   final String type;         // 'rsa' | 'ed25519' | 'ecdsa'
-  final String? publicKey;   // 公開鍵 (表示用)
-  final bool hasPassphrase;  // パスフレーズ有無
+  final String? publicKey;   // public key (display)
+  final bool hasPassphrase;  // passphrase
   final DateTime createdAt;
-  final String? comment;     // コメント
+  final String? comment;     // comment
 }
 ```
 
-**注**: 秘密鍵は `flutter_secure_storage` に別途保存
+****: private key `flutter_secure_storage` separatesave
 
-### TmuxSession (tmuxセッション)
+### TmuxSession (tmux Session)
 
-**ファイル**: `lib/services/tmux/tmux_parser.dart`
+**file**: `lib/services/tmux/tmux_parser.dart`
 
 ```dart
 class TmuxSession {
-  final String name;         // セッション名
-  final String? id;          // セッションID ($0, $1, ...)
-  final DateTime? created;   // 作成日時
-  final bool attached;       // アタッチ状態
-  final int windowCount;     // ウィンドウ数
+  final String name;         // session
+  final String? id;          // sessionID ($0, $1, ...)
+  final DateTime? created;   // create
+  final bool attached;       // attachstate
+  final int windowCount;     // windowcount
   final List<TmuxWindow> windows;
 }
 ```
 
-### TmuxWindow (tmuxウィンドウ)
+### TmuxWindow (tmux Window)
 
-**ファイル**: `lib/services/tmux/tmux_parser.dart`
+**file**: `lib/services/tmux/tmux_parser.dart`
 
 ```dart
 class TmuxWindow {
-  final int index;           // ウィンドウインデックス
-  final String? id;          // ウィンドウID (@0, @1, ...)
-  final String name;         // ウィンドウ名
-  final bool active;         // アクティブ状態
-  final int paneCount;       // ペイン数
+  final int index;           // window
+  final String? id;          // windowID (@0, @1, ...)
+  final String name;         // window
+  final bool active;         // active state
+  final int paneCount;       // panecount
   final Set<TmuxWindowFlag> flags;
   final List<TmuxPane> panes;
 }
 ```
 
-### TmuxPane (tmuxペイン)
+### TmuxPane (tmux Pane)
 
-**ファイル**: `lib/services/tmux/tmux_parser.dart`
+**file**: `lib/services/tmux/tmux_parser.dart`
 
 ```dart
 class TmuxPane {
-  final int index;           // ペインインデックス
-  final String id;           // ペインID (%0, %1, ...)
-  final bool active;         // アクティブ状態
+  final int index;           // pane
+  final String id;           // paneID (%0, %1, ...)
+  final bool active;         // active state
   final String? currentCommand;
   final String? title;
-  final int width;           // 幅 (cols)
-  final int height;          // 高さ (rows)
+  final int width;           // width (cols)
+  final int height;          // height (rows)
   final int cursorX;
   final int cursorY;
 }
 ```
 
-## 状態モデル
+## State Model
 
 ### SshState
 
-**ファイル**: `lib/providers/ssh_provider.dart`
+**file**: `lib/providers/ssh_provider.dart`
 
 ```dart
 class SshState {
@@ -144,7 +144,7 @@ class SshState {
 }
 ```
 
-**状態遷移**:
+**state**:
 ```
 disconnected ──connect()──► connecting
 connecting ───success───► connected
@@ -156,7 +156,7 @@ error ────retry()──────► connecting
 
 ### TerminalState
 
-**ファイル**: `lib/providers/terminal_provider.dart`
+**file**: `lib/providers/terminal_provider.dart`
 
 ```dart
 class TerminalState {
@@ -170,7 +170,7 @@ class TerminalState {
 
 ### TmuxState
 
-**ファイル**: `lib/providers/tmux_provider.dart`
+**file**: `lib/providers/tmux_provider.dart`
 
 ```dart
 class TmuxState {
@@ -183,37 +183,37 @@ class TmuxState {
 }
 ```
 
-## データフロー
+## Data Flow
 
-### 接続フロー
+### Connection Flow
 
 ```
-1. ユーザーが接続をタップ
+1. The user can connection
    ↓
-2. ConnectionからconnectionId取得
+2. ConnectionconnectionIdretrieve
    ↓
-3. SshProviderで接続開始
+3. SshProviderconnectionstart
    - SshClient.connect(host, port, username, options)
    - SshClient.startShell()
    ↓
-4. イベントハンドラ設定
+4. settings
    - onData → Terminal.write()
-   - onClose → 切断処理
-   - onError → エラー表示
+   - onClose → disconnectprocessing
+   - onError → errordisplay
    ↓
-5. tmuxセッション一覧取得
+5. tmux sessionlistretrieve
    - SshClient.exec(TmuxCommands.listSessions())
    ↓
-6. セッションにアタッチ
+6. sessionattach
    - SshClient.write("tmux attach -t session\n")
    ↓
-7. 接続完了
+7. connectioncomplete
 ```
 
-### キー入力フロー
+### Key Input Flow
 
 ```
-1. ユーザーがキー入力
+1. The user can Key Input
    ↓
 2. MuxTerminalController.onInput
    ↓
@@ -223,13 +223,13 @@ class TmuxState {
    ↓
 5. SshClient.write(data)
    ↓
-6. SSH → tmux → シェル
+6. SSH → tmux → shell
 ```
 
-### 出力表示フロー
+### Output Display Flow
 
 ```
-1. SSH Server → データ送信
+1. SSH Server → datasend
    ↓
 2. SshClient.onData
    ↓
@@ -239,13 +239,16 @@ class TmuxState {
    ↓
 5. Terminal.write() (xterm)
    ↓
-6. 画面更新
+6. screenupdate
 ```
 
-## セキュアストレージキー
+## Secure Storage Keys
 
-| キー | 用途 | 保存タイミング |
+| key | purpose | save |
 |-----|------|--------------|
-| `connection_{id}_password` | 接続パスワード | 接続設定保存時 |
-| `ssh_key_{id}_private` | SSH秘密鍵 | 鍵インポート時 |
-| `ssh_key_{id}_passphrase` | 鍵パスフレーズ | 鍵インポート時 |
+| `connection_{id}_password` | connectionpassword | connection settingssave |
+| `ssh_key_{id}_private` | SSHprivate key | keyport |
+| `ssh_key_{id}_passphrase` | keypassphrase | keyport |
+
+
+

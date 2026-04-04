@@ -25,7 +25,7 @@
 **Purpose**: Project initialization and dependency setup
 
 - [x] T001 Add url_launcher dependency via `flutter pub add url_launcher`
-- [x] T002 [P] Create dialogs widget directory at `lib/widgets/dialogs/`
+- [x] T002 [P] Create dialogs Widget directory at `lib/Widgets/dialogs/`
 - [x] T003 [P] Verify existing providers work via `flutter analyze`
 
 ---
@@ -45,19 +45,19 @@
 
 ## Phase 3: User Story 1 - Terminal Font Configuration (Priority: P1)
 
-**Goal**: ユーザーがフォントサイズとフォントファミリーを変更・保存できる
+**Goal**: The user can change and save the font size and font family
 
-**Independent Test**: 設定画面でフォントサイズを変更し、アプリを再起動後も設定が保持される
+**Independent Test**: Change the font size in the Settings Screen and verify that the setting remains after restarting the app
 
 ### Tests for User Story 1
 
-- [x] T006 [P] [US1] Create widget test for FontSizeDialog in `test/widgets/font_size_dialog_test.dart`
-- [x] T007 [P] [US1] Create widget test for FontFamilyDialog in `test/widgets/font_family_dialog_test.dart`
+- [x] T006 [P] [US1] Create Widget test for FontSizeDialog in `test/Widgets/font_size_dialog_test.dart`
+- [x] T007 [P] [US1] Create Widget test for FontFamilyDialog in `test/Widgets/font_family_dialog_test.dart`
 
 ### Implementation for User Story 1
 
-- [x] T008 [P] [US1] Create FontSizeDialog widget in `lib/widgets/dialogs/font_size_dialog.dart`
-- [x] T009 [P] [US1] Create FontFamilyDialog widget in `lib/widgets/dialogs/font_family_dialog.dart`
+- [x] T008 [P] [US1] Create FontSizeDialog Widget in `lib/Widgets/dialogs/font_size_dialog.dart`
+- [x] T009 [P] [US1] Create FontFamilyDialog Widget in `lib/Widgets/dialogs/font_family_dialog.dart`
 - [x] T010 [US1] Implement Font Size onTap handler in `lib/screens/settings/settings_screen.dart` (line 24)
 - [x] T011 [US1] Implement Font Family onTap handler in `lib/screens/settings/settings_screen.dart` (line 32)
 - [x] T012 [US1] Update Font Size subtitle to show current value from settingsProvider in `lib/screens/settings/settings_screen.dart`
@@ -69,19 +69,19 @@
 
 ## Phase 4: User Story 2 - Notification Rule Management (Priority: P1)
 
-**Goal**: ユーザーが通知ルールを作成・編集・削除・保存できる
+**Goal**: The user can create, edit, delete, and save notification rules
 
-**Independent Test**: 新しい通知ルールを作成してアプリを再起動後、ルールが保持される
+**Independent Test**: Create a new notification rule and verify that it remains after restarting the app
 
 ### Tests for User Story 2
 
-- [x] T014 [P] [US2] Create widget test for NotificationRulesScreen in `test/screens/notification_rules_screen_test.dart`
+- [x] T014 [P] [US2] Create Widget test for NotificationRulesScreen in `test/screens/notification_rules_screen_test.dart`
 
 ### Implementation for User Story 2
 
 - [x] T015 [US2] Add notificationProvider watch to build rule list in `lib/screens/notifications/notification_rules_screen.dart`
-- [x] T016 [US2] Replace empty Center widget with ListView.builder for rules in `lib/screens/notifications/notification_rules_screen.dart`
-- [x] T017 [US2] Create rule list item widget with Dismissible for swipe-to-delete in `lib/screens/notifications/notification_rules_screen.dart`
+- [x] T016 [US2] Replace empty Center Widget with ListView.builder for rules in `lib/screens/notifications/notification_rules_screen.dart`
+- [x] T017 [US2] Create rule list item Widget with Dismissible for swipe-to-delete in `lib/screens/notifications/notification_rules_screen.dart`
 - [x] T018 [US2] Add rule enable/disable toggle Switch to list item in `lib/screens/notifications/notification_rules_screen.dart`
 - [x] T019 [US2] Implement _save method to call notificationProvider.addRule/updateRule in `lib/screens/notifications/notification_rules_screen.dart` (line 139)
 - [x] T020 [US2] Add ConsumerStatefulWidget to _RuleFormDialog for ref access in `lib/screens/notifications/notification_rules_screen.dart`
@@ -94,13 +94,13 @@
 
 ## Phase 5: User Story 3 - Behavior Settings Persistence (Priority: P2)
 
-**Goal**: ユーザーがHaptic FeedbackとKeep Screen On設定を変更・保存できる
+**Goal**: The user can change and save the Haptic Feedback and Keep Screen On settings
 
-**Independent Test**: Haptic Feedbackをオフにしてアプリを再起動後、オフのまま
+**Independent Test**: Turn off Haptic Feedback and verify that it stays off after restarting the app
 
 ### Tests for User Story 3
 
-- [x] T023 [P] [US3] Create widget test for behavior settings toggles in `test/screens/settings_screen_test.dart`
+- [x] T023 [P] [US3] Create Widget test for behavior settings toggles in `test/screens/settings_screen_test.dart`
 
 ### Implementation for User Story 3
 
@@ -114,17 +114,17 @@
 
 ## Phase 6: User Story 4 - Theme Selection (Priority: P2)
 
-**Goal**: ユーザーがアプリテーマ（Dark/Light）を変更できる
+**Goal**: The user can change the app theme (Dark/Light)
 
-**Independent Test**: テーマをライトに変更し、アプリ全体の表示が即座に切り替わる
+**Independent Test**: Change the theme to Light and verify that the entire app display switches immediately
 
 ### Tests for User Story 4
 
-- [x] T027 [P] [US4] Create widget test for ThemeDialog in `test/widgets/theme_dialog_test.dart`
+- [x] T027 [P] [US4] Create Widget test for ThemeDialog in `test/Widgets/theme_dialog_test.dart`
 
 ### Implementation for User Story 4
 
-- [x] T028 [US4] Create ThemeDialog widget in `lib/widgets/dialogs/theme_dialog.dart`
+- [x] T028 [US4] Create ThemeDialog Widget in `lib/Widgets/dialogs/theme_dialog.dart`
 - [x] T029 [US4] Implement Theme onTap handler in `lib/screens/settings/settings_screen.dart` (line 77)
 - [x] T030 [US4] Update Theme subtitle to show current value from settingsProvider in `lib/screens/settings/settings_screen.dart`
 - [x] T031 [US4] Ensure MyApp rebuilds with new themeMode when darkMode changes in `lib/main.dart`
@@ -135,13 +135,13 @@
 
 ## Phase 7: User Story 5 - External Links (Priority: P3)
 
-**Goal**: ユーザーがSource Codeリンクをタップして外部ブラウザでGitHubを開ける
+**Goal**: The user can tap the Source Code link and open GitHub in an external browser
 
-**Independent Test**: Source Codeをタップして外部ブラウザでGitHubが開く
+**Independent Test**: Tap Source Code and verify that GitHub opens in an external browser
 
 ### Tests for User Story 5
 
-- [x] T032 [P] [US5] Create widget test for external link tap in `test/screens/settings_screen_test.dart`
+- [x] T032 [P] [US5] Create Widget test for external link tap in `test/screens/settings_screen_test.dart`
 
 ### Implementation for User Story 5
 
@@ -187,7 +187,7 @@
 ### Within Each User Story
 
 - Tests MUST be written and FAIL before implementation (TDD)
-- Dialog widgets before screen integration
+- Dialog Widgets before screen integration
 - Screen modifications after dialogs complete
 - Commit after each task or logical group
 
@@ -206,12 +206,12 @@
 
 ```bash
 # Launch all tests for User Story 1 together:
-Task: "Create widget test for FontSizeDialog in test/widgets/font_size_dialog_test.dart"
-Task: "Create widget test for FontFamilyDialog in test/widgets/font_family_dialog_test.dart"
+Task: "Create Widget test for FontSizeDialog in test/Widgets/font_size_dialog_test.dart"
+Task: "Create Widget test for FontFamilyDialog in test/Widgets/font_family_dialog_test.dart"
 
-# Launch all dialog widgets for User Story 1 together:
-Task: "Create FontSizeDialog widget in lib/widgets/dialogs/font_size_dialog.dart"
-Task: "Create FontFamilyDialog widget in lib/widgets/dialogs/font_family_dialog.dart"
+# Launch all dialog Widgets for User Story 1 together:
+Task: "Create FontSizeDialog Widget in lib/Widgets/dialogs/font_size_dialog.dart"
+Task: "Create FontFamilyDialog Widget in lib/Widgets/dialogs/font_family_dialog.dart"
 ```
 
 ---
@@ -268,3 +268,6 @@ Task: "Create FontFamilyDialog widget in lib/widgets/dialogs/font_family_dialog.
 - Verify tests fail before implementing (TDD)
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
+
+
+

@@ -1,74 +1,74 @@
-# MuxPod コーディング規約
+# MuxPod Coding Conventions
 
-## 命名規則
+## Naming Rules
 
-| 対象 | 規則 | 例 |
-|------|------|-----|
-| コンポーネント | PascalCase | `TerminalView.tsx` |
+| Target | Convention | Example |
+|--------|-----------|---------|
+| Components | PascalCase | `TerminalView.tsx` |
 | hooks | camelCase + `use` prefix | `useTerminal.ts` |
 | stores | camelCase + `Store` suffix | `connectionStore.ts` |
 | services | camelCase | `client.ts` |
-| 型定義 | PascalCase | `TmuxSession` |
-| 定数 | SCREAMING_SNAKE_CASE | `DEFAULT_PORT` |
+| Type definitions | PascalCase | `TmuxSession` |
+| Constants | SCREAMING_SNAKE_CASE | `DEFAULT_PORT` |
 
-## 状態管理
+## State Management
 
 ### Zustand Store
-- グローバル状態は `src/stores/` に配置
-- 永続化が必要なもの: `persist` middleware + AsyncStorage
-- センシティブデータ: `expo-secure-store`
+- Place global state in `src/stores/`
+- Items requiring persistence: `persist` middleware + AsyncStorage
+- Sensitive data: `expo-secure-store`
 
 ```typescript
-// 例: src/stores/connectionStore.ts
+// Example: src/stores/connectionStore.ts
 export const useConnectionStore = create<ConnectionStore>()(
-  persist(
-    (set, get) => ({ ... }),
-    {
-      name: 'muxpod-connections',
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ connections: state.connections }),
-    }
-  )
+ persist(
+ (set, get) => ({ ... }),
+ {
+ name: 'muxpod-connections',
+ storage: createJSONStorage(() => AsyncStorage),
+ partialize: (state) => ({ connections: state.connections }),
+ }
+ )
 );
 ```
 
-## SSH/tmux操作
+## SSH/tmux Operations
 
-### SSHクライアント
-- `src/services/ssh/client.ts` の `SSHClient` クラスを使用
-- 接続管理は `connectionStore` と連携
+### SSH Client
+- Use the `SSHClient` class from `src/services/ssh/client.ts`
+- Connection management coordinates with `connectionStore`
 
-### tmuxコマンド
-- `src/services/tmux/commands.ts` の `TmuxCommands` クラスを使用
-- シェルエスケープは必ず `escape()` メソッドを使用（インジェクション防止）
+### tmux Commands
+- Use the `TmuxCommands` class from `src/services/tmux/commands.ts`
+- Always use the `escape()` method for shell escaping (injection prevention)
 
 ```typescript
-// 正しい例
+// Correct example
 await tmux.sendKeys(sessionName, windowIndex, paneIndex, keys);
 
-// 悪い例（直接コマンド構築は禁止）
+// Bad example (direct command construction is prohibited)
 await ssh.exec(`tmux send-keys -t ${sessionName} ${keys}`);
 ```
 
-## ターミナル表示
+## Terminal Display
 
-- ANSIエスケープシーケンス処理: `src/services/ansi/parser.ts`
-- 文字幅計算（日本語対応）: `src/services/terminal/charWidth.ts`
-- ポーリング間隔: 100ms（`useTerminal` hook内）
+- ANSI escape sequence processing: `src/services/ansi/parser.ts`
+- Character width calculation (Japanese support): `src/services/terminal/charWidth.ts`
+- Polling interval: 100ms (inside `useTerminal` hook)
 
 ## TypeScript
 
-### 型定義
-- 共通型は `src/types/` に配置
-- コンポーネント固有のPropsは同ファイル内で定義
+### Type Definitions
+- Place shared types in `src/types/`
+- Define component-specific Props in the same file
 
-### 厳格モード
-- `strict: true` を維持
-- `any` の使用は原則禁止（やむを得ない場合は `// eslint-disable-next-line` でコメント）
+### Strict Mode
+- Maintain `strict: true`
+- Use of `any` is generally prohibited (use `// eslint-disable-next-line` with a comment if unavoidable)
 
-## コンポーネント設計
+## Component Design
 
-### ファイル構成
+### File Structure
 ```typescript
 // 1. imports
 import { ... } from 'react';
@@ -79,12 +79,12 @@ interface Props { ... }
 
 // 3. component
 export function MyComponent({ ... }: Props) {
-  // hooks
-  // handlers
-  // render
+ // hooks
+ // handlers
+ // render
 }
 ```
 
 ### Hooks
-- カスタムhooksは `src/hooks/` に配置
-- 1つのhookは1つの責務に集中
+- Place custom hooks in `src/hooks/`
+- Each hook should focus on a single responsibility

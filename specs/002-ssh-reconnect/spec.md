@@ -1,124 +1,124 @@
-# Feature Specification: SSH再接続機能
+# Feature Specification: SSH Reconnection
 
 **Feature Branch**: `002-ssh-reconnect`
 **Created**: 2026-01-10
 **Status**: Draft
-**Input**: User description: "ネットワーク再接続機能。SSH切断検出、再接続確認ダイアログ、自動再接続オプション、接続状態インジケーター。"
+**Input**: User description: "Network reconnect feature. SSH disconnect detection, reconnect confirmation dialog, auto-reconnect option, and connection status indicator."
 
 ## Overview
 
-MuxPodアプリにおいて、SSH接続が切断された際にユーザーが迅速に状況を把握し、スムーズに再接続できる機能を提供する。モバイル環境では、ネットワークの不安定さ（Wi-Fi切り替え、電波状況変化、スリープ復帰等）が日常的に発生するため、接続の中断からの回復をシームレスにすることでユーザー体験を向上させる。
+MuxPod should help users quickly understand when an SSH connection drops and reconnect smoothly. In mobile environments, unstable networking such as Wi-Fi switching, signal changes, and wake-from-sleep events happens often, so seamless recovery improves the experience.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - 接続状態の常時確認 (Priority: P1)
+### User Story 1 - Always Check Connection Status (Priority: P1)
 
-ユーザーとして、現在のSSH接続状態を常に確認できるようにしたい。これにより、作業中に接続が切れたことにすぐ気づき、適切な対応を取ることができる。
+As a user, I want to always know the current SSH connection state so I can notice disruptions immediately and respond appropriately.
 
-**Why this priority**: 接続状態の可視化は全ての再接続機能の基盤となる。状態が分からなければ、ユーザーは問題があることにも気づけない。
+**Why this priority**: Connection visibility is the foundation for every reconnect feature. If users cannot see the state, they may not even realize there is a problem.
 
-**Independent Test**: ターミナル画面で接続状態インジケーターが表示され、状態変化時に即座に更新されることを確認できる。
+**Independent Test**: Verify that the terminal screen shows a connection status indicator and that it updates immediately when the state changes.
 
 **Acceptance Scenarios**:
 
-1. **Given** ユーザーがSSH接続済みでターミナル画面を表示している, **When** 接続が正常に維持されている, **Then** 接続状態インジケーターが「接続中」を示す（緑色のドット等）
-2. **Given** ユーザーがSSH接続済みでターミナル画面を表示している, **When** ネットワーク切断によりSSH接続が失われた, **Then** 接続状態インジケーターが3秒以内に「切断」状態に変化する
-3. **Given** 接続状態が「切断」を示している, **When** ユーザーがインジケーターをタップする, **Then** 接続状態の詳細情報（切断理由、切断時刻等）が表示される
+1. **Given** the user is connected over SSH and viewing the terminal, **When** the connection is healthy, **Then** the indicator shows `Connected`, such as with a green dot
+2. **Given** the user is connected over SSH and viewing the terminal, **When** the connection is lost because of a network interruption, **Then** the indicator changes to `Disconnected` within 3 seconds
+3. **Given** the indicator shows `Disconnected`, **When** the user taps it, **Then** detailed connection information is shown, including the disconnect reason and time
 
 ---
 
-### User Story 2 - 切断時の再接続確認 (Priority: P2)
+### User Story 2 - Confirm Reconnect on Disconnect (Priority: P2)
 
-ユーザーとして、SSH接続が切断された際に再接続するかどうかを確認するダイアログが表示されてほしい。これにより、意図しない切断から素早く復帰でき、また意図的な切断の場合は再接続をスキップできる。
+As a user, I want a confirmation dialog when SSH disconnects so I can decide whether to reconnect. That lets me recover quickly from accidental disconnects while skipping reconnect when I intentionally disconnected.
 
-**Why this priority**: 手動再接続は最も基本的な回復手段であり、自動再接続が無効な場合やユーザーが確認したい場合に必須。
+**Why this priority**: Manual reconnect is the most basic recovery path and is required when auto-reconnect is off or the user wants to confirm first.
 
-**Independent Test**: 接続切断をシミュレートし、ダイアログが表示され、ユーザーの選択に応じて再接続または接続画面への遷移が行われることを確認。
+**Independent Test**: Simulate a disconnect, verify that the dialog appears, and confirm that the user choice triggers either reconnect or navigation back to the connection screen.
 
 **Acceptance Scenarios**:
 
-1. **Given** ユーザーがSSH接続済みでターミナル画面を表示している, **When** SSH接続が予期せず切断された, **Then** 再接続確認ダイアログが5秒以内に表示される
-2. **Given** 再接続確認ダイアログが表示されている, **When** ユーザーが「再接続」を選択する, **Then** 同じ接続設定で再接続が試行され、成功するとターミナル画面に戻る
-3. **Given** 再接続確認ダイアログが表示されている, **When** ユーザーが「キャンセル」を選択する, **Then** ダイアログが閉じ、接続一覧画面に遷移する
-4. **Given** 再接続確認ダイアログが表示されている, **When** 再接続を試行中, **Then** ダイアログ内に進捗状態（「接続中...」等）が表示される
-5. **Given** 再接続を試行中, **When** 再接続に失敗した, **Then** エラーメッセージと「再試行」「キャンセル」の選択肢が表示される
+1. **Given** the user is connected over SSH and viewing the terminal, **When** the SSH connection is unexpectedly lost, **Then** the reconnect confirmation dialog appears within 5 seconds
+2. **Given** the reconnect confirmation dialog is visible, **When** the user selects `Reconnect`, **Then** the app retries with the same connection settings and returns to the terminal on success
+3. **Given** the reconnect confirmation dialog is visible, **When** the user selects `Cancel`, **Then** the dialog closes and the app navigates to the connection list
+4. **Given** the reconnect confirmation dialog is visible, **When** reconnect is in progress, **Then** the dialog shows progress such as `Connecting...`
+5. **Given** reconnect is in progress, **When** reconnect fails, **Then** an error message and `Retry` / `Cancel` choices are shown
 
 ---
 
-### User Story 3 - 自動再接続設定 (Priority: P3)
+### User Story 3 - Auto-Reconnect Setting (Priority: P3)
 
-ユーザーとして、接続が切断された際に自動的に再接続を試みるオプションを設定したい。これにより、一時的なネットワーク障害から自動的に復帰し、作業の中断を最小限に抑えられる。
+As a user, I want an option to automatically reconnect when the connection drops so temporary network issues can recover without manual action.
 
-**Why this priority**: 自動再接続は利便性向上機能であり、手動再接続が先に実装されていれば、その上に構築できる。
+**Why this priority**: Auto-reconnect is a convenience feature and can be built on top of manual reconnect once that exists.
 
-**Independent Test**: 自動再接続を有効化した状態で接続切断をシミュレートし、ユーザーの操作なしに再接続が行われることを確認。
+**Independent Test**: Enable auto-reconnect, simulate a disconnect, and verify that reconnect happens without user interaction.
 
 **Acceptance Scenarios**:
 
-1. **Given** 接続設定画面を表示している, **When** ユーザーが自動再接続オプションを確認する, **Then** ON/OFFのトグルスイッチが表示され、現在の設定値が分かる
-2. **Given** 自動再接続が有効な接続でターミナル画面を表示している, **When** SSH接続が予期せず切断された, **Then** 確認ダイアログなしで自動的に再接続が試行される
-3. **Given** 自動再接続が試行されている, **When** 再接続中, **Then** 接続状態インジケーターが「再接続中」を示し、試行回数が表示される
-4. **Given** 自動再接続が3回連続で失敗した, **When** 最後の試行が失敗した, **Then** 自動再接続を中止し、手動再接続ダイアログを表示する
-5. **Given** 自動再接続中, **When** ユーザーがキャンセル操作を行う, **Then** 自動再接続を中止し、接続一覧画面に遷移する
+1. **Given** the connection settings screen is open, **When** the user checks the auto-reconnect option, **Then** an ON/OFF toggle is shown and the current value is clear
+2. **Given** a connection with auto-reconnect enabled is open in the terminal, **When** the SSH connection drops unexpectedly, **Then** reconnect starts automatically without a confirmation dialog
+3. **Given** auto-reconnect is in progress, **When** reconnecting, **Then** the status indicator shows `Reconnecting` and displays the attempt count
+4. **Given** auto-reconnect has failed 3 times in a row, **When** the final attempt fails, **Then** automatic reconnect stops and the manual reconnect dialog appears
+5. **Given** auto-reconnect is in progress, **When** the user cancels, **Then** auto-reconnect stops and the app navigates to the connection list
 
 ---
 
 ### Edge Cases
 
-- ネットワーク接続自体が復旧していない状態で再接続を試行した場合はどうなるか？
-  → 再接続失敗として扱い、適切なエラーメッセージ（「ネットワーク接続を確認してください」）を表示
-- 再接続中にアプリがバックグラウンドに移行した場合はどうなるか？
-  → 再接続処理を継続し、成功/失敗時に通知で結果を知らせる
-- サーバー側がシャットダウンして接続が切れた場合と、ネットワーク障害の場合で挙動を変えるか？
-  → 切断理由に応じてエラーメッセージは変わるが、再接続オプションは同様に提供
-- 認証情報（パスワード）が保存されていない場合の再接続はどうなるか？
-  → パスワード入力ダイアログを表示してから再接続を試行
-- 複数の接続が同時に切断された場合はどうなるか？
-  → アクティブな接続のダイアログのみ表示し、他の接続は接続一覧で状態を確認可能
+- What happens if reconnect is attempted before the network itself has recovered?
+  - Treat it as a reconnect failure and show a message such as `Please check your network connection`
+- What happens if the app moves to the background during reconnect?
+  - Continue the reconnect process and notify the user of success or failure
+- Should behavior differ between a server-side shutdown and a network failure?
+  - Error messages should vary by disconnect reason, but reconnect options should still be offered
+- What happens if credentials such as a password are not stored?
+  - Show a password entry dialog before retrying reconnect
+- What happens if multiple connections drop at once?
+  - Only show the active connection dialog; other connections can be checked in the connection list
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: システムは、SSH接続の切断を検出したら3秒以内にユーザーに通知しなければならない
-- **FR-002**: システムは、接続状態（接続中、切断、接続試行中、再接続中、エラー）を視覚的に表示しなければならない
-- **FR-003**: システムは、接続切断時に再接続確認ダイアログを表示しなければならない
-- **FR-004**: ユーザーは、再接続確認ダイアログから再接続またはキャンセルを選択できなければならない
-- **FR-005**: ユーザーは、接続ごとに自動再接続のON/OFFを設定できなければならない
-- **FR-006**: システムは、自動再接続が有効な場合、ダイアログ表示なしで再接続を試行しなければならない
-- **FR-007**: システムは、自動再接続の最大試行回数（デフォルト3回）を超えた場合、手動確認に切り替えなければならない
-- **FR-008**: システムは、再接続試行中の進捗状態をユーザーに表示しなければならない
-- **FR-009**: システムは、再接続失敗時に分かりやすいエラーメッセージを表示しなければならない
-- **FR-010**: ユーザーは、再接続処理中にキャンセル操作を行えなければならない
-- **FR-011**: システムは、接続状態インジケーターをタップした際に詳細情報を表示しなければならない
-- **FR-012**: システムは、認証情報が保存されていない場合、再接続前に認証情報の入力を求めなければならない
+- **FR-001**: The system must notify the user within 3 seconds after an SSH disconnect is detected
+- **FR-002**: The system must visually display connection status, including connected, disconnected, connecting, reconnecting, and error
+- **FR-003**: The system must show a reconnect confirmation dialog when the connection drops
+- **FR-004**: The user must be able to choose reconnect or cancel from the reconnect dialog
+- **FR-005**: The user must be able to enable or disable auto-reconnect for each connection
+- **FR-006**: The system must attempt reconnect without showing a dialog when auto-reconnect is enabled
+- **FR-007**: The system must switch to manual confirmation after the auto-reconnect retry limit is exceeded, defaulting to 3 attempts
+- **FR-008**: The system must show reconnect progress to the user
+- **FR-009**: The system must show a clear error message when reconnect fails
+- **FR-010**: The user must be able to cancel reconnect while it is in progress
+- **FR-011**: The system must show detailed information when the user taps the status indicator
+- **FR-012**: The system must prompt for credentials before reconnecting if credentials are not stored
 
 ### Key Entities
 
-- **接続状態 (ConnectionStatus)**: 現在の接続状態を表す。状態値（connected, disconnected, connecting, reconnecting, error）、最終更新時刻、エラー詳細（該当時）を含む
-- **再接続設定 (ReconnectSettings)**: 接続ごとの再接続動作設定。自動再接続有効フラグ、最大試行回数、試行間隔を含む
-- **再接続試行 (ReconnectAttempt)**: 再接続試行の記録。試行回数、開始時刻、各試行の結果を含む
+- **ConnectionStatus**: Represents the current connection state. Includes the status value (`connected`, `disconnected`, `connecting`, `reconnecting`, `error`), last updated time, and error details when applicable
+- **ReconnectSettings**: Per-connection reconnect behavior settings. Includes the auto-reconnect flag, maximum retry count, and retry interval
+- **ReconnectAttempt**: Records reconnect attempts, including attempt count, start time, and each attempt result
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: ユーザーは、接続切断から5秒以内に再接続を開始できる
-- **SC-002**: 自動再接続が有効な場合、一時的なネットワーク障害（10秒以内に復旧）から95%の確率で自動復帰できる
-- **SC-003**: ユーザーは、現在の接続状態を1秒以内に視覚的に確認できる
-- **SC-004**: 再接続ダイアログの選択肢は2タップ以内で操作完了できる
-- **SC-005**: 再接続失敗時のエラーメッセージにより、ユーザーは次のアクション（ネットワーク確認、パスワード再入力等）を理解できる
+- **SC-001**: The user can start reconnecting within 5 seconds of a disconnect
+- **SC-002**: When auto-reconnect is enabled, the app can recover automatically from temporary network issues that resolve within 10 seconds with 95% success
+- **SC-003**: The user can visually confirm the current connection state within 1 second
+- **SC-004**: The reconnect dialog choices can be completed within 2 taps
+- **SC-005**: The reconnect failure message helps the user understand the next action, such as checking the network or re-entering the password
 
 ## Assumptions
 
-- SSH接続のKeepAliveは既存機能として実装されており、切断検出に活用できる
-- 認証情報（パスワードまたはSSH鍵）は安全に保存されており、再接続時に取得可能
-- モバイルアプリのバックグラウンド処理制限は考慮するが、フォアグラウンド時の再接続を優先する
-- 再接続の試行間隔はデフォルト5秒とし、指数バックオフは初期実装では行わない
+- SSH keep-alive already exists and can be used for disconnect detection
+- Credentials such as passwords or SSH keys are securely stored and can be retrieved during reconnect
+- Mobile background processing limits should be considered, but reconnect while the app is foregrounded takes priority
+- The default reconnect retry interval is 5 seconds, and exponential backoff is not part of the initial implementation
 
 ## Out of Scope
 
-- サーバー側の設定変更（sshdの設定等）
-- VPN経由の接続に対する特別な処理
-- 複数接続の同時再接続（アクティブ接続のみ対象）
-- 再接続履歴の永続化・統計表示
+- Server-side configuration changes such as `sshd` settings
+- Special handling for VPN-based connections
+- Simultaneous reconnect for multiple connections, limited to the active connection only
+- Persistence or statistics for reconnect history

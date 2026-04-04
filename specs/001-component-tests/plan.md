@@ -5,19 +5,19 @@
 
 ## Summary
 
-4つの主要UIコンポーネント（ConnectionCard, TerminalView, SpecialKeys, SessionTabs）に対するReact Native Testing Libraryを使用したコンポーネントテストを追加する。既存のjest.config.jsとjest.setup.jsを活用し、__tests__/components/ディレクトリにテストファイルを配置する。
+Add component tests for the four main UI components: ConnectionCard, TerminalView, SpecialKeys, and SessionTabs. Use React Native Testing Library, reuse the existing `jest.config.js` and `jest.setup.js`, and place the test files in `__tests__/components/`.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.6+
 **Primary Dependencies**: React Native 0.76.0, Expo ~52.0.0, React Native Testing Library
-**Storage**: N/A（テスト機能のため永続化不要）
+**Storage**: N/A (no persistence needed for a test feature)
 **Testing**: Jest (jest-expo preset), React Native Testing Library, @testing-library/jest-native
 **Target Platform**: Android (React Native)
 **Project Type**: mobile
-**Performance Goals**: N/A（テスト機能）
-**Constraints**: 既存のjest設定を使用、@expo/vector-iconsのモックが必要
-**Scale/Scope**: 4コンポーネント × 5テストケース = 20テストケース
+**Performance Goals**: N/A (test feature)
+**Constraints**: Use the existing Jest configuration; `@expo/vector-icons` mocking is required
+**Scale/Scope**: 4 components x 5 test cases = 20 test cases
 
 ## Constitution Check
 
@@ -25,15 +25,15 @@
 
 | Principle | Status | Notes |
 |-----------|--------|-------|
-| I. Type Safety | ✅ PASS | テストファイルもTypeScriptで型安全に記述 |
-| II. KISS & YAGNI | ✅ PASS | 必要最小限のテストのみ実装 |
-| III. Test-First (TDD) | ✅ PASS | テスト追加が目的であり、TDDを推進 |
-| IV. Security-First | ✅ PASS | テストではモックを使用、実認証情報は使用しない |
-| V. SOLID | ✅ PASS | 各テストファイルは単一コンポーネントのみを対象 |
-| VI. DRY | ✅ PASS | 共通モックやヘルパーは適切に共有 |
-| Prohibited Naming | ✅ PASS | __tests__/components/は標準的なJest命名規則 |
+| I. Type Safety | ✅ PASS | Test files are also written in TypeScript with type safety |
+| II. KISS & YAGNI | ✅ PASS | Implement only the minimum necessary tests |
+| III. Test-First (TDD) | ✅ PASS | The goal is to add tests and promote TDD |
+| IV. Security-First | ✅ PASS | Use mocks in tests; do not use real credentials |
+| V. SOLID | ✅ PASS | Each test file targets only a single component |
+| VI. DRY | ✅ PASS | Share common mocks and helpers appropriately |
+| Prohibited Naming | ✅ PASS | `__tests__/components/` follows standard Jest naming conventions |
 
-**GATE RESULT**: ✅ ALL PASS - 違反なし
+**GATE RESULT**: ✅ ALL PASS - no violations
 
 ## Project Structure
 
@@ -61,21 +61,21 @@ __tests__/
 src/
 ├── components/
 │   ├── connection/
-│   │   └── ConnectionCard.tsx      # テスト対象
+│   │   └── ConnectionCard.tsx      # test target
 │   ├── terminal/
-│   │   ├── TerminalView.tsx        # テスト対象
-│   │   └── SpecialKeys.tsx         # テスト対象
+│   │   ├── TerminalView.tsx        # test target
+│   │   └── SpecialKeys.tsx         # test target
 │   └── navigation/
-│       └── SessionTabs.tsx         # テスト対象
+│       └── SessionTabs.tsx         # test target
 └── types/
-    ├── connection.ts               # テストで使用するモックデータの型
-    ├── tmux.ts                     # テストで使用するモックデータの型
-    └── terminal.ts                 # テストで使用するモックデータの型
+    ├── connection.ts               # mock data types used in tests
+    ├── tmux.ts                     # mock data types used in tests
+    └── terminal.ts                 # mock data types used in tests
 ```
 
-**Structure Decision**: 既存のMuxPodプロジェクト構造に従い、__tests__/components/ディレクトリにテストファイルを配置。jest.config.jsの`testMatch`パターン (`**/__tests__/**/*.test.{ts,tsx}`) に準拠。
+**Structure Decision**: Follow the existing MuxPod project structure and place the test files in `__tests__/components/`. Conform to the `testMatch` pattern in `jest.config.js` (`**/__tests__/**/*.test.{ts,tsx}`).
 
 ## Complexity Tracking
 
-> 違反なし - このセクションは空
+> No violations - this section is empty
 

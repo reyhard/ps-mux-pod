@@ -6,14 +6,14 @@ import 'package:cryptography/cryptography.dart' as crypto;
 import 'package:dartssh2/dartssh2.dart';
 import 'package:pointycastle/export.dart' as pc;
 
-/// SSH鍵ペアのデータクラス
+/// Data class for an SSH key pair
 class SshKeyPair {
   final String type; // 'ed25519' | 'rsa-2048' | 'rsa-3072' | 'rsa-4096'
   final Uint8List privateKeyBytes;
   final Uint8List publicKeyBytes;
   final String fingerprint;
   final String privatePem;
-  final String publicKeyString; // authorized_keys形式
+  final String publicKeyString; // authorized_keys format
 
   const SshKeyPair({
     required this.type,
@@ -25,9 +25,9 @@ class SshKeyPair {
   });
 }
 
-/// SSH鍵サービス
+/// SSH key service
 class SshKeyService {
-  /// Ed25519鍵ペアを生成
+  /// Generate an Ed25519 key pair
   Future<SshKeyPair> generateEd25519({String? comment}) async {
     final algorithm = crypto.Ed25519();
     final keyPair = await algorithm.newKeyPair();
@@ -53,7 +53,7 @@ class SshKeyService {
     );
   }
 
-  /// RSA鍵ペアを生成
+  /// Generate an RSA key pair
   Future<SshKeyPair> generateRsa({
     required int bits,
     String? comment,
@@ -90,7 +90,7 @@ class SshKeyService {
     );
   }
 
-  /// PEM文字列から鍵をパース
+  /// Parse a key from a PEM string
   Future<SshKeyPair> parseFromPem(
     String pemContent, {
     String? passphrase,
@@ -103,24 +103,24 @@ class SshKeyService {
     final keyPair = keyPairs.first;
     final type = keyPair.type;
 
-    // 公開鍵のBlobを取得（dartssh2のencodeは完全なSSH公開鍵Blobを返す）
+    // Get the public key blob (dartssh2's encode returns the full SSH public key blob)
     final publicKeyBlob = keyPair.toPublicKey().encode();
-    // Blobから直接フィンガープリントを計算（再ラップしない）
+    // Calculate the fingerprint directly from the blob (without re-wrapping)
     final fingerprint = calculateFingerprintFromBlob(publicKeyBlob);
 
     String keyType;
     if (type == 'ssh-ed25519') {
       keyType = 'ed25519';
     } else if (type == 'ssh-rsa') {
-      // RSAのビット数は公開鍵から推測
-      keyType = 'rsa-4096'; // デフォルト
+      // Infer the RSA bit length from the public key
+      keyType = 'rsa-4096'; // default
     } else {
       keyType = type;
     }
 
     return SshKeyPair(
       type: keyType,
-      privateKeyBytes: Uint8List(0), // パース時は秘密鍵バイトは不要
+      privateKeyBytes: Uint8List(0), // Private key bytes are not needed during parsing
       publicKeyBytes: publicKeyBlob,
       fingerprint: fingerprint,
       privatePem: pemContent,
@@ -128,27 +128,27 @@ class SshKeyService {
     );
   }
 
-  /// 鍵がパスフレーズで暗号化されているか確認
+  /// Check whether the key is encrypted with a passphrase
   bool isEncrypted(String pemContent) {
     return SSHKeyPair.isEncryptedPem(pemContent);
   }
 
-  /// 公開鍵のフィンガープリントを計算 (SHA256)
+  /// Calculate the public key fingerprint (SHA256)
   String calculateFingerprint(String keyType, Uint8List publicKeyBytes) {
-    // SSH公開鍵Blobを構築
+    // Build the SSH public key blob
     final blob = _buildPublicKeyBlob(keyType, publicKeyBytes);
     return calculateFingerprintFromBlob(blob);
   }
 
-  /// SSH公開鍵Blobから直接フィンガープリントを計算
+  /// Calculate the fingerprint directly from an SSH public key blob
   String calculateFingerprintFromBlob(Uint8List blob) {
     final hash = sha256.convert(blob);
     final encoded = base64Encode(hash.bytes);
-    // パディングの=を除去
+    // Remove = padding
     return 'SHA256:${encoded.replaceAll('=', '')}';
   }
 
-  /// 公開鍵をauthorized_keys形式に変換
+  /// Convert a public key to authorized_keys format
   String toAuthorizedKeys(String keyType, Uint8List publicKeyBytes, String comment) {
     final blob = _buildPublicKeyBlob(keyType, publicKeyBytes);
     final encoded = base64Encode(blob);
@@ -159,7 +159,7 @@ class SshKeyService {
 
   Uint8List _buildPublicKeyBlob(String keyType, Uint8List publicKeyBytes) {
     if (keyType == 'ssh-ed25519') {
-      // Ed25519の場合、公開鍵は32バイト
+      // For Ed25519, the public key is 32 bytes
       final typeBytes = utf8.encode(keyType);
       final buffer = BytesBuilder();
       buffer.add(_encodeUint32(typeBytes.length));
@@ -168,7 +168,7 @@ class SshKeyService {
       buffer.add(publicKeyBytes);
       return buffer.toBytes();
     } else if (keyType == 'ssh-rsa') {
-      // RSAの場合、publicKeyBytesは既にBlobフォーマット
+      // For RSA, publicKeyBytes is already in blob format
       return publicKeyBytes;
     }
     return publicKeyBytes;
@@ -193,7 +193,7 @@ class SshKeyService {
 
   Uint8List _encodeMpInt(BigInt value) {
     var bytes = _bigIntToBytes(value);
-    // 先頭ビットが1の場合、0x00を追加
+    // Add 0x00 if the leading bit is 1
     if (bytes.isNotEmpty && (bytes[0] & 0x80) != 0) {
       bytes = Uint8List.fromList([0, ...bytes]);
     }
@@ -225,14 +225,14 @@ class SshKeyService {
   }
 
   Uint8List _rsaPrivateKeyToBytes(pc.RSAPrivateKey privateKey) {
-    // 簡略化のため、modulusのバイト表現を返す
+    // Return the modulus byte representation for simplicity
     return _bigIntToBytes(privateKey.modulus!);
   }
 
   String _buildEd25519Pem(
       Uint8List privateKey, Uint8List publicKey, String comment) {
-    // OpenSSH形式のEd25519秘密鍵PEMを構築
-    // 簡略化のため、dartssh2で読み込み可能な形式で返す
+    // Build an OpenSSH-style Ed25519 private key PEM
+    // Return a format that dartssh2 can read, keeping this simplified
     final buffer = BytesBuilder();
 
     // AUTH_MAGIC
@@ -291,7 +291,7 @@ class SshKeyService {
 
   String _buildRsaPem(
       pc.RSAPrivateKey privateKey, pc.RSAPublicKey publicKey, String comment) {
-    // RSA秘密鍵をPKCS#1形式で出力 (ASN.1 DER手動エンコード)
+    // Output the RSA private key in PKCS#1 format (manual ASN.1 DER encoding)
     final derBytes = _encodeRsaPrivateKeyDer(privateKey, publicKey);
 
     final encoded = base64Encode(derBytes);
@@ -351,11 +351,11 @@ class SshKeyService {
     buffer.addByte(0x02);
 
     var bytes = _bigIntToBytes(value);
-    // 先頭ビットが1の場合、符号ビット用に0x00を追加
+    // Add 0x00 for the sign bit if the leading bit is 1
     if (bytes.isNotEmpty && (bytes[0] & 0x80) != 0) {
       bytes = Uint8List.fromList([0, ...bytes]);
     }
-    // 0の場合は1バイトの0
+    // Use a single zero byte for value 0
     if (bytes.isEmpty) {
       bytes = Uint8List.fromList([0]);
     }

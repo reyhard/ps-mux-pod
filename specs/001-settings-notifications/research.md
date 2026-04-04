@@ -3,82 +3,82 @@
 **Feature**: 001-settings-notifications
 **Date**: 2026-01-11
 
-## 1. 既存実装の調査
+## 1. Existing Implementation Analysis
 
-### 1.1 設定プロバイダー (settings_provider.dart)
+### 1.1 Settings Provider (settings_provider.dart)
 
-**現状**:
-- `AppSettings` クラスに全設定を保持
-- `SettingsNotifier` でSharedPreferencesへの保存/読み込み実装済み
-- 既存メソッド: `setDarkMode()`, `setFontSize()`, `setFontFamily()`, `setEnableVibration()` 等
+**Current state**:
+- `AppSettings` classallsettingsretain
+- `SettingsNotifier` SharedPreferencessave/loadimplement
+- existingmethod: `setDarkMode()`, `setFontSize()`, `setFontFamily()`, `setEnableVibration()` 
 
-**Decision**: 既存のSettingsNotifierメソッドをそのまま活用
-**Rationale**: 既に必要な機能が実装されている
-**Alternatives**: なし（再実装は不要）
+**Decision**: existingSettingsNotifiermethodreuse
+**Rationale**: requiredfeatureimplement
+**Alternatives**: （reimplementnot needed）
 
-### 1.2 通知プロバイダー (notification_provider.dart)
+### 1.2 Notification Provider (notification_provider.dart)
 
-**現状**:
-- `NotificationState` で状態管理
-- `NotificationNotifier` にCRUD操作実装済み: `addRule()`, `removeRule()`, `updateRule()`, `toggleRule()`
-- `NotificationEngine` で永続化処理実装済み
+**Current state**:
+- `NotificationState` statemanagement
+- `NotificationNotifier` CRUDoperationimplement: `addRule()`, `removeRule()`, `updateRule()`, `toggleRule()`
+- `NotificationEngine` persistprocessingimplement
 
-**Decision**: 既存のNotificationNotifierメソッドをUI層から呼び出す
-**Rationale**: 既にルールの永続化機能が完備されている
-**Alternatives**: なし
+**Decision**: existingNotificationNotifiermethodUI
+**Rationale**: rulepersistfeature
+**Alternatives**: 
 
-### 1.3 テーマ管理 (app_theme.dart, main.dart)
+### 1.3 Theme Management (app_theme.dart, main.dart)
 
-**現状**:
-- `AppTheme.dark` と `AppTheme.light` が定義済み（ただしlightはdarkと同一）
-- `AppTheme.getThemeMode()` メソッド存在
-- `main.dart` では `ThemeMode.dark` がハードコードされている
+**Current state**:
+- `AppTheme.dark`  `AppTheme.light` （lightdarksame）
+- `AppTheme.getThemeMode()` method
+- `main.dart`  `ThemeMode.dark` code
 
-**Decision**: `MyApp`をConsumerWidgetに変更し、settingsProviderからテーマを取得
-**Rationale**: 動的テーマ切り替えには状態管理との連携が必要
+**Decision**: `MyApp`ConsumerWidgetchange、settingsProviderthemeretrieve
+**Rationale**: dynamicthemeswitchstatemanagementintegrationrequired
 **Alternatives**:
-- InheritedWidgetで独自実装 → 却下（Riverpod既存）
-- MaterialApp.router使用 → 却下（過剰な変更）
+- InheritedWidgetimplement → （Riverpodexisting）
+- MaterialApp.router → （change）
 
-## 2. UI実装パターン
+## 2. UI Implementation Patterns
 
-### 2.1 ダイアログ実装
+### 2.1 Dialog Implementation
 
-**Decision**: FlutterのAlertDialog + SimpleDialogOptionを使用
-**Rationale**: Material Design準拠、Flutter標準
+**Decision**: FlutterAlertDialog + SimpleDialogOption
+**Rationale**: Material Design、Flutterstandard
 **Alternatives**:
-- BottomSheet → 却下（選択肢少数のため過剰）
-- カスタムダイアログ → 却下（KISS原則）
+- BottomSheet → （selectcount）
+- custom → （KISS）
 
-### 2.2 フォントサイズ選択
+### 2.2 font sizeselect
 
-**Decision**: RadioListTileリストのAlertDialog
-**選択肢**: 10, 12, 14, 16, 18, 20pt（デフォルト14）
-**Rationale**: 一般的なコードエディタの設定範囲
+**Decision**: RadioListTilelistAlertDialog
+**select**: 10, 12, 14, 16, 18, 20pt（default14）
+**Rationale**: codesettingsrange
 
-### 2.3 フォントファミリー選択
+### 2.3 font familyselect
 
-**Decision**: RadioListTileリストのAlertDialog
-**選択肢**: JetBrains Mono, Fira Code, Source Code Pro, Roboto Mono
-**Rationale**: プログラミングフォントとして人気のある4種
+**Decision**: RadioListTilelistAlertDialog
+**select**: JetBrains Mono, Fira Code, Source Code Pro, Roboto Mono
+**Rationale**: font4
 
-### 2.4 テーマ選択
+### 2.4 Theme Selection
 
-**Decision**: RadioListTileリストのAlertDialog
-**選択肢**: Dark, Light, System
-**Rationale**: 一般的なアプリの3パターン
+**Decision**: RadioListTilelistAlertDialog
+**select**: Dark, Light, System
+**Rationale**: app3pattern
 
-## 3. 外部リンク
+## 3. External Links
 
-### 3.1 url_launcher使用
+### 3.1 Using url_launcher
 
-**Decision**: url_launcherパッケージを使用
-**Rationale**: Flutter公式推奨、クロスプラットフォーム対応
+**Decision**: url_launcherpackage
+**Rationale**: Flutterrecommended、support
 **Alternatives**:
-- android_intent → Android専用のため却下
-- webview → 過剰（単純なURL起動）
+- android_intent → Android
+- webview → （URLstart）
 
-**実装**:
+**implement**:
 ```dart
 import 'package:url_launcher/url_launcher.dart';
 
@@ -90,56 +90,59 @@ Future<void> _launchUrl(String url) async {
 }
 ```
 
-## 4. 通知ルール画面の改善
+## 4. Notification Rules Screen Improvements
 
-### 4.1 ルールリスト表示
+### 4.1 Rule List Display
 
-**Decision**: `ref.watch(notificationProvider).rules` を監視してListView.builderで表示
-**Rationale**: Riverpodの標準パターン
+**Decision**: `ref.watch(notificationProvider).rules` ListView.builderdisplay
+**Rationale**: Riverpodstandardpattern
 
-### 4.2 スワイプ削除
+### 4.2 Swipe Delete
 
-**Decision**: Dismissibleウィジェットを使用
-**Rationale**: Flutter標準、ユーザー馴染みのあるUX
-**確認ダイアログ**: 削除前に確認ダイアログを表示
+**Decision**: Dismissiblewidget
+**Rationale**: Flutterstandard、userUX
+**verify**: deleteverifydisplay
 
-### 4.3 ルール編集
+### 4.3 Rule Edit
 
-**Decision**: 既存の_RuleFormDialogを拡張、ruleIdがある場合は編集モード
-**Rationale**: 新規/編集で同一フォームを再利用（DRY原則）
+**Decision**: existing_RuleFormDialogextension、ruleIdwheneditmode
+**Rationale**: new/editsamereuse（DRY）
 
-## 5. 依存関係
+## 5. dependencies
 
-### 5.1 追加パッケージ
+### 5.1 Added Packages
 
-| パッケージ | 用途 | 状態 |
+| package | purpose | state |
 |-----------|------|------|
-| url_launcher | 外部URL起動 | 追加必要 |
-| google_fonts | フォント選択 | 既存 |
-| shared_preferences | 設定保存 | 既存 |
+| url_launcher | externalURLstart | addrequired |
+| google_fonts | fontselect | existing |
+| shared_preferences | settingssave | existing |
 
-### 5.2 pubspec.yaml確認
+### 5.2 pubspec.yamlverify
 
 ```yaml
 dependencies:
-  url_launcher: ^6.2.0  # 追加
+  url_launcher: ^6.2.0  # add
 ```
 
-## 6. テスト戦略
+## 6. test
 
-### 6.1 Widgetテスト
+### 6.1 Widget Tests
 
-- settings_screen_test.dart: ダイアログ表示、設定変更
-- notification_rules_screen_test.dart: ルールリスト、CRUD操作
+- settings_screen_test.dart: display、settingschange
+- notification_rules_screen_test.dart: rulelist、CRUDoperation
 
-### 6.2 モック
+### 6.2 Mocks
 
-- SharedPreferencesはモック使用
-- NotificationEngineはモック使用
+- SharedPreferencesmock
+- NotificationEnginemock
 
-## まとめ
+## Summary
 
-- 既存のプロバイダー機能は十分であり、新規実装は不要
-- UI層からプロバイダーメソッドを呼び出す実装が主
-- url_launcherパッケージの追加が必要
-- テーマ切り替えのためmain.dartの軽微な変更が必要
+- existingproviderfeature、new implementation is not needed
+- The main implementation is calling provider methods from the UI layer
+- The url_launcher package needs to be added
+- A minor main.dart change is needed for theme switching
+
+
+

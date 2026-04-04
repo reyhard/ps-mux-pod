@@ -1,4 +1,4 @@
-# Data Model: SSH鍵管理機能
+# Data Model: SSH Key Management
 
 **Feature**: 002-ssh-key-management
 **Date**: 2026-01-10
@@ -7,104 +7,104 @@
 
 ### SSHKey
 
-SSH鍵ペアのメタデータ。秘密鍵本体は SecureStore に別途保存。
+SSHkeymetadata。private key SecureStore separatelysave。
 
 ```typescript
 interface SSHKey {
-  /** UUID v4 */
-  id: string;
+ /** UUID v4 */
+ id: string;
 
-  /** ユーザー定義の表示名 (e.g., "Work Laptop", "Personal") */
-  name: string;
+ /** display (e.g., "Work Laptop", "Personal") */
+ name: string;
 
-  /** 鍵タイプ */
-  keyType: 'ed25519' | 'rsa-2048' | 'rsa-4096' | 'ecdsa';
+ /** key */
+ keyType: 'ed25519' | 'rsa-2048' | 'rsa-4096' | 'ecdsa';
 
-  /** 公開鍵 (OpenSSH authorized_keys 形式) */
-  publicKey: string;
+ /** public key (OpenSSH authorized_keys format) */
+ publicKey: string;
 
-  /** SHA256 フィンガープリント (e.g., "SHA256:abcd1234...") */
-  fingerprint: string;
+ /** SHA256 fingerprint (e.g., "SHA256:abcd1234...") */
+ fingerprint: string;
 
-  /** 生体認証を要求するか */
-  requireBiometrics: boolean;
+ /** biometric authentication */
+ requireBiometrics: boolean;
 
-  /** 作成日時 (Unix timestamp ms) */
-  createdAt: number;
+ /** create (Unix timestamp ms) */
+ createdAt: number;
 
-  /** インポートされた鍵かどうか */
-  imported: boolean;
+ /** importkey */
+ imported: boolean;
 }
 ```
 
 **Storage**:
-- メタデータ: `AsyncStorage` key `muxpod-ssh-keys` (JSON array)
-- 秘密鍵: `SecureStore` key `muxpod-ssh-key-{id}`
+- metadata: `AsyncStorage` key `muxpod-ssh-keys` (JSON array)
+- private key: `SecureStore` key `muxpod-ssh-key-{id}`
 
 **Validation Rules**:
-- `name`: 1-50文字、空白のみ不可
-- `publicKey`: OpenSSH形式のバリデーション
-- `fingerprint`: `SHA256:` プレフィックス必須
+- `name`: 1-50、
+- `publicKey`: OpenSSHformat
+- `fingerprint`: `SHA256:` required
 
 ---
 
 ### KnownHost
 
-既知のサーバーホスト鍵。MITM攻撃防止のために使用。
+serverhostkey。MITMuse。
 
 ```typescript
 interface KnownHost {
-  /** ホスト識別子 (host:port) */
-  identifier: string;
+ /** host (host:port) */
+ identifier: string;
 
-  /** ホスト名 */
-  host: string;
+ /** host */
+ host: string;
 
-  /** ポート番号 */
-  port: number;
+ /** */
+ port: number;
 
-  /** ホスト鍵タイプ */
-  keyType: 'ssh-ed25519' | 'ssh-rsa' | 'ecdsa-sha2-nistp256' | 'ecdsa-sha2-nistp384';
+ /** hostkey */
+ keyType: 'ssh-ed25519' | 'ssh-rsa' | 'ecdsa-sha2-nistp256' | 'ecdsa-sha2-nistp384';
 
-  /** 公開鍵 (Base64) */
-  publicKey: string;
+ /** public key (Base64) */
+ publicKey: string;
 
-  /** SHA256 フィンガープリント */
-  fingerprint: string;
+ /** SHA256 fingerprint */
+ fingerprint: string;
 
-  /** 初回追加日時 (Unix timestamp ms) */
-  addedAt: number;
+ /** firstadd (Unix timestamp ms) */
+ addedAt: number;
 
-  /** 最終検証成功日時 (Unix timestamp ms) */
-  lastVerifiedAt: number;
+ /** verification (Unix timestamp ms) */
+ lastVerifiedAt: number;
 }
 ```
 
 **Storage**: `AsyncStorage` key `muxpod-known-hosts` (JSON array)
 
 **Validation Rules**:
-- `identifier`: `{host}:{port}` 形式
+- `identifier`: `{host}:{port}` format
 - `port`: 1-65535
-- `fingerprint`: `SHA256:` プレフィックス必須
+- `fingerprint`: `SHA256:` required
 
 ---
 
-### Connection (既存エンティティの拡張)
+### Connection (existingentity)
 
 ```typescript
 interface Connection {
-  // ... 既存フィールド ...
+ // ... existing ...
 
-  /** 認証方式 (既存) */
-  authMethod: 'password' | 'key';
+ /** authentication (existing) */
+ authMethod: 'password' | 'key';
 
-  /** SSH鍵ID (key認証時、既存だがオプショナルから必須に変更) */
-  keyId?: string;
+ /** SSHkeyID (keyauthentication、existingrequiredchange) */
+ keyId?: string;
 }
 ```
 
 **Relationship**:
-- `Connection.keyId` → `SSHKey.id` (多対一)
+- `Connection.keyId` → `SSHKey.id` ()
 
 ---
 
@@ -113,32 +113,32 @@ interface Connection {
 ### SSHKey Lifecycle
 
 ```
-[Created] ─── 生成 ───→ [Active] ←─── インポート ───┐
-                           │                         │
-                           │ 削除                    │
-                           ▼                         │
-                        [Deleted]              [File Selected]
+[Created] ─── generate ───→ [Active] ←─── import ───┐
+ │ │
+ │ delete │
+ ▼ │
+ [Deleted] [File Selected]
 ```
 
 ### KnownHost Verification
 
 ```
 [New Connection]
-      │
-      ▼
+ │
+ ▼
 [Check Known Hosts]
-      │
-      ├─── 見つからない ───→ [Show Fingerprint Dialog]
-      │                              │
-      │                    ├─ Accept ─→ [Save & Connect]
-      │                    └─ Reject ─→ [Abort]
-      │
-      ├─── 一致 ───→ [Connect]
-      │
-      └─── 不一致 ───→ [Show Warning Dialog]
-                              │
-                    ├─ Accept ─→ [Update & Connect]
-                    └─ Reject ─→ [Abort]
+ │
+ ├─── ───→ [Show Fingerprint Dialog]
+ │ │
+ │ ├─ Accept ─→ [Save & Connect]
+ │ └─ Reject ─→ [Abort]
+ │
+ ├─── ───→ [Connect]
+ │
+ └─── ───→ [Show Warning Dialog]
+ │
+ ├─ Accept ─→ [Update & Connect]
+ └─ Reject ─→ [Abort]
 ```
 
 ---
@@ -147,10 +147,10 @@ interface Connection {
 
 | Key | Type | Content |
 |-----|------|---------|
-| `muxpod-ssh-keys` | AsyncStorage | `SSHKey[]` メタデータ配列 |
-| `muxpod-ssh-key-{id}` | SecureStore | 秘密鍵 (PEM形式) |
-| `muxpod-known-hosts` | AsyncStorage | `KnownHost[]` 配列 |
-| `muxpod-ssh-password-{id}` | SecureStore | パスワード (既存) |
+| `muxpod-ssh-keys` | AsyncStorage | `SSHKey[]` metadata |
+| `muxpod-ssh-key-{id}` | SecureStore | private key (PEMformat) |
+| `muxpod-known-hosts` | AsyncStorage | `KnownHost[]` |
+| `muxpod-ssh-password-{id}` | SecureStore | password (existing) |
 
 ---
 
@@ -159,7 +159,7 @@ interface Connection {
 ### SSHKey
 - **By ID**: `getKeyById(id: string): SSHKey | undefined`
 - **All**: `getAllKeys(): SSHKey[]`
-- **By Name**: `getKeyByName(name: string): SSHKey | undefined` (重複チェック用)
+- **By Name**: `getKeyByName(name: string): SSHKey | undefined` ()
 
 ### KnownHost
 - **By Identifier**: `getHostByIdentifier(identifier: string): KnownHost | undefined`
@@ -169,7 +169,7 @@ interface Connection {
 
 ## Constraints
 
-1. **SSHKey.name** はユニークでなければならない
-2. **SSHKey** 削除時、関連する **Connection** の `keyId` は `undefined` にリセット
-3. **KnownHost.identifier** はユニークでなければならない
-4. 秘密鍵は **SecureStore** 外に保存してはならない
+1. **SSHKey.name** 
+2. **SSHKey** delete、 **Connection** `keyId` `undefined` 
+3. **KnownHost.identifier** 
+4. private key **SecureStore** save

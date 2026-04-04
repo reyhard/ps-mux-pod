@@ -20,7 +20,7 @@ All paths relative to `flutter/` project directory:
 - **Services**: `lib/services/`
 - **Providers**: `lib/providers/`
 - **Screens**: `lib/screens/`
-- **Widgets**: `lib/widgets/`
+- **Widgets**: `lib/Widgets/`
 - **Tests**: `test/`
 
 ---
@@ -32,7 +32,7 @@ All paths relative to `flutter/` project directory:
 - [x] T001 Create Flutter project in `flutter/` directory with `flutter create --org com.muxpod --project-name muxpod flutter`
 - [x] T002 Configure `flutter/pubspec.yaml` with all dependencies (dartssh2, xterm, flutter_riverpod, flutter_secure_storage, shared_preferences, freezed, go_router)
 - [x] T003 [P] Configure `flutter/analysis_options.yaml` with strict mode and lint rules
-- [x] T004 [P] Create directory structure per plan.md (lib/models, lib/services, lib/providers, lib/screens, lib/widgets, lib/theme, lib/router)
+- [x] T004 [P] Create directory structure per plan.md (lib/models, lib/services, lib/providers, lib/screens, lib/Widgets, lib/theme, lib/router)
 - [x] T005 [P] Add font assets (JetBrainsMono, HackGen) to `flutter/assets/fonts/`
 - [x] T006 Run `flutter pub get` and `dart run build_runner build` to verify setup
 
@@ -70,21 +70,21 @@ All paths relative to `flutter/` project directory:
 
 ---
 
-## Phase 3: User Story 1+2 - SSH接続・ターミナル操作 + 接続管理 (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1+2 - SSH Connection and Terminal Operation + Connection Management (Priority: P1) 🎯 MVP
 
-**Goal**: ユーザーがSSH接続設定を追加し、サーバーに接続してtmuxペイン内でコマンドを実行できる
+**Goal**: The user can SSH connection settingsadd、serverconnectiontmux panecommandrun
 
-**Independent Test**: 接続設定を追加し、サーバーに接続、tmuxペイン内でlsコマンドを実行して結果が表示される
+**Independent Test**: connection settingsadd、serverconnection、tmux panelscommandrunresultdisplay
 
-**Note**: US1とUS2は密接に関連しており（接続なしにターミナル操作なし）、MVPとして一緒に実装
+**Note**: US1US2（connectionterminaloperation）、MVPimplement
 
 ### Tests for US1+US2 (TDD)
 
-- [ ] T017 [P] [US1] Unit test for SSHClient in `flutter/test/unit/services/ssh_client_test.dart` (後回し - SSHモック複雑)
-- [ ] T018 [P] [US1] Unit test for TmuxCommands in `flutter/test/unit/services/tmux_commands_test.dart` (後回し)
-- [ ] T019 [P] [US2] Unit test for ConnectionProvider in `flutter/test/unit/providers/connection_provider_test.dart` (後回し)
-- [ ] T020 [P] [US2] Widget test for ConnectionsScreen in `flutter/test/widget/screens/connections_screen_test.dart` (後回し)
-- [ ] T021 [P] [US1] Widget test for TerminalScreen in `flutter/test/widget/screens/terminal_screen_test.dart` (後回し)
+- [ ] T017 [P] [US1] Unit test for SSHClient in `flutter/test/unit/services/ssh_client_test.dart` (deferred - SSHmock)
+- [ ] T018 [P] [US1] Unit test for TmuxCommands in `flutter/test/unit/services/tmux_commands_test.dart` (deferred)
+- [ ] T019 [P] [US2] Unit test for ConnectionProvider in `flutter/test/unit/providers/connection_provider_test.dart` (deferred)
+- [ ] T020 [P] [US2] Widget test for ConnectionsScreen in `flutter/test/Widget/screens/connections_screen_test.dart` (deferred)
+- [ ] T021 [P] [US1] Widget test for TerminalScreen in `flutter/test/Widget/screens/terminal_screen_test.dart` (deferred)
 
 ### Models for US1+US2
 
@@ -112,17 +112,17 @@ All paths relative to `flutter/` project directory:
 
 ### Widgets for US1+US2
 
-- [ ] T037 [P] [US1] Create TerminalView widget in `flutter/lib/widgets/terminal_view.dart`
-- [ ] T038 [P] [US1] Create SpecialKeysBar widget in `flutter/lib/widgets/special_keys_bar.dart`
-- [ ] T039 [P] [US1] Create SessionTree widget in `flutter/lib/widgets/session_tree.dart`
+- [ ] T037 [P] [US1] Create TerminalView Widget in `flutter/lib/Widgets/terminal_view.dart`
+- [ ] T038 [P] [US1] Create SpecialKeysBar Widget in `flutter/lib/Widgets/special_keys_bar.dart`
+- [ ] T039 [P] [US1] Create SessionTree Widget in `flutter/lib/Widgets/session_tree.dart`
 
 ### Screens for US1+US2
 
 - [ ] T040 [US2] Create ConnectionsScreen in `flutter/lib/screens/connections/connections_screen.dart`
-- [ ] T041 [US2] Create ConnectionCard widget in `flutter/lib/screens/connections/widgets/connection_card.dart`
+- [ ] T041 [US2] Create ConnectionCard Widget in `flutter/lib/screens/connections/Widgets/connection_card.dart`
 - [ ] T042 [US2] Create ConnectionFormScreen in `flutter/lib/screens/connections/connection_form_screen.dart`
 - [ ] T043 [US1] Create TerminalScreen in `flutter/lib/screens/terminal/terminal_screen.dart`
-- [ ] T044 [US1] Create TerminalToolbar widget in `flutter/lib/screens/terminal/widgets/terminal_toolbar.dart`
+- [ ] T044 [US1] Create TerminalToolbar Widget in `flutter/lib/screens/terminal/Widgets/terminal_toolbar.dart`
 
 ### Integration
 
@@ -135,16 +135,16 @@ All paths relative to `flutter/` project directory:
 
 ---
 
-## Phase 4: User Story 3 - SSH鍵管理 (Priority: P2)
+## Phase 4: User Story 3 - SSH Key Management (Priority: P2)
 
-**Goal**: ユーザーがSSH鍵を生成/インポートし、鍵認証でサーバーに接続できる
+**Goal**: The user can SSHkeygenerate/port、keyauthenticationserverconnection
 
-**Independent Test**: 鍵を生成し、その鍵を使用してサーバーに接続できる
+**Independent Test**: keygenerate、keyserverconnection
 
 ### Tests for US3 (TDD)
 
 - [ ] T049 [P] [US3] Unit test for KeyService in `flutter/test/unit/services/key_service_test.dart`
-- [ ] T050 [P] [US3] Widget test for KeysScreen in `flutter/test/widget/screens/keys_screen_test.dart`
+- [ ] T050 [P] [US3] Widget test for KeysScreen in `flutter/test/Widget/screens/keys_screen_test.dart`
 
 ### Models for US3
 
@@ -164,7 +164,7 @@ All paths relative to `flutter/` project directory:
 ### Screens for US3
 
 - [ ] T057 [US3] Create KeysScreen in `flutter/lib/screens/keys/keys_screen.dart`
-- [ ] T058 [US3] Create KeyCard widget in `flutter/lib/screens/keys/widgets/key_card.dart`
+- [ ] T058 [US3] Create KeyCard Widget in `flutter/lib/screens/keys/Widgets/key_card.dart`
 - [ ] T059 [US3] Create KeyGenerateScreen in `flutter/lib/screens/keys/key_generate_screen.dart`
 - [ ] T060 [US3] Create KeyImportScreen in `flutter/lib/screens/keys/key_import_screen.dart`
 
@@ -177,16 +177,16 @@ All paths relative to `flutter/` project directory:
 
 ---
 
-## Phase 5: User Story 4 - tmuxナビゲーション (Priority: P2)
+## Phase 5: User Story 4 - tmux Navigation (Priority: P2)
 
-**Goal**: ユーザーがtmuxセッション/ウィンドウ/ペインを階層的にナビゲーションできる
+**Goal**: The user can tmux session/window/panehierarchical
 
-**Independent Test**: 複数セッションがある状態で、セッション/ウィンドウ/ペイン間を移動できる
+**Independent Test**: multiplesessionstate、session/window/pane
 
 ### Tests for US4 (TDD)
 
 - [ ] T063 [P] [US4] Unit test for TmuxNavigationService in `flutter/test/unit/services/tmux_navigation_test.dart`
-- [ ] T064 [P] [US4] Widget test for SessionTree in `flutter/test/widget/widgets/session_tree_test.dart`
+- [ ] T064 [P] [US4] Widget test for SessionTree in `flutter/test/Widget/Widgets/session_tree_test.dart`
 
 ### Services for US4
 
@@ -198,9 +198,9 @@ All paths relative to `flutter/` project directory:
 
 ### Screens for US4
 
-- [ ] T067 [US4] Create SessionListDrawer in `flutter/lib/screens/terminal/widgets/session_list_drawer.dart`
-- [ ] T068 [US4] Create WindowTabBar in `flutter/lib/screens/terminal/widgets/window_tab_bar.dart`
-- [ ] T069 [US4] Create PaneSelector in `flutter/lib/screens/terminal/widgets/pane_selector.dart`
+- [ ] T067 [US4] Create SessionListDrawer in `flutter/lib/screens/terminal/Widgets/session_list_drawer.dart`
+- [ ] T068 [US4] Create WindowTabBar in `flutter/lib/screens/terminal/Widgets/window_tab_bar.dart`
+- [ ] T069 [US4] Create PaneSelector in `flutter/lib/screens/terminal/Widgets/pane_selector.dart`
 
 ### Integration
 
@@ -211,11 +211,11 @@ All paths relative to `flutter/` project directory:
 
 ---
 
-## Phase 6: User Story 5 - 通知ルール (Priority: P3)
+## Phase 6: User Story 5 - Notification Rules (Priority: P3)
 
-**Goal**: ユーザーがターミナル出力パターンにマッチする通知ルールを設定し、通知を受け取れる
+**Goal**: The user can terminal outputpatternNotification Rulessettings、notification
 
-**Independent Test**: 「error」というテキストルールを設定し、ターミナルにerrorが表示されたら通知が発生する
+**Independent Test**: 「error」rulesettings、terminalerrordisplaynotification
 
 ### Tests for US5 (TDD)
 
@@ -241,8 +241,8 @@ All paths relative to `flutter/` project directory:
 ### Screens for US5
 
 - [ ] T081 [US5] Create NotificationRulesScreen in `flutter/lib/screens/notifications/notification_rules_screen.dart`
-- [ ] T082 [US5] Create RuleCard widget in `flutter/lib/screens/notifications/widgets/rule_card.dart`
-- [ ] T083 [US5] Create RuleFormDialog in `flutter/lib/screens/notifications/widgets/rule_form_dialog.dart`
+- [ ] T082 [US5] Create RuleCard Widget in `flutter/lib/screens/notifications/Widgets/rule_card.dart`
+- [ ] T083 [US5] Create RuleFormDialog in `flutter/lib/screens/notifications/Widgets/rule_form_dialog.dart`
 
 ### Integration
 
@@ -253,16 +253,16 @@ All paths relative to `flutter/` project directory:
 
 ---
 
-## Phase 7: User Story 6 - 表示設定 (Priority: P3)
+## Phase 7: User Story 6 - Display Settings (Priority: P3)
 
-**Goal**: ユーザーがターミナルのフォント、サイズ、カラーテーマをカスタマイズできる
+**Goal**: The user can terminalfont、size、color theme
 
-**Independent Test**: フォントサイズを変更し、ターミナル表示に反映される
+**Independent Test**: font sizechange、Terminal Displayreflect
 
 ### Tests for US6 (TDD)
 
 - [ ] T086 [P] [US6] Unit test for SettingsProvider in `flutter/test/unit/providers/settings_provider_test.dart`
-- [ ] T087 [P] [US6] Widget test for SettingsScreen in `flutter/test/widget/screens/settings_screen_test.dart`
+- [ ] T087 [P] [US6] Widget test for SettingsScreen in `flutter/test/Widget/screens/settings_screen_test.dart`
 
 ### Models for US6
 
@@ -282,9 +282,9 @@ All paths relative to `flutter/` project directory:
 ### Screens for US6
 
 - [ ] T094 [US6] Create SettingsScreen in `flutter/lib/screens/settings/settings_screen.dart`
-- [ ] T095 [US6] Create DisplaySettingsSection in `flutter/lib/screens/settings/widgets/display_settings_section.dart`
-- [ ] T096 [US6] Create TerminalSettingsSection in `flutter/lib/screens/settings/widgets/terminal_settings_section.dart`
-- [ ] T097 [US6] Create SecuritySettingsSection in `flutter/lib/screens/settings/widgets/security_settings_section.dart`
+- [ ] T095 [US6] Create DisplaySettingsSection in `flutter/lib/screens/settings/Widgets/display_settings_section.dart`
+- [ ] T096 [US6] Create TerminalSettingsSection in `flutter/lib/screens/settings/Widgets/terminal_settings_section.dart`
+- [ ] T097 [US6] Create SecuritySettingsSection in `flutter/lib/screens/settings/Widgets/security_settings_section.dart`
 
 ### Integration
 
@@ -334,10 +334,10 @@ Phase 3   Phase 4  Phase 5  Phase 6  Phase 7
 | Story | Depends On | Can Run In Parallel With |
 |-------|-----------|--------------------------|
 | US1+US2 (MVP) | Foundational | - |
-| US3 (SSH鍵) | Foundational | US1+US2, US4, US5, US6 |
-| US4 (tmuxナビ) | Foundational | US3, US5, US6 |
-| US5 (通知) | Foundational | US3, US4, US6 |
-| US6 (設定) | Foundational | US3, US4, US5 |
+| US3 (SSHkey) | Foundational | US1+US2, US4, US5, US6 |
+| US4 (tmux) | Foundational | US3, US5, US6 |
+| US5 (notification) | Foundational | US3, US4, US6 |
+| US6 (settings) | Foundational | US3, US4, US5 |
 
 ### Within Each User Story
 
@@ -404,12 +404,12 @@ Each user story can be worked on independently by different developers after Pha
 
 | Milestone | Phases | Cumulative Tasks | Deliverable |
 |-----------|--------|------------------|-------------|
-| MVP | 1-3 | 48 | SSH接続+ターミナル操作 |
-| +SSH鍵 | 4 | 62 | 鍵認証サポート |
-| +tmuxナビ | 5 | 71 | 高度なナビゲーション |
-| +通知 | 6 | 85 | パターンマッチ通知 |
-| +設定 | 7 | 99 | カスタマイズ |
-| Complete | 8 | 107 | 本番リリース |
+| MVP | 1-3 | 48 | SSH connection+terminaloperation |
+| +SSHkey | 4 | 62 | keyauthenticationsupport |
+| +tmux | 5 | 71 | high |
+| +notification | 6 | 85 | patternnotification |
+| +settings | 7 | 99 |  |
+| Complete | 8 | 107 | release |
 
 ---
 
@@ -421,10 +421,10 @@ Each user story can be worked on independently by different developers after Pha
 | Phase 1 (Setup) | 6 |
 | Phase 2 (Foundational) | 10 |
 | Phase 3 (US1+US2 MVP) | 32 |
-| Phase 4 (US3 SSH鍵) | 14 |
-| Phase 5 (US4 tmuxナビ) | 9 |
-| Phase 6 (US5 通知) | 14 |
-| Phase 7 (US6 設定) | 14 |
+| Phase 4 (US3 SSHkey) | 14 |
+| Phase 5 (US4 tmux) | 9 |
+| Phase 6 (US5 notification) | 14 |
+| Phase 7 (US6 settings) | 14 |
 | Phase 8 (Polish) | 8 |
 | **Parallel Opportunities** | 42 tasks marked [P] |
 
@@ -438,3 +438,6 @@ Each user story can be worked on independently by different developers after Pha
 - TDD enabled: Write tests first, ensure they fail, then implement
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
+
+
+

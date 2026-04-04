@@ -11,7 +11,7 @@ import '../../services/keychain/secure_storage.dart';
 import '../../services/ssh/ssh_client.dart';
 import '../../theme/design_colors.dart';
 
-/// 接続編集画面
+/// Connection edit screen
 class ConnectionFormScreen extends ConsumerStatefulWidget {
   final String? connectionId;
 
@@ -1005,7 +1005,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
     bool tmuxInstalled = false;
 
     try {
-      // 認証情報を準備
+      // Prepare authentication details
       String? password;
       String? privateKey;
       String? passphrase;
@@ -1027,7 +1027,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         }
       }
 
-      // SSH接続テスト
+      // SSH connection test
       final customTmuxPath = _tmuxPathController.text.trim();
       await sshClient.connect(
         host: _hostController.text.trim(),
@@ -1041,9 +1041,9 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         ),
       );
 
-      // マルチプレクサの検出
+      // Detect the multiplexer
       if (_muxType == 'psmux') {
-        // psmux指定: psmuxの存在を確認
+        // psmux selected: verify that psmux exists
         try {
           final output = await sshClient.exec('psmux -V');
           tmuxInstalled = output.isNotEmpty && !output.toLowerCase().contains('not found');
@@ -1053,7 +1053,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
       } else if (_muxType == 'tmux') {
         tmuxInstalled = sshClient.tmuxPath != null;
       } else {
-        // auto: まずpsmux、なければtmux
+        // auto: try psmux first, then tmux
         try {
           final output = await sshClient.exec('psmux -V');
           if (output.isNotEmpty && !output.toLowerCase().contains('not found') && !output.toLowerCase().contains('error')) {

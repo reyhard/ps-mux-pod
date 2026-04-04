@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "dart@claude-code-lsps": true
+  }
+}

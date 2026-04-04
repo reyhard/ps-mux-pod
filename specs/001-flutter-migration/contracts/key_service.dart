@@ -1,16 +1,16 @@
 /// Key Service Contract
 ///
-/// SSH鍵管理のサービス層インターフェース。
-/// 鍵の生成、インポート、エクスポート、セキュアストレージを担当。
+/// SSH Key Managementserviceinterface。
+/// keygenerate、port、port、securestorage。
 
 import 'dart:async';
 
 import '../models/ssh_key.dart';
 
-/// 鍵生成オプション
+/// keygenerate
 class KeyGenerationOptions {
   final KeyType type;
-  final int? bits; // RSAのみ: 2048, 3072, 4096
+  final int? bits; // RSA: 2048, 3072, 4096
   final String? passphrase;
   final String? comment;
 
@@ -22,7 +22,7 @@ class KeyGenerationOptions {
   });
 }
 
-/// 鍵インポート結果
+/// keyportresult
 class KeyImportResult {
   final SSHKey key;
   final bool requiresPassphrase;
@@ -33,67 +33,70 @@ class KeyImportResult {
   });
 }
 
-/// 鍵サービスインターフェース
+/// keyserviceinterface
 abstract class KeyService {
-  /// 鍵一覧取得
+  /// keylistretrieve
   Future<List<SSHKey>> listKeys();
 
-  /// 鍵取得
+  /// keyretrieve
   Future<SSHKey?> getKey(String keyId);
 
-  /// 鍵生成
+  /// keygenerate
   Future<SSHKey> generateKey({
     required String name,
     required KeyGenerationOptions options,
   });
 
-  /// 鍵インポート（PEM形式）
+  /// keyport（PEMformat）
   Future<KeyImportResult> importKey({
     required String name,
     required String privateKeyPem,
     String? passphrase,
   });
 
-  /// 鍵インポート（ファイルから）
+  /// keyport（file）
   Future<KeyImportResult> importKeyFromFile({
     required String name,
     required String filePath,
     String? passphrase,
   });
 
-  /// 秘密鍵取得（認証用）
+  /// private keyretrieve（authentication）
   Future<String> getPrivateKey({
     required String keyId,
     String? passphrase,
   });
 
-  /// 公開鍵取得（OpenSSH形式）
+  /// public keyretrieve（OpenSSHformat）
   Future<String> getPublicKey(String keyId);
 
-  /// 鍵削除
+  /// keydelete
   Future<void> deleteKey(String keyId);
 
-  /// 鍵名更新
+  /// keyupdate
   Future<void> updateKeyName({
     required String keyId,
     required String name,
   });
 
-  /// デフォルト鍵設定
+  /// defaultkeysettings
   Future<void> setDefaultKey(String keyId);
 
-  /// デフォルト鍵取得
+  /// defaultkeyretrieve
   Future<SSHKey?> getDefaultKey();
 
-  /// フィンガープリント計算
+  /// fingerprint
   Future<String> calculateFingerprint(String publicKey);
 
-  /// 鍵タイプ判定
+  /// key
   KeyType detectKeyType(String privateKeyPem);
 
-  /// パスフレーズ検証
+  /// passphraseverify
   Future<bool> verifyPassphrase({
     required String keyId,
     required String passphrase,
   });
 }
+
+
+

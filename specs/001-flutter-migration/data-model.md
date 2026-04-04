@@ -31,25 +31,25 @@
 
 ## 1. Connection
 
-SSH接続設定を表すエンティティ。
+SSH connection settings。
 
 ```dart
 @freezed
 class Connection with _$Connection {
   const factory Connection({
     required String id,              // UUID
-    required String name,            // 表示名 (e.g., "Production AWS")
-    required String host,            // ホスト名 or IP
-    @Default(22) int port,           // SSHポート
-    required String username,        // SSHユーザー名
-    required AuthMethod authMethod,  // 認証方法
-    String? keyId,                   // SSH鍵ID（key認証時）
-    @Default(30) int timeout,        // 接続タイムアウト秒
-    @Default(60) int keepAliveInterval, // Keepalive間隔秒
-    String? icon,                    // カスタムアイコン
-    String? color,                   // カード色（hex）
-    @Default([]) List<String> tags,  // タグ
-    DateTime? lastConnected,         // 最終接続日時
+    required String name,            // display (e.g., "Production AWS")
+    required String host,            // host name or IP
+    @Default(22) int port,           // SSHport
+    required String username,        // SSHuser
+    required AuthMethod authMethod,  // authentication
+    String? keyId,                   // SSHkeyID（keyauthentication）
+    @Default(30) int timeout,        // connection timeout
+    @Default(60) int keepAliveInterval, // Keepalive
+    String? icon,                    // custom
+    String? color,                   // color（hex）
+    @Default([]) List<String> tags,  // 
+    DateTime? lastConnected,         // finalconnection
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _Connection;
@@ -66,35 +66,35 @@ class AuthMethod with _$AuthMethod {
 ```
 
 ### Validation Rules
-- `name`: 1-50文字、空白不可
-- `host`: 有効なホスト名/IPv4/IPv6
+- `name`: 1-50characters、
+- `host`: enabledhost name/IPv4/IPv6
 - `port`: 1-65535
-- `username`: 1-32文字
-- `timeout`: 5-120秒
-- `keepAliveInterval`: 0（無効）または 10-300秒
+- `username`: 1-32characters
+- `timeout`: 5-120
+- `keepAliveInterval`: 0（disabled） 10-300
 
 ### Storage
-- **非機密**: SharedPreferences (JSON)
-- **パスワード**: flutter_secure_storage (暗号化)
+- ****: SharedPreferences (JSON)
+- **password**: flutter_secure_storage (encrypted)
 
 ---
 
 ## 2. SSHKey
 
-SSH鍵ペアを表すエンティティ。
+SSHkey。
 
 ```dart
 @freezed
 class SSHKey with _$SSHKey {
   const factory SSHKey({
     required String id,              // UUID
-    required String name,            // 表示名
-    required KeyType type,           // 鍵タイプ
-    int? bits,                       // RSAの場合: 2048, 4096等
-    required String fingerprint,     // SHA256フィンガープリント
-    required String publicKey,       // 公開鍵（表示・エクスポート用）
-    @Default(false) bool encrypted,  // パスフレーズ保護
-    @Default(false) bool isDefault,  // デフォルト鍵
+    required String name,            // display
+    required KeyType type,           // key
+    int? bits,                       // RSAwhen: 2048, 4096
+    required String fingerprint,     // SHA256fingerprint
+    required String publicKey,       // public key（displayport）
+    @Default(false) bool encrypted,  // passphraseprotection
+    @Default(false) bool isDefault,  // defaultkey
     required DateTime createdAt,
     DateTime? lastUsed,
   }) = _SSHKey;
@@ -107,29 +107,29 @@ enum KeyType { rsa, ed25519, ecdsa }
 ```
 
 ### Validation Rules
-- `name`: 1-50文字
-- `bits` (RSA): 2048, 3072, 4096のいずれか
-- `fingerprint`: SHA256:... 形式
+- `name`: 1-50characters
+- `bits` (RSA): 2048, 3072, 4096
+- `fingerprint`: SHA256:... format
 
 ### Storage
-- **メタデータ**: SharedPreferences (JSON)
-- **秘密鍵**: flutter_secure_storage (暗号化、キー: `ssh_private_key_${id}`)
+- **data**: SharedPreferences (JSON)
+- **private key**: flutter_secure_storage (encrypted、key: `ssh_private_key_${id}`)
 
 ---
 
 ## 3. TmuxSession
 
-リモートサーバー上のtmuxセッションを表すエンティティ（ランタイムのみ）。
+servertmux session（）。
 
 ```dart
 @freezed
 class TmuxSession with _$TmuxSession {
   const factory TmuxSession({
-    required String name,            // セッション名
-    required DateTime created,       // 作成日時
-    required bool attached,          // アタッチ状態
-    required int windowCount,        // ウィンドウ数
-    @Default([]) List<TmuxWindow> windows, // ウィンドウ一覧
+    required String name,            // session
+    required DateTime created,       // create
+    required bool attached,          // attachstate
+    required int windowCount,        // windowcount
+    @Default([]) List<TmuxWindow> windows, // windowlist
   }) = _TmuxSession;
 }
 ```
@@ -150,17 +150,17 @@ class TmuxSession with _$TmuxSession {
 
 ## 4. TmuxWindow
 
-tmuxウィンドウを表すエンティティ（ランタイムのみ）。
+tmux window（）。
 
 ```dart
 @freezed
 class TmuxWindow with _$TmuxWindow {
   const factory TmuxWindow({
-    required int index,              // ウィンドウインデックス
-    required String name,            // ウィンドウ名
-    required bool active,            // アクティブ状態
-    required int paneCount,          // ペイン数
-    @Default([]) List<TmuxPane> panes, // ペイン一覧
+    required int index,              // window
+    required String name,            // window
+    required bool active,            // active state
+    required int paneCount,          // panecount
+    @Default([]) List<TmuxPane> panes, // panelist
   }) = _TmuxWindow;
 }
 ```
@@ -169,21 +169,21 @@ class TmuxWindow with _$TmuxWindow {
 
 ## 5. TmuxPane
 
-tmuxペインを表すエンティティ（ランタイムのみ）。
+tmux pane（）。
 
 ```dart
 @freezed
 class TmuxPane with _$TmuxPane {
   const factory TmuxPane({
-    required int index,              // ペインインデックス
-    required String id,              // ペインID (%0, %1, etc.)
-    required bool active,            // アクティブ状態
-    required String currentCommand,  // 実行中コマンド
-    required String title,           // ペインタイトル
-    required int width,              // 幅（列数）
-    required int height,             // 高さ（行数）
-    required int cursorX,            // カーソルX位置
-    required int cursorY,            // カーソルY位置
+    required int index,              // pane
+    required String id,              // paneID (%0, %1, etc.)
+    required bool active,            // active state
+    required String currentCommand,  // runin progresscommand
+    required String title,           // pane
+    required int width,              // width（columns）
+    required int height,             // height（rows）
+    required int cursorX,            // X
+    required int cursorY,            // Y
   }) = _TmuxPane;
 }
 ```
@@ -192,32 +192,32 @@ class TmuxPane with _$TmuxPane {
 
 ## 6. NotificationRule
 
-通知ルールを表すエンティティ。
+Notification Rules。
 
 ```dart
 @freezed
 class NotificationRule with _$NotificationRule {
   const factory NotificationRule({
     required String id,              // UUID
-    required String name,            // ルール名
-    @Default(true) bool enabled,     // 有効/無効
+    required String name,            // rule
+    @Default(true) bool enabled,     // enabled/disabled
 
-    // ターゲット
-    required String connectionId,    // 対象接続
-    String? sessionName,             // 対象セッション（null=全て）
-    int? windowIndex,                // 対象ウィンドウ
-    int? paneIndex,                  // 対象ペイン
+    // 
+    required String connectionId,    // targetconnection
+    String? sessionName,             // targetsession（null=all）
+    int? windowIndex,                // targetwindow
+    int? paneIndex,                  // targetpane
 
-    // 条件
+    // conditions
     required NotificationCondition condition,
 
-    // アクション
+    // 
     @Default(NotificationAction.inApp) NotificationAction action,
-    String? soundName,               // サウンド名（sound時）
+    String? soundName,               // （sound）
 
-    // 制御
+    // 
     @Default(NotificationFrequency.always) NotificationFrequency frequency,
-    @Default(5000) int throttleMs,   // 最小通知間隔
+    @Default(5000) int throttleMs,   // minimumnotification
 
     DateTime? lastTriggered,
     required DateTime createdAt,
@@ -254,9 +254,9 @@ enum NotificationFrequency { always, oncePerSession, oncePerMatch }
 ```
 
 ### Validation Rules
-- `name`: 1-50文字
+- `name`: 1-50characters
 - `throttleMs`: 1000-60000ms
-- `pattern` (regex): 有効な正規表現
+- `pattern` (regex): enabled
 
 ### Storage
 - SharedPreferences (JSON)
@@ -265,7 +265,7 @@ enum NotificationFrequency { always, oncePerSession, oncePerMatch }
 
 ## 7. AppSettings
 
-アプリケーション設定を表すエンティティ。
+appsettings。
 
 ```dart
 @freezed
@@ -309,7 +309,7 @@ class TerminalSettings with _$TerminalSettings {
 @freezed
 class SshSettings with _$SshSettings {
   const factory SshSettings({
-    @Default(60) int keepAliveInterval, // 0=off, 10-300秒
+    @Default(60) int keepAliveInterval, // 0=off, 10-300
     @Default(false) bool compressionEnabled,
     @Default(22) int defaultPort,
     @Default('') String defaultUsername,
@@ -339,7 +339,7 @@ enum ColorTheme { dracula, solarized, monokai, nord, custom }
 
 ## 8. TerminalColors
 
-ターミナルカラーテーマを表すエンティティ。
+terminalcolor theme。
 
 ```dart
 @freezed
@@ -391,9 +391,12 @@ class TerminalColors with _$TerminalColors {
 ## Code Generation Commands
 
 ```bash
-# Freezed/JSON Serializable 生成
+# Freezed/JSON Serializable generate
 dart run build_runner build --delete-conflicting-outputs
 
-# Watch モード
+# Watch mode
 dart run build_runner watch
 ```
+
+
+

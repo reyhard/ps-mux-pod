@@ -1,26 +1,26 @@
-# Quickstart: SSH/Terminal統合機能
+# Quickstart: SSH/Terminal Integration
 
 **Date**: 2026-01-11
 **Branch**: `001-ssh-terminal-integration`
 
-## 概要
+## Overview
 
-このドキュメントは、SSH/Terminal統合機能の実装ガイドです。
-`terminal_screen.dart`の2つのTODOコメントを解決するための具体的な手順を示します。
+documentation、SSH/Terminal Integrationimplement。
+`terminal_screen.dart`2TODOcommentresolveSteps。
 
-## 前提条件
+## Prerequisites
 
 - Flutter 3.24+ / Dart 3.10+
-- 既存サービス層の理解
+- existingservice
   - `lib/services/ssh/ssh_client.dart`
   - `lib/services/tmux/tmux_commands.dart`
   - `lib/providers/ssh_provider.dart`
 
-## 実装ステップ
+## implement
 
-### Step 1: TerminalScreenにProviderを追加
+### Step 1: TerminalScreenProvideradd
 
-`lib/screens/terminal/terminal_screen.dart`を修正:
+`lib/screens/terminal/terminal_screen.dart`:
 
 ```dart
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -33,15 +33,15 @@ import '../../services/tmux/tmux_commands.dart';
 import '../../services/tmux/tmux_parser.dart';
 
 class _TerminalScreenState extends ConsumerState<TerminalScreen> {
-  // 追加: ストレージインスタンス
+  // add: storage
   final _secureStorage = const FlutterSecureStorage();
 
-  // 追加: 接続状態
+  // add: connectionstate
   bool _isConnecting = false;
   String? _connectionError;
 ```
 
-### Step 2: _connectAndAttach()の実装 (39行目のTODO)
+### Step 2: _connectAndAttach()implement (39lineTODO)
 
 ```dart
 Future<void> _connectAndAttach() async {
@@ -51,20 +51,20 @@ Future<void> _connectAndAttach() async {
   });
 
   try {
-    // 1. 接続情報を取得
-    final connection = ref.read(connectionsProvider.notifier).getById(widget.connectionId);
+    // 1. connectioninformationretrieve
+    final connection = ref.read(connectionsProvider.notifier).getById(Widget.connectionId);
     if (connection == null) {
       throw Exception('Connection not found');
     }
 
-    // 2. 認証情報を取得
+    // 2. authenticationinformationretrieve
     final options = await _getAuthOptions(connection);
 
-    // 3. SSH接続
+    // 3. SSH connection
     final sshNotifier = ref.read(sshProvider.notifier);
     await sshNotifier.connect(connection, options);
 
-    // 4. イベントハンドラを設定
+    // 4. settings
     final sshClient = sshNotifier.client;
     if (sshClient != null) {
       sshClient.setEventHandlers(SshEvents(
@@ -76,15 +76,15 @@ Future<void> _connectAndAttach() async {
       ));
     }
 
-    // 5. tmuxセッション一覧を取得
+    // 5. tmux sessionlistretrieve
     final sessionsOutput = await sshClient?.exec(TmuxCommands.listSessions());
     if (sessionsOutput != null) {
       final sessions = TmuxParser.parseSessions(sessionsOutput);
       ref.read(tmuxProvider.notifier).updateSessions(sessions);
 
-      // 6. セッションにアタッチまたは新規作成
+      // 6. sessionattachnewcreate
       if (sessions.isNotEmpty) {
-        final sessionName = widget.sessionName ?? sessions.first.name;
+        final sessionName = Widget.sessionName ?? sessions.first.name;
         sshClient?.write('${TmuxCommands.attachSession(sessionName)}\n');
         ref.read(tmuxProvider.notifier).setActiveSession(sessionName);
       } else {
@@ -151,7 +151,7 @@ void _showErrorSnackBar(String message) {
 }
 ```
 
-### Step 3: _sendKey()の実装 (287行目のTODO)
+### Step 3: _sendKey()implement (287lineTODO)
 
 ```dart
 void _sendKey(String key) {
@@ -159,26 +159,26 @@ void _sendKey(String key) {
   if (sshState.isConnected) {
     ref.read(sshProvider.notifier).write(key);
   }
-  // ローカルエコー（オプション）
+  // （）
   // _terminal.write(key);
 }
 ```
 
-### Step 4: disposeの修正
+### Step 4: dispose
 
 ```dart
 @override
 void dispose() {
   _terminalController.dispose();
-  // SSH接続をクリーンアップ
+  // SSH connectioncleanup
   ref.read(sshProvider.notifier).disconnect();
   super.dispose();
 }
 ```
 
-### Step 5: UIにローディング/エラー表示を追加
+### Step 5: UIloading/errordisplayadd
 
-`build()`メソッド内:
+`build()`method:
 
 ```dart
 @override
@@ -196,7 +196,7 @@ Widget build(BuildContext context) {
               child: TerminalView(
                 _terminal,
                 controller: _terminalController,
-                // ... 既存の設定
+                // ... existingsettings
               ),
             ),
             SpecialKeysBar(
@@ -205,7 +205,7 @@ Widget build(BuildContext context) {
             ),
           ],
         ),
-        // ローディングオーバーレイ
+        // loadingoverlay
         if (_isConnecting || sshState.isConnecting)
           Container(
             color: Colors.black54,
@@ -213,7 +213,7 @@ Widget build(BuildContext context) {
               child: CircularProgressIndicator(),
             ),
           ),
-        // エラー表示
+        // errordisplay
         if (_connectionError != null || sshState.hasError)
           _buildErrorOverlay(sshState.error ?? _connectionError),
       ],
@@ -247,17 +247,17 @@ Widget _buildErrorOverlay(String? error) {
 }
 ```
 
-## テスト方法
+## test
 
-### 手動テスト
+### manualtest
 
-1. Androidエミュレータまたは実機でアプリを起動
-2. 接続を追加（有効なSSHサーバー）
-3. 接続をタップしてターミナル画面を開く
-4. tmuxセッションが表示されることを確認
-5. キー入力が送信されることを確認
+1. Androidemulatorphysical deviceappstart
+2. connectionadd（enabledSSHserver）
+3. connectionterminal screen
+4. tmux sessiondisplayverify
+5. Key Inputsendverify
 
-### 統合テスト（将来）
+### integrationtest（future）
 
 ```dart
 testWidgets('SSH connection establishes and attaches to tmux', (tester) async {
@@ -268,17 +268,20 @@ testWidgets('SSH connection establishes and attaches to tmux', (tester) async {
 });
 ```
 
-## トラブルシューティング
+## troubleshooting
 
-| 問題 | 原因 | 解決策 |
+| issue | cause | solution |
 |-----|------|-------|
-| 接続タイムアウト | ネットワーク問題 | ホスト/ポートを確認 |
-| 認証エラー | パスワード/鍵が不正 | 認証情報を再設定 |
-| tmux not found | サーバーにtmuxがない | tmuxをインストール |
-| 表示が乱れる | ANSIエスケープの問題 | ターミナルタイプを確認 |
+| connection timeout | issue | host/portverify |
+| authenticationerror | password/keyinvalid | authenticationinformationresettings |
+| tmux not found | servertmux | tmuxinstall |
+| display | ANSIescapeissue | terminalverify |
 
-## 参考資料
+## reference
 
-- [dartssh2 ドキュメント](https://pub.dev/packages/dartssh2)
-- [xterm.dart ドキュメント](https://pub.dev/packages/xterm)
-- [tmux マニュアル](https://man7.org/linux/man-pages/man1/tmux.1.html)
+- [dartssh2 documentation](https://pub.dev/packages/dartssh2)
+- [xterm.dart documentation](https://pub.dev/packages/xterm)
+- [tmux manual](https://man7.org/linux/man-pages/man1/tmux.1.html)
+
+
+

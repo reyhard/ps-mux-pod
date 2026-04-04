@@ -1,76 +1,76 @@
 /**
  * ANSI Parser Contract
  *
- * ANSIエスケープシーケンスをパースし、スタイル付きテキストに変換する。
+ * ANSIescapesequenceparse、。
  */
 
 /**
- * テキストスパン（同一スタイルのテキスト断片）
+ * （same）
  */
 export interface AnsiSpan {
-  /** テキスト内容 */
+  /** contents */
   text: string;
-  /** 前景色 (0-255, undefined=デフォルト) */
+  /** color (0-255, undefined=default) */
   fg?: number;
-  /** 背景色 (0-255, undefined=デフォルト) */
+  /** color (0-255, undefined=default) */
   bg?: number;
-  /** 太字 */
+  /**  */
   bold?: boolean;
-  /** 薄字 */
+  /**  */
   dim?: boolean;
-  /** イタリック */
+  /**  */
   italic?: boolean;
-  /** 下線 */
+  /**  */
   underline?: boolean;
-  /** 点滅 */
+  /**  */
   blink?: boolean;
-  /** 反転 */
+  /**  */
   inverse?: boolean;
-  /** 非表示 */
+  /** display */
   hidden?: boolean;
-  /** 取り消し線 */
+  /**  */
   strikethrough?: boolean;
 }
 
 /**
- * パース済み行
+ * parseline
  */
 export interface AnsiLine {
-  /** スパン配列 */
+  /** column */
   spans: AnsiSpan[];
 }
 
 /**
- * ANSIパーサーインターフェース
+ * ANSIparserinterface
  */
 export interface IAnsiParser {
   /**
-   * ANSIエスケープシーケンスを含む行をパースする
-   * @param line 生テキスト
-   * @returns パース済みスパン配列
+   * ANSIescapesequencelineparse
+   * @param line 
+   * @returns parsecolumn
    */
   parseLine(line: string): AnsiSpan[];
 
   /**
-   * 複数行をパースする
-   * @param lines 生テキスト行配列
-   * @returns パース済み行配列
+   * multiplelineparse
+   * @param lines linecolumn
+   * @returns parselinecolumn
    */
   parseLines(lines: string[]): AnsiLine[];
 
   /**
-   * ANSIエスケープシーケンスを削除する
-   * @param text ANSIシーケンスを含むテキスト
-   * @returns プレーンテキスト
+   * ANSIescapesequencedelete
+   * @param text ANSIsequence
+   * @returns 
    */
   stripAnsi(text: string): string;
 }
 
 /**
- * 16色パレット（標準）
+ * 16color（standard）
  */
 export const ANSI_16_COLORS = {
-  // 標準色 (30-37, 40-47)
+  // standardcolor (30-37, 40-47)
   0: '#000000', // Black
   1: '#CC0000', // Red
   2: '#00CC00', // Green
@@ -79,7 +79,7 @@ export const ANSI_16_COLORS = {
   5: '#CC00CC', // Magenta
   6: '#00CCCC', // Cyan
   7: '#CCCCCC', // White
-  // 明るい色 (90-97, 100-107)
+  // color (90-97, 100-107)
   8: '#666666',  // Bright Black
   9: '#FF0000',  // Bright Red
   10: '#00FF00', // Bright Green
@@ -91,9 +91,9 @@ export const ANSI_16_COLORS = {
 } as const;
 
 /**
- * 256色を16進数カラーコードに変換する
+ * 256color16countcolorcode
  * @param colorIndex 0-255
- * @returns #RRGGBB形式の色
+ * @returns #RRGGBBformatcolor
  */
 export function ansi256ToHex(colorIndex: number): string {
   if (colorIndex < 16) {
@@ -101,7 +101,7 @@ export function ansi256ToHex(colorIndex: number): string {
   }
 
   if (colorIndex < 232) {
-    // 6x6x6 色キューブ (16-231)
+    // 6x6x6 color (16-231)
     const index = colorIndex - 16;
     const r = Math.floor(index / 36);
     const g = Math.floor((index % 36) / 6);
@@ -110,25 +110,25 @@ export function ansi256ToHex(colorIndex: number): string {
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   }
 
-  // グレースケール (232-255)
+  //  (232-255)
   const gray = (colorIndex - 232) * 10 + 8;
   const hex = gray.toString(16).padStart(2, '0');
   return `#${hex}${hex}${hex}`;
 }
 
 /**
- * テーマ定義（ターミナルカラー）
+ * theme（terminalcolor）
  */
 export interface TerminalTheme {
-  /** 背景色 */
+  /** color */
   background: string;
-  /** 前景色（デフォルト） */
+  /** color（default） */
   foreground: string;
-  /** カーソル色 */
+  /** color */
   cursor: string;
-  /** 選択色 */
+  /** selectcolor */
   selection: string;
-  /** 16色パレット */
+  /** 16color */
   palette: readonly [
     string, string, string, string, string, string, string, string,
     string, string, string, string, string, string, string, string
@@ -136,7 +136,7 @@ export interface TerminalTheme {
 }
 
 /**
- * Draculaテーマ
+ * Draculatheme
  */
 export const DRACULA_THEME: TerminalTheme = {
   background: '#282A36',
@@ -150,3 +150,6 @@ export const DRACULA_THEME: TerminalTheme = {
     '#D6ACFF', '#FF92DF', '#A4FFFF', '#FFFFFF',
   ],
 };
+
+
+

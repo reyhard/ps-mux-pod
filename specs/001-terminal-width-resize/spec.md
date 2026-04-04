@@ -3,114 +3,117 @@
 **Feature Branch**: `001-terminal-width-resize`
 **Created**: 2026-01-11
 **Status**: Draft
-**Input**: User description: "ターミナル横幅リサイズ機能: ペイン選択時にtmuxのpane_widthに合わせてターミナル表示幅を自動調整。設定で最小文字サイズを設定可能。最小サイズ未満の場合は水平スクロール有効化。ピンチで拡大縮小対応。"
+**Input**: User description: "Terminal width auto-resize feature: when a pane is selected, automatically adjust the terminal display width to match tmux `pane_width`. Allow configuring a minimum font size in settings. Enable horizontal scrolling if the size would go below the minimum. Support pinch zoom in and out."
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Auto-fit Terminal to Pane Width (Priority: P1)
 
-ユーザーがtmuxペインを選択すると、ターミナル表示が自動的にペインの横幅（文字数）に合わせてフィットする。これにより、デスクトップ環境と同じ表示レイアウトでターミナルを確認できる。
+When the user selects a tmux pane, the terminal display automatically fits the pane width in characters. This lets the user view the terminal with the same layout as on the desktop.
 
-**Why this priority**: これはこの機能の核心であり、tmuxペインの横幅に合わせた表示がなければ、行の折り返しが発生してデスクトップ環境と異なる表示になってしまう。最も重要なユーザー体験を提供する。
+**Why this priority**: This is the core of the feature. Without matching the tmux pane width, lines wrap and the display diverges from the desktop layout. This provides the most important user experience.
 
-**Independent Test**: ペインを選択し、ターミナル表示がペインの横幅（例: 80文字、120文字、200文字）に正確にフィットすることを確認できる。
+**Independent Test**: Select a pane and verify that the terminal display fits the pane width exactly, for example 80, 120, or 200 characters.
 
 **Acceptance Scenarios**:
 
-1. **Given** SSH接続済みでtmuxセッションが開いている状態, **When** 80文字幅のペインを選択する, **Then** ターミナル表示が80文字幅でフィットし、すべての文字が画面内に収まる
-2. **Given** SSH接続済みでtmuxセッションが開いている状態, **When** 200文字幅のペインを選択する, **Then** フォントサイズが縮小されて200文字幅がスクリーン幅内に収まる
-3. **Given** ペイン表示中, **When** ペインを別のウィンドウに切り替える, **Then** 新しいペインの横幅に合わせて表示が再調整される
+1. **Given** SSH is connected and a tmux session is open, **When** a pane that is 80 characters wide is selected, **Then** the terminal display fits 80 characters and all text stays within the screen
+2. **Given** SSH is connected and a tmux session is open, **When** a pane that is 200 characters wide is selected, **Then** the font size shrinks so the 200-character width fits within the screen
+3. **Given** a pane is displayed, **When** the pane is switched to another window, **Then** the display is recalculated for the new pane width
 
 ---
 
 ### User Story 2 - Minimum Font Size Setting (Priority: P2)
 
-ユーザーが設定画面で最小フォントサイズを指定できる。これにより、読みやすさを確保しながら自動調整の限界を設定できる。
+The user can specify the minimum font size in the settings screen. This sets the limit for automatic resizing while preserving readability.
 
-**Why this priority**: 自動リサイズが極端に小さいフォントを生成すると読めなくなる。ユーザーが許容できる最小サイズを設定できることは、アクセシビリティとユーザー体験の両方に重要。
+**Why this priority**: Automatic resizing can produce unreadably small fonts. Letting the user set an acceptable minimum is important for both accessibility and UX.
 
-**Independent Test**: 設定画面で最小フォントサイズを変更し、その値がターミナル表示の自動調整に反映されることを確認できる。
+**Independent Test**: Change the minimum font size in the settings screen and verify that the value affects automatic terminal resizing.
 
 **Acceptance Scenarios**:
 
-1. **Given** 設定画面を開いている状態, **When** 最小フォントサイズを8pxに設定する, **Then** 設定が保存され、次回起動時も8pxが維持される
-2. **Given** 最小フォントサイズが10pxに設定されている状態, **When** ペインの横幅が非常に広い場合, **Then** フォントサイズは10px以下には縮小されない
+1. **Given** the settings screen is open, **When** the minimum font size is set to 8 px, **Then** the setting is saved and 8 px is retained on the next launch
+2. **Given** the minimum font size is set to 10 px, **When** the pane width is very large, **Then** the font size does not shrink below 10 px
 
 ---
 
 ### User Story 3 - Horizontal Scroll for Wide Panes (Priority: P2)
 
-最小フォントサイズでもペイン全体を画面幅に収められない場合、水平スクロールが有効になる。
+If the entire pane still cannot fit within the screen width at the minimum font size, horizontal scrolling becomes available.
 
-**Why this priority**: 最小フォントサイズ制限があるため、極端に広いペインでは画面に収まりきらない。水平スクロールにより、そのような場合でもすべてのコンテンツにアクセス可能。
+**Why this priority**: Because of the minimum font-size limit, extremely wide panes may not fit on screen. Horizontal scrolling ensures all content remains accessible in those cases.
 
-**Independent Test**: 非常に広いペイン（例: 300文字）を選択し、水平スクロールでコンテンツ全体を確認できることを確認する。
+**Independent Test**: Select a very wide pane, for example 300 characters, and verify that the full content can be reviewed through horizontal scrolling.
 
 **Acceptance Scenarios**:
 
-1. **Given** 最小フォントサイズが10pxで、300文字幅のペインを表示している状態, **When** 最小フォントサイズでも画面幅を超える場合, **Then** 水平スクロールが有効になり、左右にスクロールできる
-2. **Given** 水平スクロールが有効な状態, **When** 画面右端までスクロールする, **Then** ペインの最右端の文字が表示される
+1. **Given** the minimum font size is 10 px and a 300-character-wide pane is displayed, **When** the content still exceeds the screen width at the minimum font size, **Then** horizontal scrolling is enabled and the user can scroll left and right
+2. **Given** horizontal scrolling is enabled, **When** the user scrolls to the far right, **Then** the rightmost pane text is shown
 
 ---
 
 ### User Story 4 - Pinch to Zoom (Priority: P3)
 
-ユーザーがピンチジェスチャーでフォントサイズを一時的に拡大・縮小できる。
+The user can temporarily increase or decrease the font size with pinch gestures.
 
-**Why this priority**: モバイルデバイスで標準的なジェスチャーであり、細かい文字を確認したいときやコンテンツを俯瞰したいときに便利。ただし、P1/P2の機能が先に実装されていれば、基本的なユースケースはカバーされている。
+**Why this priority**: This is a standard mobile gesture and is useful when the user wants to inspect small text or zoom out for an overview. The core use cases are already covered by the P1/P2 features.
 
-**Independent Test**: ターミナル表示中にピンチイン/ピンチアウトし、フォントサイズが動的に変化することを確認できる。
+**Independent Test**: Pinch in and pinch out while the terminal is displayed and verify that the font size changes dynamically.
 
 **Acceptance Scenarios**:
 
-1. **Given** ターミナルが表示されている状態, **When** ピンチアウト（2本指を広げる）する, **Then** フォントサイズが拡大される
-2. **Given** ターミナルが表示されている状態, **When** ピンチイン（2本指を狭める）する, **Then** フォントサイズが縮小される（最小フォントサイズまで）
-3. **Given** ピンチでフォントサイズを変更した状態, **When** 別のペインに切り替える, **Then** 新しいペインの横幅に基づいた自動調整が適用される
+1. **Given** the terminal is displayed, **When** the user pinches out, **Then** the font size increases
+2. **Given** the terminal is displayed, **When** the user pinches in, **Then** the font size decreases, down to the minimum font size
+3. **Given** the font size was changed by pinch, **When** the user switches to another pane, **Then** automatic resizing is applied based on the new pane width
 
 ---
 
 ### Edge Cases
 
-- 極端に狭いペイン（例: 10文字幅）の場合、フォントサイズが画面幅いっぱいまで拡大される
-- ペインの横幅が0または取得できない場合、デフォルト値（80文字）を使用する
-- 折りたたみデバイスで画面幅が動的に変わった場合、再計算を行う
-- ピンチ操作中にペイン内容が更新された場合、表示を維持しながらコンテンツを更新する
-- 縦向き/横向き切り替え時、横幅に合わせた再計算を行う
-- 水平スクロール中にペインを切り替えた場合、スクロール位置をリセットする
+- For extremely narrow panes, for example 10 characters wide, the font size expands to fill the available screen width
+- If the pane width is 0 or cannot be retrieved, use the default value of 80 characters
+- Recalculate when screen width changes dynamically on foldable devices
+- If pane content updates during a pinch gesture, update the content while preserving the display
+- Recalculate on portrait/landscape rotation
+- Reset the scroll position when switching panes while horizontal scrolling is active
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: システムはペイン選択時にtmuxの`pane_width`（文字数）を取得しなければならない
-- **FR-002**: システムは取得したペイン横幅に基づいて、画面幅内に収まるようフォントサイズを自動計算しなければならない
-- **FR-003**: ユーザーは設定画面で最小フォントサイズ（ポイント単位）を設定できなければならない
-- **FR-004**: システムは自動計算されたフォントサイズが最小値を下回る場合、最小値を適用しなければならない
-- **FR-005**: システムは最小フォントサイズでもコンテンツが画面幅を超える場合、水平スクロールを有効にしなければならない
-- **FR-006**: ユーザーはピンチジェスチャーでフォントサイズを拡大・縮小できなければならない
-- **FR-007**: システムはピンチ操作でも最小フォントサイズ制限を適用しなければならない
-- **FR-008**: システムはペイン切り替え時に新しいペインの横幅に合わせて表示を再調整しなければならない
-- **FR-009**: システムは画面回転時に横幅に合わせた再計算を行わなければならない
-- **FR-010**: システムは最小フォントサイズ設定を永続化しなければならない
+- **FR-001**: The system must retrieve tmux `pane_width` in characters when a pane is selected
+- **FR-002**: The system must automatically calculate a font size that fits within the screen width based on the pane width
+- **FR-003**: The user must be able to set the minimum font size in points from the settings screen
+- **FR-004**: The system must apply the minimum value when the calculated font size falls below it
+- **FR-005**: The system must enable horizontal scrolling when the content still exceeds the screen width at the minimum font size
+- **FR-006**: The user must be able to increase or decrease the font size with pinch gestures
+- **FR-007**: The system must still enforce the minimum font-size limit during pinch gestures
+- **FR-008**: The system must readjust the display when switching panes to match the new pane width
+- **FR-009**: The system must recalculate based on width changes when the screen rotates
+- **FR-010**: The system must persist the minimum font-size setting
 
 ### Key Entities
 
-- **TerminalDisplayState**: ターミナル表示の状態を管理するエンティティ。現在のフォントサイズ、ペイン横幅（文字数）、スクロールオフセット、ズーム倍率を保持する
-- **TerminalDisplaySettings**: ユーザー設定を管理するエンティティ。最小フォントサイズを保持し、永続化される
+- **TerminalDisplayState**: Entity that manages terminal display state, including the current font size, pane width in characters, scroll offset, and zoom scale
+- **TerminalDisplaySettings**: Entity that manages user settings, stores the minimum font size, and persists it
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: ペイン選択から表示調整完了まで500ms以内に完了する
-- **SC-002**: 80文字から200文字幅のペインで、行の折り返しなしに全文字が表示される（水平スクロールなしで収まる場合）
-- **SC-003**: ピンチ操作に対するフォントサイズ変更が滑らかに表示される
-- **SC-004**: 最小フォントサイズ設定が100%のケースで正しく適用される
-- **SC-005**: 水平スクロール時、ペインの全コンテンツにアクセスできる
+- **SC-001**: Display adjustment completes within 500 ms after pane selection
+- **SC-002**: For panes 80 to 200 characters wide, all text is shown without line wrapping when it fits without horizontal scrolling
+- **SC-003**: Font-size changes from pinch gestures are displayed smoothly
+- **SC-004**: The minimum font-size setting is applied correctly in 100% of cases
+- **SC-005**: All pane content remains accessible during horizontal scrolling
 
 ## Assumptions
 
-- デフォルトの最小フォントサイズは8px（業界標準のモバイルアプリ読みやすさ基準）
-- ピンチ操作後にペインを切り替えると、自動フィットモードに戻る（ユーザーの一時的な拡大/縮小はリセット）
-- ペイン横幅が取得できない場合のフォールバック値は80文字（標準ターミナル幅）
-- 等幅フォント（モノスペースフォント）を使用している前提で、1文字あたりの幅は一定
+- The default minimum font size is 8 px, which matches common mobile readability guidance
+- After a pinch gesture, switching panes returns to auto-fit mode, resetting the user's temporary zoom
+- The fallback width when pane width cannot be retrieved is 80 characters, which is the standard terminal width
+- This assumes a monospaced font, so the width per character is constant
+
+
+

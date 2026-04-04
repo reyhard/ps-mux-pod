@@ -3,132 +3,135 @@
 **Feature Branch**: `001-settings-notifications`
 **Created**: 2026-01-11
 **Status**: Draft
-**Input**: 設定と通知機能を実装。settings_screen.dartのTODOコメント解決とnotification_rules_screenのルール保存実装。
+**Input**: Implement settings and notifications. Resolve the TODO comments in `settings_screen.dart` and implement rule persistence in `notification_rules_screen`.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Terminal Font Configuration (Priority: P1)
 
-ユーザーはターミナルのフォントサイズとフォントファミリーを変更して、読みやすさを向上させたい。
+The user wants to change the terminal font size and font family to improve readability.
 
-**Why this priority**: ターミナル操作において視認性は最重要。ユーザーの環境や好みに合わせたカスタマイズは基本機能。
+**Why this priority**: Visibility is critical for terminal work. Customization to match the user's environment and preferences is a core feature.
 
-**Independent Test**: 設定画面でフォントサイズを変更し、アプリを再起動後も設定が保持されていることを確認できる。
+**Independent Test**: Change the font size in the settings screen and verify that the setting persists after restarting the app.
 
 **Acceptance Scenarios**:
 
-1. **Given** 設定画面を開いている状態, **When** Font Sizeをタップ, **Then** フォントサイズ選択ダイアログが表示される
-2. **Given** フォントサイズダイアログが表示されている状態, **When** サイズを選択して確定, **Then** 設定が保存され画面に反映される
-3. **Given** 設定画面を開いている状態, **When** Font Familyをタップ, **Then** フォントファミリー選択ダイアログが表示される
-4. **Given** フォントファミリーダイアログが表示されている状態, **When** フォントを選択して確定, **Then** 設定が保存され画面に反映される
+1. **Given** the settings screen is open, **When** Font Size is tapped, **Then** the font size picker dialog is shown
+2. **Given** the font size dialog is shown, **When** a size is selected and confirmed, **Then** the setting is saved and reflected on screen
+3. **Given** the settings screen is open, **When** Font Family is tapped, **Then** the font family picker dialog is shown
+4. **Given** the font family dialog is shown, **When** a font is selected and confirmed, **Then** the setting is saved and reflected on screen
 
 ---
 
 ### User Story 2 - Notification Rule Management (Priority: P1)
 
-ユーザーはターミナル出力に対するパターンマッチ通知ルールを作成・保存し、重要なイベントを見逃さないようにしたい。
+The user wants to create and save pattern-matching notification rules for terminal output so important events are not missed.
 
-**Why this priority**: 通知機能はMuxPodの差別化要素であり、リモートサーバー監視のコア機能。
+**Why this priority**: Notifications are a differentiator for MuxPod and a core feature for remote server monitoring.
 
-**Independent Test**: 新しい通知ルールを作成してアプリを再起動後、ルールが保持されていることを確認できる。
+**Independent Test**: Create a new notification rule and verify that it persists after restarting the app.
 
 **Acceptance Scenarios**:
 
-1. **Given** 通知ルール画面を開いている状態, **When** FABをタップ, **Then** ルール作成ダイアログが表示される
-2. **Given** ルール作成ダイアログでフォームを入力した状態, **When** Saveをタップ, **Then** ルールが保存されリストに表示される
-3. **Given** ルールが1つ以上存在する状態, **When** 画面を開く, **Then** 保存されたルールがリストに表示される
-4. **Given** ルールリストが表示されている状態, **When** ルールをタップ, **Then** 編集ダイアログが表示される
-5. **Given** ルールリストが表示されている状態, **When** ルールを左スワイプ, **Then** 削除確認後にルールが削除される
+1. **Given** the notification rules screen is open, **When** FAB is tapped, **Then** the rule creation dialog is shown
+2. **Given** the form is filled out in the rule creation dialog, **When** Save is tapped, **Then** the rule is saved and shown in the list
+3. **Given** one or more rules already exist, **When** the screen is opened, **Then** the saved rules are shown in the list
+4. **Given** the rule list is shown, **When** a rule is tapped, **Then** the edit dialog is shown
+5. **Given** the rule list is shown, **When** a rule is swiped left, **Then** the rule is deleted after confirmation
 
 ---
 
 ### User Story 3 - Behavior Settings Persistence (Priority: P2)
 
-ユーザーはHaptic FeedbackやKeep Screen Onなどの動作設定を変更し、好みに合わせた操作感を得たい。
+The user wants to change behavioral settings such as Haptic Feedback and Keep Screen On to match their preferences.
 
-**Why this priority**: UXに直接影響するが、デフォルト値でも使用可能。
+**Why this priority**: These settings directly affect UX, but the app remains usable with defaults.
 
-**Independent Test**: Haptic Feedbackをオフにしてアプリを再起動後、オフのままであることを確認できる。
+**Independent Test**: Turn off Haptic Feedback and verify that it remains off after restarting the app.
 
 **Acceptance Scenarios**:
 
-1. **Given** 設定画面を開いている状態, **When** Haptic Feedbackトグルを切り替え, **Then** 設定が即座に保存される
-2. **Given** 設定画面を開いている状態, **When** Keep Screen Onトグルを切り替え, **Then** 設定が即座に保存される
-3. **Given** 設定を変更した状態, **When** アプリを再起動, **Then** 変更した設定が保持されている
+1. **Given** the settings screen is open, **When** the Haptic Feedback toggle is changed, **Then** the setting is saved immediately
+2. **Given** the settings screen is open, **When** the Keep Screen On toggle is changed, **Then** the setting is saved immediately
+3. **Given** the settings were changed, **When** the app is restarted, **Then** the changes are preserved
 
 ---
 
 ### User Story 4 - Theme Selection (Priority: P2)
 
-ユーザーはアプリのテーマ（ダーク/ライト）を変更して、好みや環境に合わせた表示にしたい。
+The user wants to change the app theme (dark/light) to match personal preference and environment.
 
-**Why this priority**: 視認性とUXに影響するが、デフォルト（ダーク）で多くのユーザーに対応可能。
+**Why this priority**: This affects visibility and UX, but the default dark theme works for many users.
 
-**Independent Test**: テーマをライトに変更し、アプリ全体の表示が切り替わることを確認できる。
+**Independent Test**: Change the theme to light and verify that the entire app switches accordingly.
 
 **Acceptance Scenarios**:
 
-1. **Given** 設定画面を開いている状態, **When** Themeをタップ, **Then** テーマ選択ダイアログが表示される
-2. **Given** テーマ選択ダイアログが表示されている状態, **When** テーマを選択して確定, **Then** アプリ全体のテーマが即座に切り替わる
+1. **Given** the settings screen is open, **When** Theme is tapped, **Then** the theme picker dialog is shown
+2. **Given** the theme picker dialog is shown, **When** a theme is selected and confirmed, **Then** the entire app theme switches immediately
 
 ---
 
 ### User Story 5 - External Links (Priority: P3)
 
-ユーザーはアプリのソースコードリンクをタップして、外部ブラウザでGitHubリポジトリを開きたい。
+The user wants to tap the app's source code link and open the GitHub repository in an external browser.
 
-**Why this priority**: 補助的な機能であり、コア機能ではない。
+**Why this priority**: This is a supporting feature, not a core one.
 
-**Independent Test**: Source Codeをタップして外部ブラウザでGitHubが開くことを確認できる。
+**Independent Test**: Tap Source Code and verify that GitHub opens in an external browser.
 
 **Acceptance Scenarios**:
 
-1. **Given** 設定画面のAboutセクションが表示されている状態, **When** Source Codeをタップ, **Then** 外部ブラウザでGitHubリポジトリが開く
+1. **Given** the About section of the settings screen is shown, **When** Source Code is tapped, **Then** the GitHub repository opens in an external browser
 
 ---
 
 ### Edge Cases
 
-- フォントサイズが極端に小さい/大きい場合のターミナル表示は正常か？
-- 正規表現として不正なパターンが入力された場合のバリデーションは機能するか？
-- 通知ルールの名前やパターンが空の場合のエラーハンドリングは適切か？
-- 大量のルール（50件以上）が存在する場合のリスト表示パフォーマンスは問題ないか？
-- オフライン状態でGitHubリンクをタップした場合の挙動は適切か？
+- Does the terminal display remain correct when the font size is extremely small or large?
+- Does validation work when an invalid regular-expression pattern is entered?
+- Is error handling appropriate when a notification rule name or pattern is empty?
+- Is list rendering performance acceptable when many rules exist (50+ items)?
+- Is behavior appropriate when the GitHub link is tapped while offline?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: システムは設定画面からフォントサイズを変更できなければならない（選択肢: 10, 12, 14, 16, 18, 20pt）
-- **FR-002**: システムは設定画面からフォントファミリーを変更できなければならない（選択肢: JetBrains Mono, Fira Code, Source Code Pro, Roboto Mono）
-- **FR-003**: システムはHaptic Feedbackのオン/オフ設定を永続化しなければならない
-- **FR-004**: システムはKeep Screen Onのオン/オフ設定を永続化しなければならない
-- **FR-005**: システムは設定画面からテーマ（Dark/Light/System）を変更できなければならない
-- **FR-006**: システムはSource Codeリンクタップ時に外部ブラウザでURLを開かなければならない
-- **FR-007**: システムは通知ルールの作成・編集・削除ができなければならない
-- **FR-008**: システムは通知ルールを永続化し、アプリ再起動後も保持しなければならない
-- **FR-009**: システムは通知ルールフォームで正規表現の有効性を検証しなければならない
-- **FR-010**: システムは通知ルールの一覧を表示し、各ルールの有効/無効を切り替えられなければならない
+- **FR-001**: The system must allow font size changes from the settings screen (options: 10, 12, 14, 16, 18, 20 pt)
+- **FR-002**: The system must allow font family changes from the settings screen (options: JetBrains Mono, Fira Code, Source Code Pro, Roboto Mono)
+- **FR-003**: The system must persist the Haptic Feedback on/off setting
+- **FR-004**: The system must persist the Keep Screen On on/off setting
+- **FR-005**: The system must allow changing the theme (Dark/Light/System) from the settings screen
+- **FR-006**: The system must open the URL in an external browser when Source Code is tapped
+- **FR-007**: The system must support creating, editing, and deleting notification rules
+- **FR-008**: The system must persist notification rules and retain them after app restarts
+- **FR-009**: The system must validate regular-expression input in the notification rule form
+- **FR-010**: The system must display a list of notification rules and allow each rule to be enabled or disabled
 
 ### Key Entities
 
-- **AppSettings**: アプリ全体の設定（フォントサイズ、フォントファミリー、ダークモード、バイブレーション有効、画面オン維持など）
-- **NotificationRule**: 通知ルール（ID、名前、パターン、正規表現フラグ、有効フラグ、バイブレーションフラグなど）
+- **AppSettings**: App-wide settings such as font size, font family, dark mode, vibration enabled, and keep-screen-on
+- **NotificationRule**: Notification rules such as ID, name, pattern, regex flag, enabled flag, and vibration flag
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: ユーザーは3タップ以内でフォントサイズまたはフォントファミリーを変更できる
-- **SC-002**: 設定変更は即座に（1秒以内に）保存され、アプリ再起動後も100%保持される
-- **SC-003**: 通知ルールの作成は30秒以内に完了できる
-- **SC-004**: 50件のルールを持つリストでも、画面表示に2秒以上かからない
-- **SC-005**: すべてのフォーム入力にバリデーションエラーが即座に表示される
+- **SC-001**: The user can change the font size or font family within three taps
+- **SC-002**: Setting changes are saved immediately (within 1 second) and are retained 100% after app restarts
+- **SC-003**: Creating a notification rule can be completed within 30 seconds
+- **SC-004**: Even with a list of 50 rules, screen rendering takes no more than 2 seconds
+- **SC-005**: Validation errors appear immediately for all form inputs
 
 ## Assumptions
 
-- フォントサイズの選択肢は10-20ptの範囲で6段階とする（業界標準）
-- フォントファミリーの選択肢は一般的なプログラミングフォント4種類とする
-- テーマ選択にはSystem（OS設定に従う）オプションを含める
-- GitHubのURLは現在のリポジトリURL（https://github.com/muxpod）を使用する
-- 通知ルールの最大数に制限は設けない（パフォーマンスが問題になった場合は再検討）
+- Font size options should use six steps in the 10-20 pt range, which is standard for the industry
+- Font family options should be four common programming fonts
+- Theme selection should include a System option that follows the OS setting
+- The GitHub URL should use the current repository URL (`https://github.com/muxpod`)
+- No maximum limit is set for notification rules; revisit if performance becomes an issue
+
+
+

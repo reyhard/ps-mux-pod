@@ -173,20 +173,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       //   - ASCII letter regex: don't intercept Korean (ㅊ) or other non-ASCII composing
       if ((_ctrlPressed || _altPressed) && _lastComposingText!.length == 1) {
         final char = _lastComposingText!;
-        if (RegExp(r'^[A-Za-z]$').hasMatch(char)) {
-          if (widget.hapticFeedback) {
-            HapticFeedback.lightImpact();
-          }
-          String sequence = char;
-          if (_ctrlPressed) {
-            sequence = Vt100Keys.ctrl(char);
-            setState(() => _ctrlPressed = false);
-          }
-          if (_altPressed) {
-            sequence = Vt100Keys.alt(sequence);
-            setState(() => _altPressed = false);
-          }
-          widget.onSpecialKeyPressed(sequence);
+        if (_sendModifiedText(char)) {
           _lastComposingText = null;
           _resetToSentinel();
           return;
@@ -222,23 +209,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       // Send modifier+key when CTRL/ALT is active (non-composing path)
       // This handles IMEs that commit without composing (e.g. Gboard English)
       // VT100 format: Ctrl+letter -> control char, Alt+key -> ESC prefix
-      if ((_ctrlPressed || _altPressed) &&
-          textToSend.length == 1 &&
-          RegExp(r'^[A-Za-z]$').hasMatch(textToSend)) {
-        if (widget.hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        String sequence = textToSend;
-        if (_ctrlPressed) {
-          sequence = Vt100Keys.ctrl(textToSend);
-          setState(() => _ctrlPressed = false);
-        }
-        if (_altPressed) {
-          sequence = Vt100Keys.alt(sequence);
-          setState(() => _altPressed = false);
-        }
-        widget.onSpecialKeyPressed(sequence);
-      } else {
+      if (!_sendModifiedText(textToSend)) {
         widget.onKeyPressed(textToSend);
       }
 
@@ -312,7 +283,9 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     }
 
     // Ctrl+letter or Alt+letter → send as control/meta character
-    if ((ctrl || alt) && key.keyLabel.length == 1 && RegExp(r'^[A-Za-z]$').hasMatch(key.keyLabel)) {
+    if ((ctrl || alt) &&
+        key.keyLabel.length == 1 &&
+        RegExp(r'^[A-Za-z]$').hasMatch(key.keyLabel)) {
       String seq = key.keyLabel;
       if (ctrl) seq = Vt100Keys.ctrl(seq);
       if (alt) seq = Vt100Keys.alt(seq);
@@ -338,8 +311,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final currentValue = _directInputController.value;
-      final hasActiveComposing = currentValue.composing.isValid &&
-          !currentValue.composing.isCollapsed;
+      final hasActiveComposing =
+          currentValue.composing.isValid && !currentValue.composing.isCollapsed;
       // If composing is in progress, respect iOS input and skip re-reset
       if (!hasActiveComposing && _directInputController.text != _sentinel) {
         _directInputController.value = TextEditingValue(
@@ -357,10 +330,10 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? DesignColors.footerBackground : DesignColors.footerBackgroundLight,
-        border: Border(
-          top: BorderSide(color: colorScheme.outline, width: 1),
-        ),
+        color: isDark
+            ? DesignColors.footerBackground
+            : DesignColors.footerBackgroundLight,
+        border: Border(top: BorderSide(color: colorScheme.outline, width: 1)),
       ),
       child: SafeArea(
         top: false,
@@ -371,7 +344,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             _buildModifierKeysRow(),
             _buildArrowKeysRow(),
             if (_rawInputEnabled) _buildHiddenRawInput(),
-            if (widget.directInputEnabled && !_rawInputEnabled) _buildDirectInputRow(),
+            if (widget.directInputEnabled && !_rawInputEnabled)
+              _buildDirectInputRow(),
             const SizedBox(height: 4),
           ],
         ),
@@ -443,7 +417,10 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             color: DesignColors.secondary.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(4),
             border: Border(
-              bottom: BorderSide(color: DesignColors.secondary.withValues(alpha: 0.5), width: 2),
+              bottom: BorderSide(
+                color: DesignColors.secondary.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
             boxShadow: [
               BoxShadow(
@@ -485,7 +462,10 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             color: DesignColors.primary.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(4),
             border: Border(
-              bottom: BorderSide(color: DesignColors.primary.withValues(alpha: 0.5), width: 2),
+              bottom: BorderSide(
+                color: DesignColors.primary.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
             boxShadow: [
               BoxShadow(
@@ -605,9 +585,43 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
 
     final actual = text.replaceAll(_sentinel, '');
     if (actual.isNotEmpty) {
-      widget.onKeyPressed(actual);
+      if (!_sendModifiedText(actual)) {
+        widget.onKeyPressed(actual);
+      }
     }
     _resetRawSentinel();
+  }
+
+  bool _sendModifiedText(String text) {
+    if (!(_ctrlPressed || _altPressed) || !_isAsciiLetter(text)) {
+      return false;
+    }
+
+    if (widget.hapticFeedback) {
+      HapticFeedback.lightImpact();
+    }
+
+    String sequence = text;
+    if (_ctrlPressed) {
+      sequence = Vt100Keys.ctrl(sequence);
+    }
+    if (_altPressed) {
+      sequence = Vt100Keys.alt(sequence);
+    }
+
+    setState(() {
+      _ctrlPressed = false;
+      _altPressed = false;
+    });
+
+    widget.onSpecialKeyPressed(sequence);
+    return true;
+  }
+
+  bool _isAsciiLetter(String text) {
+    if (text.length != 1) return false;
+    final code = text.codeUnitAt(0);
+    return (code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A);
   }
 
   void _resetRawSentinel() {
@@ -717,81 +731,84 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   Widget _buildDirectInputField() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: DesignColors.success.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: DesignColors.success.withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          children: [
-            // LIVE indicator (placed on the left)
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: DesignColors.success.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: DesignColors.success,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: DesignColors.success.withValues(alpha: 0.5),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'LIVE',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: DesignColors.success,
-                    ),
-                  ),
-                ],
-              ),
+      height: 40,
+      decoration: BoxDecoration(
+        color: DesignColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: DesignColors.success.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          // LIVE indicator (placed on the left)
+          Container(
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: DesignColors.success.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(4),
             ),
-            const SizedBox(width: 8),
-            // Input field (hardware keyboard shortcuts intercepted via onKeyEvent)
-            Expanded(
-              child: Focus(
-                onKeyEvent: _handleDirectInputKeyEvent,
-                child: TextField(
-                  controller: _directInputController,
-                  focusNode: _directInputFocusNode,
-                  autofocus: true,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: _onDirectInputSubmitted,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: DesignColors.success,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: DesignColors.success.withValues(alpha: 0.5),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'LIVE',
                   style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: DesignColors.success,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Input field (hardware keyboard shortcuts intercepted via onKeyEvent)
+          Expanded(
+            child: Focus(
+              onKeyEvent: _handleDirectInputKeyEvent,
+              child: TextField(
+                controller: _directInputController,
+                focusNode: _directInputFocusNode,
+                autofocus: true,
+                textInputAction: TextInputAction.send,
+                onSubmitted: _onDirectInputSubmitted,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Type here...',
+                  hintStyle: GoogleFonts.jetBrainsMono(
                     fontSize: 14,
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: DesignColors.success.withValues(alpha: 0.5),
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'Type here...',
-                    hintStyle: GoogleFonts.jetBrainsMono(
-                      fontSize: 14,
-                      color: DesignColors.success.withValues(alpha: 0.5),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    isDense: true,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
                   ),
+                  isDense: true,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -811,10 +828,15 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isDark ? DesignColors.keyBackground : DesignColors.keyBackgroundLight,
+            color: isDark
+                ? DesignColors.keyBackground
+                : DesignColors.keyBackgroundLight,
             borderRadius: BorderRadius.circular(4),
             border: Border(
-              bottom: BorderSide(color: isDark ? Colors.black : Colors.grey.shade400, width: 2),
+              bottom: BorderSide(
+                color: isDark ? Colors.black : Colors.grey.shade400,
+                width: 2,
+              ),
             ),
             boxShadow: [
               BoxShadow(
@@ -855,10 +877,15 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isDark ? DesignColors.keyBackground : DesignColors.keyBackgroundLight,
+            color: isDark
+                ? DesignColors.keyBackground
+                : DesignColors.keyBackgroundLight,
             borderRadius: BorderRadius.circular(4),
             border: Border(
-              bottom: BorderSide(color: isDark ? Colors.black : Colors.grey.shade400, width: 2),
+              bottom: BorderSide(
+                color: isDark ? Colors.black : Colors.grey.shade400,
+                width: 2,
+              ),
             ),
             boxShadow: [
               BoxShadow(
@@ -883,7 +910,11 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  Widget _buildModifierButton(String label, bool isPressed, VoidCallback onPressed) {
+  Widget _buildModifierButton(
+    String label,
+    bool isPressed,
+    VoidCallback onPressed,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
@@ -898,11 +929,17 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isPressed ? colorScheme.primary : (isDark ? DesignColors.keyBackground : DesignColors.keyBackgroundLight),
+            color: isPressed
+                ? colorScheme.primary
+                : (isDark
+                      ? DesignColors.keyBackground
+                      : DesignColors.keyBackgroundLight),
             borderRadius: BorderRadius.circular(4),
             border: Border(
               bottom: BorderSide(
-                color: isPressed ? colorScheme.primary : (isDark ? Colors.black : Colors.grey.shade400),
+                color: isPressed
+                    ? colorScheme.primary
+                    : (isDark ? Colors.black : Colors.grey.shade400),
                 width: 2,
               ),
             ),
@@ -943,15 +980,13 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDark ? DesignColors.keyBackground : DesignColors.keyBackgroundLight,
+          color: isDark
+              ? DesignColors.keyBackground
+              : DesignColors.keyBackgroundLight,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
         ),
-        child: Icon(
-          icon,
-          size: 16,
-          color: colorScheme.onSurface,
-        ),
+        child: Icon(icon, size: 16, color: colorScheme.onSurface),
       ),
     );
   }
@@ -971,7 +1006,9 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDark ? DesignColors.keyBackground : DesignColors.keyBackgroundLight,
+          color: isDark
+              ? DesignColors.keyBackground
+              : DesignColors.keyBackgroundLight,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
         ),
@@ -997,7 +1034,9 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         decoration: BoxDecoration(
           color: DesignColors.primary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: DesignColors.primary.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: DesignColors.primary.withValues(alpha: 0.2),
+          ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
@@ -1022,7 +1061,9 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
               decoration: BoxDecoration(
                 color: DesignColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: DesignColors.primary.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: DesignColors.primary.withValues(alpha: 0.1),
+                ),
               ),
               child: Text(
                 'cmd',

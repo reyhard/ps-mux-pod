@@ -7,7 +7,7 @@
 ## Content Quality
 
 - [x] No implementation details (languages, frameworks, APIs)
-  - Note: dartssh2とxterm.dartは移行の理由として言及されているが、HOWではなくWHATとして記述
+  - Note: dartssh2xterm.dartlineRationale、HOWWHATdescribe
 - [x] Focused on user value and business needs
 - [x] Written for non-technical stakeholders
 - [x] All mandatory sections completed
@@ -32,8 +32,11 @@
 
 ## Notes
 
-- 仕様はReact NativeからFlutterへの移行に焦点を当てているが、技術的実装の詳細は避けている
-- dartssh2/xterm.dartは「ネイティブ依存なし」という利点として言及され、実装方法ではない
-- 全ユーザーストーリーに優先度が割り当てられ、独立してテスト可能
-- iOS/デスクトップは明確にスコープ外として定義
+- specificationReact NativeFlutterline、implementdetails
+- dartssh2/xterm.dart「dependency」、implement
+- alluserpriority、independenttestpossible
+- iOS/desktopclear
 - **Status: READY for `/speckit.plan`**
+
+
+

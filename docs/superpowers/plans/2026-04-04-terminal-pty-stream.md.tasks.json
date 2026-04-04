@@ -1,0 +1,47 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-04-terminal-pty-stream.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 0: Foundation — xterm Dependency & Interface Definitions",
+      "status": "pending",
+      "description": "**Goal:** Add the xterm package, define InteractiveShell and MuxPtySession models, update CommandExecutor/MuxBackend interfaces.\n\n**Files:**\n- Modify: pubspec.yaml\n- Create: lib/services/mux/mux_pty_session.dart\n- Modify: lib/services/mux/command_executor.dart\n- Modify: lib/services/mux/mux_backend.dart\n- Modify: lib/services/mux/psmux_backend.dart (stub)\n\n```json:metadata\n{\"files\": [\"pubspec.yaml\", \"lib/services/mux/mux_pty_session.dart\", \"lib/services/mux/command_executor.dart\", \"lib/services/mux/mux_backend.dart\", \"lib/services/mux/psmux_backend.dart\"], \"verifyCommand\": \"flutter pub get && flutter analyze\", \"acceptanceCriteria\": [\"xterm package added and flutter pub get succeeds\", \"MuxPtySession model defined\", \"CommandExecutor has openInteractiveShell\", \"MuxBackend has attachPty\", \"flutter analyze passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: SSH Client PTY Channel + Backend Implementation",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** Implement openInteractiveShell() in SshExecutor and attachPty() in TmuxBackend. Remove _inputShell and execInput() from SshClient.\n\n**Files:**\n- Modify: lib/services/ssh/ssh_client.dart\n- Modify: lib/services/mux/ssh_executor.dart\n- Modify: lib/services/mux/tmux_backend.dart\n\n```json:metadata\n{\"files\": [\"lib/services/ssh/ssh_client.dart\", \"lib/services/mux/ssh_executor.dart\", \"lib/services/mux/tmux_backend.dart\"], \"verifyCommand\": \"flutter analyze\", \"acceptanceCriteria\": [\"SshClient.openPtyShell() opens SSH shell with PTY\", \"SshExecutor.openInteractiveShell() wraps openPtyShell into InteractiveShell\", \"TmuxBackend.attachPty() opens shell and runs tmux attach\", \"_inputShell and execInput removed\", \"flutter analyze passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Special Keys Bar — VT100 Escape Sequences",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** Replace tmux key name format with VT100 escape sequences in special_keys_bar.dart.\n\n**Files:**\n- Modify: lib/widgets/special_keys_bar.dart\n\n```json:metadata\n{\"files\": [\"lib/widgets/special_keys_bar.dart\"], \"verifyCommand\": \"flutter analyze\", \"acceptanceCriteria\": [\"On-screen buttons produce VT100 escape sequences\", \"Ctrl+letter produces control characters\", \"Hardware keyboard handling removed\", \"flutter analyze passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Battery Optimization Setting",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** Add askBatteryOptimization setting and check it before prompting.\n\n**Files:**\n- Modify: lib/providers/settings_provider.dart\n- Modify: lib/services/background/foreground_task_service.dart\n- Modify: lib/screens/settings/settings_screen.dart\n\n```json:metadata\n{\"files\": [\"lib/providers/settings_provider.dart\", \"lib/services/background/foreground_task_service.dart\", \"lib/screens/settings/settings_screen.dart\"], \"verifyCommand\": \"flutter analyze\", \"acceptanceCriteria\": [\"askBatteryOptimization setting added with default true\", \"Setting persisted via SharedPreferences\", \"Toggle visible in settings screen\", \"ForegroundTaskService skips battery prompt when false\", \"flutter analyze passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Terminal Screen Rewrite",
+      "status": "pending",
+      "blockedBy": [1, 2, 3],
+      "description": "**Goal:** Rewrite terminal_screen.dart to use xterm.dart TerminalView + MuxPtySession stream. Remove all polling logic.\n\n**Files:**\n- Modify: lib/screens/terminal/terminal_screen.dart\n\n```json:metadata\n{\"files\": [\"lib/screens/terminal/terminal_screen.dart\"], \"verifyCommand\": \"flutter analyze\", \"acceptanceCriteria\": [\"TerminalView replaces AnsiTextView\", \"PTY stream connected to Terminal.write()\", \"User input via Terminal.onOutput written to PTY\", \"Resize forwarded to PTY\", \"Session drawer works via side channel\", \"Reconnection reopens PTY\", \"Special keys bar writes VT100 to PTY\", \"Enter Command writes to PTY\", \"No polling code remains\", \"flutter analyze passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Dead Code Removal & Cleanup",
+      "status": "pending",
+      "blockedBy": [4],
+      "description": "**Goal:** Delete unused files and clean up imports after the rewrite.\n\n**Files to delete:**\n- lib/screens/terminal/widgets/ansi_text_view.dart\n- lib/services/terminal/ansi_parser.dart\n- lib/services/terminal/terminal_diff.dart\n- lib/services/terminal/scrollback_buffer.dart\n- lib/services/terminal/font_calculator.dart\n- lib/providers/terminal_display_provider.dart\n\n```json:metadata\n{\"files\": [\"lib/screens/terminal/widgets/ansi_text_view.dart\", \"lib/services/terminal/ansi_parser.dart\", \"lib/services/terminal/terminal_diff.dart\", \"lib/services/terminal/scrollback_buffer.dart\", \"lib/services/terminal/font_calculator.dart\", \"lib/providers/terminal_display_provider.dart\"], \"verifyCommand\": \"flutter analyze && flutter build apk --debug\", \"acceptanceCriteria\": [\"All listed files deleted\", \"No remaining imports reference deleted files\", \"flutter analyze passes\", \"flutter build apk --debug succeeds\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-04-04T00:00:00Z"
+}

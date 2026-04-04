@@ -8,11 +8,11 @@
 - Node.js 18+
 - pnpm 8+
 - Android Studio (Android SDK)
-- 実機またはエミュレータ（Android 10+推奨）
+- physical deviceemulator（Android 10+recommended）
 
 ## Setup
 
-### 1. リポジトリクローン
+### 1. 
 
 ```bash
 git clone <repo>
@@ -20,22 +20,22 @@ cd mux-pod
 git checkout 001-phase1-mvp
 ```
 
-### 2. 依存関係インストール
+### 2. dependencyinstall
 
 ```bash
 pnpm install
 ```
 
-### 3. 開発サーバー起動
+### 3. serverstart
 
 ```bash
 pnpm start
 ```
 
-### 4. Androidで実行
+### 4. Androidrun
 
 ```bash
-# 別ターミナルで
+# separateterminal
 pnpm android
 ```
 
@@ -44,9 +44,9 @@ pnpm android
 ```
 mux-pod/
 ├── app/                    # Expo Router screens
-│   ├── index.tsx           # 接続一覧（ホーム）
-│   ├── connection/         # 接続追加・編集
-│   └── (main)/terminal/    # ターミナル画面
+│   ├── index.tsx           # connection list（）
+│   ├── connection/         # connectionaddedit
+│   └── (main)/terminal/    # terminalscreen
 ├── src/
 │   ├── components/         # React components
 │   ├── hooks/              # Custom hooks
@@ -58,44 +58,44 @@ mux-pod/
 
 ## Key Files to Implement
 
-### Phase 1 MVP - 優先順位順
+### Phase 1 MVP - priority order
 
-#### 1. SSH接続基盤 (P1)
-
-```
-src/services/ssh/client.ts      # SSHクライアント
-src/services/ssh/auth.ts        # 認証処理
-src/types/connection.ts         # Connection型定義
-```
-
-#### 2. 接続管理 (P1)
+#### 1. SSH connection (P1)
 
 ```
-src/stores/connectionStore.ts   # 接続設定の永続化
-app/index.tsx                   # 接続一覧画面
-app/connection/add.tsx          # 接続追加
-app/connection/[id]/edit.tsx    # 接続編集
+src/services/ssh/client.ts      # SSHclient
+src/services/ssh/auth.ts        # authenticationprocessing
+src/types/connection.ts         # Connection
+```
+
+#### 2. connectionmanagement (P1)
+
+```
+src/stores/connectionStore.ts   # connection settingspersistence
+app/index.tsx                   # connection listscreen
+app/connection/add.tsx          # connectionadd
+app/connection/[id]/edit.tsx    # connectionedit
 src/components/connection/      # UI components
 ```
 
-#### 3. tmux操作 (P2)
+#### 3. tmuxoperation (P2)
 
 ```
-src/services/tmux/commands.ts   # tmuxコマンド
-src/services/tmux/parser.ts     # 出力パーサー
-src/types/tmux.ts               # TmuxSession等の型
-src/stores/sessionStore.ts      # セッション状態管理
+src/services/tmux/commands.ts   # tmuxcommand
+src/services/tmux/parser.ts     # outputparser
+src/types/tmux.ts               # TmuxSession
+src/stores/sessionStore.ts      # sessionstatemanagement
 ```
 
-#### 4. ターミナル表示 (P2)
+#### 4. terminal display (P2)
 
 ```
-src/services/ansi/parser.ts     # ANSIパーサー
+src/services/ansi/parser.ts     # ANSIparser
 src/components/terminal/TerminalView.tsx
 src/stores/terminalStore.ts
 ```
 
-#### 5. キー入力 (P2)
+#### 5. key input (P2)
 
 ```
 src/components/terminal/TerminalInput.tsx
@@ -105,31 +105,31 @@ src/components/terminal/SpecialKeys.tsx
 ## Development Commands
 
 ```bash
-# 開発
+# 
 pnpm start                 # Expo dev server
-pnpm android               # Android実行
-pnpm ios                   # iOS実行 (optional)
+pnpm android               # Androidrun
+pnpm ios                   # iOSrun (optional)
 
-# 品質チェック
-pnpm typecheck             # TypeScript型チェック
+# check
+pnpm typecheck             # TypeScriptcheck
 pnpm lint                  # ESLint
 pnpm test                  # Jest tests
 
-# ビルド
-pnpm build:android         # APK/AAB生成
+# build
+pnpm build:android         # APK/AABgenerate
 ```
 
 ## Testing
 
-### ユニットテスト
+### test
 
 ```bash
-pnpm test                  # 全テスト
-pnpm test -- --watch       # ウォッチモード
-pnpm test -- src/services  # 特定ディレクトリ
+pnpm test                  # alltest
+pnpm test -- --watch       # mode
+pnpm test -- src/services  # 
 ```
 
-### テストファイル命名規則
+### testfile
 
 ```
 __tests__/
@@ -147,7 +147,7 @@ __tests__/
 
 ## Key Patterns
 
-### 1. SSHクライアント使用
+### 1. SSHclient
 
 ```typescript
 import { SSHClient } from '@/services/ssh/client';
@@ -158,7 +158,7 @@ const output = await client.exec('tmux list-sessions');
 await client.disconnect();
 ```
 
-### 2. tmuxコマンド実行
+### 2. tmuxcommandrun
 
 ```typescript
 import { TmuxCommands } from '@/services/tmux/commands';
@@ -169,20 +169,20 @@ await tmux.sendKeys('main', 0, 0, 'ls -la');
 await tmux.sendKeys('main', 0, 0, 'Enter');
 ```
 
-### 3. Zustand Store使用
+### 3. Zustand Store
 
 ```typescript
 import { useConnectionStore } from '@/stores/connectionStore';
 
-// コンポーネント内
+// component
 const { connections, addConnection } = useConnectionStore();
 
-// 非コンポーネント
+// component
 const store = useConnectionStore.getState();
 store.addConnection({ name: 'Server', host: '192.168.1.1', ... });
 ```
 
-### 4. ANSIパース
+### 4. ANSIparse
 
 ```typescript
 import { AnsiParser } from '@/services/ansi/parser';
@@ -194,31 +194,34 @@ const spans = parser.parseLine('\x1b[32mgreen text\x1b[0m');
 
 ## Troubleshooting
 
-### SSH接続エラー
+### SSH connectionerror
 
-1. ホスト/ポートが正しいか確認
-2. ファイアウォール設定を確認
-3. パスワード/鍵が正しいか確認
+1. host/portverify
+2. settingsverify
+3. password/keyverify
 
-### tmuxが見つからない
+### tmux
 
 ```bash
-# サーバー上で確認
+# serververify
 which tmux
-# インストールされていない場合
+# installwhen
 sudo apt install tmux  # Ubuntu/Debian
 sudo yum install tmux  # CentOS/RHEL
 ```
 
-### 日本語が文字化けする
+### Japanesecharacters
 
-1. フォント設定を確認（HackGen, PlemolJP推奨）
-2. サーバー側のロケール設定を確認
+1. fontsettingsverify（HackGen, PlemolJPrecommended）
+2. serverlocalesettingsverify
 
 ## References
 
-- [spec.md](./spec.md) - 機能仕様
-- [plan.md](./plan.md) - 実装計画
-- [research.md](./research.md) - 技術調査
-- [data-model.md](./data-model.md) - データモデル
-- [contracts/](./contracts/) - サービスインターフェース
+- [spec.md](./spec.md) - featurespecification
+- [plan.md](./plan.md) - implement
+- [research.md](./research.md) - analysis
+- [data-model.md](./data-model.md) - datamodel
+- [contracts/](./contracts/) - serviceinterface
+
+
+

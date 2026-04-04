@@ -1,31 +1,31 @@
 /// Tmux Service Contract
 ///
-/// tmuxセッション/ウィンドウ/ペイン操作のサービス層インターフェース。
-/// SSHサービスに依存し、tmuxコマンドをラップする。
+/// tmux session/window/paneoperationserviceinterface。
+/// SSHservicedependency、tmuxcommand。
 
 import 'dart:async';
 
 import '../models/tmux.dart';
 
-/// tmuxサービスインターフェース
+/// tmuxserviceinterface
 abstract class TmuxService {
-  /// セッション一覧取得
+  /// sessionlistretrieve
   Future<List<TmuxSession>> listSessions(String connectionId);
 
-  /// ウィンドウ一覧取得
+  /// windowlistretrieve
   Future<List<TmuxWindow>> listWindows({
     required String connectionId,
     required String sessionName,
   });
 
-  /// ペイン一覧取得
+  /// panelistretrieve
   Future<List<TmuxPane>> listPanes({
     required String connectionId,
     required String sessionName,
     required int windowIndex,
   });
 
-  /// ペイン内容取得
+  /// panecontentsretrieve
   Future<List<String>> capturePane({
     required String connectionId,
     required String sessionName,
@@ -36,7 +36,7 @@ abstract class TmuxService {
     bool escapeSequences = true,
   });
 
-  /// キー送信
+  /// keysend
   Future<void> sendKeys({
     required String connectionId,
     required String sessionName,
@@ -46,7 +46,7 @@ abstract class TmuxService {
     bool literal = false,
   });
 
-  /// ペイン選択
+  /// paneselect
   Future<void> selectPane({
     required String connectionId,
     required String sessionName,
@@ -54,26 +54,26 @@ abstract class TmuxService {
     required int paneIndex,
   });
 
-  /// ウィンドウ選択
+  /// windowselect
   Future<void> selectWindow({
     required String connectionId,
     required String sessionName,
     required int windowIndex,
   });
 
-  /// セッション作成
+  /// sessioncreate
   Future<void> newSession({
     required String connectionId,
     required String name,
   });
 
-  /// セッション削除
+  /// sessiondelete
   Future<void> killSession({
     required String connectionId,
     required String name,
   });
 
-  /// ペインリサイズ
+  /// paneresize
   Future<void> resizePane({
     required String connectionId,
     required String sessionName,
@@ -83,9 +83,12 @@ abstract class TmuxService {
     required int height,
   });
 
-  /// tmuxインストール確認
+  /// tmuxinstallverify
   Future<bool> isTmuxInstalled(String connectionId);
 
-  /// tmuxバージョン取得
+  /// tmuxversionretrieve
   Future<String?> getTmuxVersion(String connectionId);
 }
+
+
+

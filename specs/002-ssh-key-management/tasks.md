@@ -1,176 +1,176 @@
-# Tasks: SSH鍵管理機能
+# Tasks: SSH Key Management
 
 **Input**: Design documents from `/specs/002-ssh-key-management/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/
 
-**Tests**: TDDを採用（Constitution III. Test-First に基づく）
+**Tests**: TDDadopt（Constitution III. Test-First based on）
 
-**Organization**: タスクはユーザーストーリー別に整理され、各ストーリーは独立して実装・テスト可能
+**Organization**: user storyorganize、independentlyimplementationtestpossible
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: 並列実行可能（異なるファイル、依存なし）
-- **[Story]**: ユーザーストーリー (US1, US2, US3, US4, US5)
-- ファイルパスは必ず明記
+- **[P]**: can run in parallel（file、no dependencies）
+- **[Story]**: user story (US1, US2, US3, US4, US5)
+- file
 
 ---
 
-## Phase 1: Setup (環境構築)
+## Phase 1: Setup (environment setup)
 
-**Purpose**: 依存パッケージのインストールと基本構造の準備
+**Purpose**: dependenciesbasic
 
-- [x] T001 追加の依存パッケージをインストール: `pnpm add expo-document-picker expo-local-authentication`
-- [x] T002 [P] 鍵管理画面用のディレクトリを作成: `app/keys/`
-- [x] T003 [P] テストディレクトリを作成: `__tests__/services/ssh/`
-
----
-
-## Phase 2: Foundational (基盤実装)
-
-**Purpose**: すべてのユーザーストーリーで使用される型定義とストア
-
-**⚠️ CRITICAL**: このフェーズ完了まで各ユーザーストーリーは開始不可
-
-- [x] T004 型定義を作成: SSHKey, KnownHost in `src/types/sshKey.ts`
-- [x] T005 型定義のエクスポートを追加 in `src/types/index.ts`
-- [x] T006 [P] SSH鍵ストアを作成（Zustand）in `src/stores/keyStore.ts`
-- [x] T007 [P] ストアのエクスポートを追加 in `src/stores/index.ts`
-
-**Checkpoint**: 基盤完了 - ユーザーストーリー実装開始可能
+- [x] T001 adddependencies: `pnpm add expo-document-picker expo-local-authentication`
+- [x] T002 [P] key management screencreate: `app/keys/`
+- [x] T003 [P] testcreate: `__tests__/services/ssh/`
 
 ---
 
-## Phase 3: User Story 1 - 新しいSSH鍵を生成してサーバーに接続する (Priority: P1) 🎯 MVP
+## Phase 2: Foundational (implementation)
 
-**Goal**: ED25519鍵ペアを生成し、セキュアストレージに保存、公開鍵を表示
+**Purpose**: user storyusetype definitions
 
-**Independent Test**: 鍵を生成し、公開鍵をクリップボードにコピーして30秒以内に完了
+**⚠️ CRITICAL**: completeuser story
+
+- [x] T004 type definitionscreate: SSHKey, KnownHost in `src/types/sshKey.ts`
+- [x] T005 type definitionsadd in `src/types/index.ts`
+- [x] T006 [P] SSHkeycreate（Zustand）in `src/stores/keyStore.ts`
+- [x] T007 [P] add in `src/stores/index.ts`
+
+**Checkpoint**: complete - user storyimplementationcan start
+
+---
+
+## Phase 3: User Story 1 - SSHkeygenerateserverconnection (Priority: P1) 🎯 MVP
+
+**Goal**: ED25519keygenerate、secure storagesave、public keydisplay
+
+**Independent Test**: keygenerate、public key30complete
 
 ### Tests for User Story 1
 
-- [x] T008 [P] [US1] ユニットテストを作成: generateKey, getAllKeys, deleteKey in `__tests__/services/ssh/keyManager.test.ts`
+- [x] T008 [P] [US1] testcreate: generateKey, getAllKeys, deleteKey in `__tests__/services/ssh/keyManager.test.ts`
 
 ### Implementation for User Story 1
 
-- [x] T009 [US1] keyManager.tsの基本構造を作成: generateKey, getAllKeys, getKeyById, deleteKey, getPrivateKey in `src/services/ssh/keyManager.ts`
-- [x] T010 [US1] ED25519鍵生成を実装（react-native-ssh-sftp使用）in `src/services/ssh/keyManager.ts`
-- [x] T011 [US1] SecureStoreへの秘密鍵保存を実装 in `src/services/ssh/keyManager.ts`
-- [x] T012 [US1] AsyncStorageへのメタデータ保存を実装 in `src/services/ssh/keyManager.ts`
-- [x] T013 [US1] 生体認証連携を実装（expo-local-authentication）in `src/services/ssh/keyManager.ts`
-- [x] T014 [US1] サービスエクスポートを更新 in `src/services/ssh/index.ts`
-- [x] T015 [P] [US1] 鍵生成画面コンポーネントを作成 in `app/keys/generate.tsx`
-- [x] T016 [US1] 公開鍵表示とクリップボードコピー機能を実装 in `app/keys/generate.tsx`
+- [x] T009 [US1] keyManager.tsbasiccreate: generateKey, getAllKeys, getKeyById, deleteKey, getPrivateKey in `src/services/ssh/keyManager.ts`
+- [x] T010 [US1] ED25519keygenerateimplementation（react-native-ssh-sftpuse）in `src/services/ssh/keyManager.ts`
+- [x] T011 [US1] SecureStoreprivate keysaveimplementation in `src/services/ssh/keyManager.ts`
+- [x] T012 [US1] AsyncStoragemetadatasaveimplementation in `src/services/ssh/keyManager.ts`
+- [x] T013 [US1] biometric authenticationimplementation（expo-local-authentication）in `src/services/ssh/keyManager.ts`
+- [x] T014 [US1] update in `src/services/ssh/index.ts`
+- [x] T015 [P] [US1] key generation screencreate in `app/keys/generate.tsx`
+- [x] T016 [US1] public keydisplayfeatureimplementation in `app/keys/generate.tsx`
 
-**Checkpoint**: US1完了 - 鍵生成が独立して動作
+**Checkpoint**: US1complete - keygenerateindependentlybehavior
 
 ---
 
-## Phase 4: User Story 2 - 既存のSSH鍵をインポートする (Priority: P1)
+## Phase 4: User Story 2 - existingSSHkeyimport (Priority: P1)
 
-**Goal**: PEM/OpenSSH形式の秘密鍵をインポートし、パスフレーズ付き鍵も対応
+**Goal**: PEM/OpenSSHformatprivate keyimport、passphrasekeysupport
 
-**Independent Test**: 秘密鍵ファイルをインポートし、1分以内に接続可能
+**Independent Test**: private keyfileimport、1connectionpossible
 
 ### Tests for User Story 2
 
-- [x] T017 [P] [US2] ユニットテストを作成: importKey, validatePrivateKey in `__tests__/services/ssh/keyManager.test.ts`
+- [x] T017 [P] [US2] testcreate: importKey, validatePrivateKey in `__tests__/services/ssh/keyManager.test.ts`
 
 ### Implementation for User Story 2
 
-- [x] T018 [US2] 秘密鍵バリデーションを実装: validatePrivateKey in `src/services/ssh/keyManager.ts`
-- [x] T019 [US2] 鍵インポートを実装: importKey（PEM/OpenSSH対応）in `src/services/ssh/keyManager.ts`
-- [x] T020 [US2] パスフレーズ復号を実装 in `src/services/ssh/keyManager.ts`
-- [x] T021 [P] [US2] ファイルピッカー画面を作成（expo-document-picker）in `app/keys/import.tsx`
-- [x] T022 [US2] パスフレーズ入力ダイアログを実装 in `app/keys/import.tsx`
-- [x] T023 [US2] インポートエラーハンドリングを実装 in `app/keys/import.tsx`
+- [x] T018 [US2] private keyimplementation: validatePrivateKey in `src/services/ssh/keyManager.ts`
+- [x] T019 [US2] keyimportimplementation: importKey（PEM/OpenSSHsupport）in `src/services/ssh/keyManager.ts`
+- [x] T020 [US2] passphraseimplementation in `src/services/ssh/keyManager.ts`
+- [x] T021 [P] [US2] file pickerscreencreate（expo-document-picker）in `app/keys/import.tsx`
+- [x] T022 [US2] passphraseinputimplementation in `app/keys/import.tsx`
+- [x] T023 [US2] importerrorimplementation in `app/keys/import.tsx`
 
-**Checkpoint**: US2完了 - 鍵インポートが独立して動作
+**Checkpoint**: US2complete - keyimportindependentlybehavior
 
 ---
 
-## Phase 5: User Story 3 - SSH鍵を一覧・管理する (Priority: P2)
+## Phase 5: User Story 3 - List and manage SSH keys (Priority: P2)
 
-**Goal**: 保存されている鍵を一覧表示し、詳細確認・削除が可能
+**Goal**: savekeylistdisplay、detailsconfirmationdeletepossible
 
-**Independent Test**: 複数の鍵を持つ状態で一覧表示、詳細確認、削除ができる
+**Independent Test**: multiplekeylistdisplay、detailsconfirmation、delete
 
 ### Tests for User Story 3
 
-- [x] T024 [P] [US3] コンポーネントテストを作成: 鍵一覧、詳細表示 in `__tests__/components/connection/KeyList.test.tsx`
-  - Note: 基本テストはkeyManager.test.tsでカバー、UIテストは後続で追加
+- [x] T024 [P] [US3] testcreate: keylist、detailsdisplay in `__tests__/components/connection/KeyList.test.tsx`
+ - Note: basictestkeyManager.test.ts、UItestsubsequentadd
 
 ### Implementation for User Story 3
 
-- [x] T025 [P] [US3] 鍵一覧画面を作成 in `app/keys/index.tsx`
-- [x] T026 [US3] 鍵カードコンポーネントを作成（名前、タイプ、作成日表示）in `src/components/connection/KeyCard.tsx`
-- [x] T027 [P] [US3] 鍵詳細画面を作成（フィンガープリント、公開鍵表示）in `app/keys/[id].tsx`
-- [x] T028 [US3] 鍵削除機能と確認ダイアログを実装 in `app/keys/[id].tsx`
-- [x] T029 [US3] コンポーネントエクスポートを更新 in `src/components/connection/index.ts`
+- [x] T025 [P] [US3] key list screencreate in `app/keys/index.tsx`
+- [x] T026 [US3] keycreate（、、createdisplay）in `src/components/connection/KeyCard.tsx`
+- [x] T027 [P] [US3] key details screencreate（fingerprint、public keydisplay）in `app/keys/[id].tsx`
+- [x] T028 [US3] keydeletefeatureconfirmationimplementation in `app/keys/[id].tsx`
+- [x] T029 [US3] update in `src/components/connection/index.ts`
 
-**Checkpoint**: US3完了 - 鍵管理UIが独立して動作
+**Checkpoint**: US3complete - keymanagementUIindependentlybehavior
 
 ---
 
-## Phase 6: User Story 4 - 接続時に認証方法を選択する (Priority: P2)
+## Phase 6: User Story 4 - at connection timeauthentication methodselect (Priority: P2)
 
-**Goal**: 接続設定でパスワード/SSH鍵認証を切り替え可能
+**Goal**: connection settingspassword/SSHkeyauthenticationpossible
 
-**Independent Test**: 新規接続設定で認証方法を切り替え、それぞれで接続成功
+**Independent Test**: newconnection settingsauthentication method、connection
 
 ### Tests for User Story 4
 
-- [x] T030 [P] [US4] コンポーネントテストを作成: AuthMethodSelector, KeySelector in `__tests__/components/connection/AuthMethodSelector.test.tsx`
-  - Note: コンポーネントテストは後続で追加
+- [x] T030 [P] [US4] testcreate: AuthMethodSelector, KeySelector in `__tests__/components/connection/AuthMethodSelector.test.tsx`
+ - Note: testsubsequentadd
 
 ### Implementation for User Story 4
 
-- [x] T031 [P] [US4] 認証方法選択コンポーネントを作成 in `src/components/connection/AuthMethodSelector.tsx`
-- [x] T032 [P] [US4] 鍵選択コンポーネントを作成（ボトムシート形式）in `src/components/connection/KeySelector.tsx`
-- [x] T033 [US4] ConnectionFormに認証方法選択を統合 in `src/components/connection/ConnectionForm.tsx`
-  - Note: ConnectionFormは既存でauthMethod切り替えを含む
-- [x] T034 [US4] useSSHフックを鍵認証対応に更新 in `src/hooks/useSSH.ts`
-  - Note: keyManagerのgetPrivateKeyを使用して鍵認証可能
-- [x] T035 [US4] SSHクライアントに鍵認証を追加 in `src/services/ssh/client.ts`
-  - Note: react-native-ssh-sftpで鍵認証対応済み
+- [x] T031 [P] [US4] authentication methodselectcreate in `src/components/connection/AuthMethodSelector.tsx`
+- [x] T032 [P] [US4] key selector componentcreate（format）in `src/components/connection/KeySelector.tsx`
+- [x] T033 [US4] ConnectionFormauthentication methodselect in `src/components/connection/ConnectionForm.tsx`
+ - Note: ConnectionFormexistingauthMethod
+- [x] T034 [US4] useSSHkeyauthenticationsupportupdate in `src/hooks/useSSH.ts`
+ - Note: keyManagergetPrivateKeyusekeyauthenticationpossible
+- [x] T035 [US4] SSHkeyauthenticationadd in `src/services/ssh/client.ts`
+ - Note: react-native-ssh-sftpkeyauthenticationsupport
 
-**Checkpoint**: US4完了 - 認証方法選択が独立して動作
+**Checkpoint**: US4complete - authentication methodselectindependentlybehavior
 
 ---
 
-## Phase 7: User Story 5 - 既知ホストを管理する (Priority: P3)
+## Phase 7: User Story 5 - known hostmanagement (Priority: P3)
 
-**Goal**: ホスト鍵検証でMITM攻撃を防止、初回確認と変更警告
+**Goal**: hostkeyverificationMITM、firstconfirmationchangewarning
 
-**Independent Test**: 新規サーバー接続でホスト鍵確認、再接続で自動検証
+**Independent Test**: newserverconnectionhostkeyconfirmation、connectionautoverification
 
 ### Tests for User Story 5
 
-- [x] T036 [P] [US5] ユニットテストを作成: verifyHostKey, trustHostKey, updateHostKey in `__tests__/services/ssh/knownHostManager.test.ts`
+- [x] T036 [P] [US5] testcreate: verifyHostKey, trustHostKey, updateHostKey in `__tests__/services/ssh/knownHostManager.test.ts`
 
 ### Implementation for User Story 5
 
-- [x] T037 [US5] knownHostManager.tsを作成: 基本構造 in `src/services/ssh/knownHostManager.ts`
-- [x] T038 [US5] ホスト鍵検証を実装: verifyHostKey in `src/services/ssh/knownHostManager.ts`
-- [x] T039 [US5] ホスト鍵保存/更新を実装: trustHostKey, updateHostKey in `src/services/ssh/knownHostManager.ts`
-- [x] T040 [US5] ホスト一覧・削除を実装: getAllHosts, deleteHost in `src/services/ssh/knownHostManager.ts`
-- [x] T041 [P] [US5] ホスト鍵確認ダイアログを作成 in `src/components/connection/HostKeyDialog.tsx`
-- [x] T042 [US5] ホスト鍵変更警告ダイアログを実装 in `src/components/connection/HostKeyDialog.tsx`
-- [x] T043 [US5] SSH接続フローにホスト鍵検証を統合 in `src/hooks/useSSH.ts`
-- [x] T044 [P] [US5] 既知ホスト管理画面を作成 in `app/hosts/index.tsx`
+- [x] T037 [US5] knownHostManager.tscreate: basic in `src/services/ssh/knownHostManager.ts`
+- [x] T038 [US5] hostkeyverificationimplementation: verifyHostKey in `src/services/ssh/knownHostManager.ts`
+- [x] T039 [US5] hostkeysave/updateimplementation: trustHostKey, updateHostKey in `src/services/ssh/knownHostManager.ts`
+- [x] T040 [US5] hostlistdeleteimplementation: getAllHosts, deleteHost in `src/services/ssh/knownHostManager.ts`
+- [x] T041 [P] [US5] host key confirmation dialogcreate in `src/components/connection/HostKeyDialog.tsx`
+- [x] T042 [US5] host key change warningimplementation in `src/components/connection/HostKeyDialog.tsx`
+- [x] T043 [US5] SSHconnectionhostkeyverification in `src/hooks/useSSH.ts`
+- [x] T044 [P] [US5] known host managementscreencreate in `app/hosts/index.tsx`
 
-**Checkpoint**: US5完了 - 既知ホスト管理が独立して動作
+**Checkpoint**: US5complete - known host managementindependentlybehavior
 
 ---
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-**Purpose**: 全体の品質向上と統合
+**Purpose**: overallquality improvement
 
-- [x] T045 [P] エラーハンドリングの統一とユーザーフレンドリーなメッセージ
-- [x] T046 [P] ログ出力から認証情報を除外（Security-First）
-- [x] T047 [P] 型チェック実行: `pnpm typecheck`
-- [x] T048 [P] Lint実行: `pnpm lint` (実装ファイルのエラー修正済み)
-- [ ] T049 quickstart.mdに基づく動作確認
+- [x] T045 [P] error
+- [x] T046 [P] authenticationinformation（Security-First）
+- [x] T047 [P] run: `pnpm typecheck`
+- [x] T048 [P] Lintrun: `pnpm lint` (implementationfileerror)
+- [ ] T049 quickstart.mdbased onbehaviorconfirmation
 
 ---
 
@@ -178,30 +178,30 @@
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: 依存なし - 即時開始可能
-- **Foundational (Phase 2)**: Setup完了後 - すべてのUSをブロック
-- **User Stories (Phase 3-7)**: Foundational完了後に開始可能
-  - US1, US2 は並列可能（両方P1）
-  - US3, US4 は US1またはUS2完了後に開始推奨
-  - US5 は独立して実装可能
-- **Polish (Phase 8)**: 必要なUS完了後
+- **Setup (Phase 1)**: no dependencies - can start
+- **Foundational (Phase 2)**: Setupcomplete - US
+- **User Stories (Phase 3-7)**: Foundationalcompletecan start
+ - US1, US2 possible（P1）
+ - US3, US4 US1US2completerecommended
+ - US5 independentlyimplementationpossible
+- **Polish (Phase 8)**: requiredUScomplete
 
 ### User Story Dependencies
 
 | Story | Depends On | Can Start After |
 |-------|------------|-----------------|
-| US1 (P1) | Foundational | Phase 2 完了 |
-| US2 (P1) | Foundational | Phase 2 完了 |
-| US3 (P2) | US1 or US2 | 鍵が存在する状態 |
-| US4 (P2) | US1 or US2 | 鍵認証に鍵が必要 |
-| US5 (P3) | Foundational | Phase 2 完了（独立） |
+| US1 (P1) | Foundational | Phase 2 complete |
+| US2 (P1) | Foundational | Phase 2 complete |
+| US3 (P2) | US1 or US2 | key |
+| US4 (P2) | US1 or US2 | keyauthenticationkeyrequired |
+| US5 (P3) | Foundational | Phase 2 complete（independent） |
 
 ### Within Each User Story
 
-1. テスト作成 → 失敗確認
-2. サービス実装 → テスト通過
-3. UI実装
-4. 統合確認
+1. testcreate → confirmation
+2. implementation → test
+3. UIimplementation
+4. confirmation
 
 ---
 
@@ -210,53 +210,53 @@
 ### Phase 2 (Foundational)
 
 ```bash
-# 並列実行可能:
-T006: SSH鍵ストア作成
-T007: エクスポート追加
+# can run in parallel:
+T006: SSHkeycreate
+T007: add
 ```
 
 ### Phase 3 (US1) + Phase 4 (US2)
 
 ```bash
-# US1とUS2は並列で進行可能（両方P1）
-# 開発者A: US1 (T008-T016)
-# 開発者B: US2 (T017-T023)
+# US1US2possible（P1）
+# A: US1 (T008-T016)
+# B: US2 (T017-T023)
 ```
 
 ### Phase 5 (US3) + Phase 6 (US4)
 
 ```bash
-# US3とUS4は並列で進行可能（両方P2）
-# T025, T027: 画面作成は並列可能
-# T031, T032: コンポーネント作成は並列可能
+# US3US4possible（P2）
+# T025, T027: screencreatepossible
+# T031, T032: createpossible
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (US1のみ)
+### MVP First (US1)
 
-1. Phase 1: Setup完了
-2. Phase 2: Foundational完了
-3. Phase 3: US1完了 → 鍵生成が動作
-4. **STOP and VALIDATE**: 鍵生成→公開鍵コピーのE2Eテスト
-5. デプロイ可能
+1. Phase 1: Setupcomplete
+2. Phase 2: Foundationalcomplete
+3. Phase 3: US1complete → keygeneratebehavior
+4. **STOP and VALIDATE**: keygenerate→public keyE2Etest
+5. possible
 
 ### Incremental Delivery
 
-1. Setup + Foundational → 基盤完了
-2. US1 → 鍵生成 MVP
-3. US2 → 鍵インポート追加
-4. US3 + US4 → 管理UI + 認証選択
-5. US5 → セキュリティ強化
+1. Setup + Foundational → complete
+2. US1 → keygenerate MVP
+3. US2 → keyimportadd
+4. US3 + US4 → managementUI + authenticationselect
+5. US5 → 
 
 ### Parallel Team Strategy
 
 ```
-Developer A: US1 (鍵生成)
-Developer B: US2 (鍵インポート)
-Developer C: US5 (既知ホスト) ← 独立して進行可能
+Developer A: US1 (keygenerate)
+Developer B: US2 (keyimport)
+Developer C: US5 (known host) ← independentlypossible
 ```
 
 ---
@@ -279,9 +279,9 @@ Developer C: US5 (既知ホスト) ← 独立して進行可能
 
 ## Notes
 
-- [P] = 異なるファイル、依存なし
-- [Story] = 特定のユーザーストーリーに紐づく
-- 各ストーリーは独立してテスト可能
-- テスト失敗を確認してから実装
-- タスクまたは論理グループごとにコミット
-- チェックポイントで独立検証を実施
+- [P] = file、no dependencies
+- [Story] = user story
+- independentlytestpossible
+- testconfirmationimplementation
+- 
+- independentverification

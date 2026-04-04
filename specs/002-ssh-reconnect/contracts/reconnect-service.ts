@@ -1,94 +1,94 @@
 /**
  * ReconnectService Contract
  *
- * SSH再接続ロジックを管理するサービスのインターフェース定義。
- * 実装は src/services/ssh/reconnect.ts に配置する。
+ * Interface definition for the service that manages SSH reconnect logic.
+ * Implementation goes in src/services/ssh/reconnect.ts.
  */
 
 import type { Connection, ConnectionState } from '@/types/connection';
 
 /**
- * 再接続オプション
+ * Reconnect options
  */
 export interface ReconnectOptions {
-  /** 認証情報（パスワードまたは秘密鍵） */
+  /** Credentials (password or private key) */
   password?: string;
   privateKey?: string;
   passphrase?: string;
 }
 
 /**
- * 再接続結果
+ * Reconnect result
  */
 export interface ReconnectResult {
-  /** 成功したかどうか */
+  /** Whether it succeeded */
   success: boolean;
-  /** 試行回数 */
+  /** Attempt count */
   attemptCount: number;
-  /** エラーメッセージ（失敗時） */
+  /** Error message (on failure) */
   error?: string;
-  /** キャンセルされたかどうか */
+  /** Whether it was cancelled */
   cancelled?: boolean;
 }
 
 /**
- * 再接続イベント
+ * Reconnect events
  */
 export interface ReconnectEvents {
-  /** 再接続試行開始時 */
+  /** When a reconnect attempt starts */
   onAttemptStart: (attemptNumber: number, maxAttempts: number) => void;
-  /** 再接続試行失敗時 */
+  /** When a reconnect attempt fails */
   onAttemptFailed: (attemptNumber: number, error: string) => void;
-  /** 再接続成功時 */
+  /** When reconnect succeeds */
   onSuccess: () => void;
-  /** 再接続断念時（最大試行回数到達） */
+  /** When reconnect gives up after the maximum attempts */
   onGiveUp: (totalAttempts: number, lastError: string) => void;
-  /** 再接続キャンセル時 */
+  /** When reconnect is cancelled */
   onCancelled: () => void;
 }
 
 /**
- * ReconnectService インターフェース
+ * ReconnectService interface
  */
 export interface IReconnectService {
   /**
-   * 切断を処理し、設定に応じて自動再接続を開始するか判断する
-   * @param connection 切断された接続
-   * @param state 現在の接続状態
-   * @returns 自動再接続が開始された場合はtrue
+   * Handle a disconnect and decide whether auto-reconnect should start.
+   * @param connection The disconnected connection
+   * @param state The current connection state
+   * @returns true if auto-reconnect was started
    */
   handleDisconnection(connection: Connection, state: ConnectionState): boolean;
 
   /**
-   * 再接続を開始する
-   * @param connection 再接続する接続
-   * @param options 認証情報などのオプション
-   * @returns 再接続結果のPromise
+   * Start reconnecting.
+   * @param connection The connection to reconnect
+   * @param options Options such as credentials
+   * @returns Promise for the reconnect result
    */
   startReconnect(connection: Connection, options?: ReconnectOptions): Promise<ReconnectResult>;
 
   /**
-   * 進行中の再接続をキャンセルする
-   * @param connectionId 接続ID
+   * Cancel an in-progress reconnect.
+   * @param connectionId The connection ID
    */
   cancelReconnect(connectionId: string): void;
 
   /**
-   * 再接続が進行中かどうかを確認する
-   * @param connectionId 接続ID
+   * Check whether reconnect is in progress.
+   * @param connectionId The connection ID
    */
   isReconnecting(connectionId: string): boolean;
 
   /**
-   * イベントハンドラを設定する
-   * @param connectionId 接続ID
-   * @param events イベントハンドラ
+   * Set event handlers.
+   * @param connectionId The connection ID
+   * @param events Event handlers
    */
   setEventHandlers(connectionId: string, events: Partial<ReconnectEvents>): void;
 
   /**
-   * イベントハンドラを解除する
-   * @param connectionId 接続ID
+   * Remove event handlers.
+   * @param connectionId The connection ID
    */
   removeEventHandlers(connectionId: string): void;
 }

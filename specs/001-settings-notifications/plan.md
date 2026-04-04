@@ -5,19 +5,19 @@
 
 ## Summary
 
-設定画面のTODOコメント解決と通知ルール管理機能の完全実装。既存の`settingsProvider`と`notificationProvider`を活用し、フォントサイズ/ファミリー選択ダイアログ、動作設定の永続化、テーマ選択、通知ルールのCRUD操作を実装する。
+Resolve the TODO comments in the settings screen and fully implement notification rule management. Reuse the existing `settingsProvider` and `notificationProvider` to implement font size/family picker dialogs, persistence for behavioral settings, theme selection, and notification rule CRUD operations.
 
 ## Technical Context
 
 **Language/Version**: Dart 3.x / Flutter 3.24+
 **Primary Dependencies**: flutter_riverpod, shared_preferences, flutter_local_notifications, url_launcher
-**Storage**: SharedPreferences（設定）、SharedPreferences（通知ルール - JSON形式）
+**Storage**: SharedPreferences (settings), SharedPreferences (notification rules in JSON format)
 **Testing**: flutter_test, mockito
-**Target Platform**: Android（iOS対応予定）
+**Target Platform**: Android (iOS support planned)
 **Project Type**: Mobile
-**Performance Goals**: 設定変更は1秒以内に保存、50件のルールで2秒以内にリスト表示
-**Constraints**: オフライン対応不要（ローカルストレージのみ）
-**Scale/Scope**: 単一ユーザー、ルール数上限なし
+**Performance Goals**: Save setting changes within 1 second and render the list within 2 seconds for 50 rules
+**Constraints**: No offline support required; local storage only
+**Scale/Scope**: Single user, no limit on the number of rules
 
 ## Constitution Check
 
@@ -25,15 +25,15 @@
 
 | Principle | Status | Notes |
 |-----------|--------|-------|
-| I. Type Safety | PASS | Dartの型システムで厳密に型定義済み |
-| II. KISS & YAGNI | PASS | 既存プロバイダーを活用、新規抽象化なし |
-| III. Test-First (TDD) | PASS | 各機能にテストを作成 |
-| IV. Security-First | PASS | 設定データに機密情報なし（SSH鍵は別管理） |
-| V. SOLID | PASS | SRP: 設定と通知は別プロバイダーで分離済み |
-| VI. DRY | PASS | 既存のAppSettingsとNotificationRuleを再利用 |
-| Prohibited Naming | PASS | utils/helpers不使用、screens/services構造 |
+| I. Type Safety | PASS | Strictly typed with Dart's type system |
+| II. KISS & YAGNI | PASS | Reuse existing providers; no new abstractions |
+| III. Test-First (TDD) | PASS | Create tests for each feature |
+| IV. Security-First | PASS | No sensitive data in settings; SSH keys are managed separately |
+| V. SOLID | PASS | SRP: settings and notifications are separated into different providers |
+| VI. DRY | PASS | Reuse existing `AppSettings` and `NotificationRule` types |
+| Prohibited Naming | PASS | Do not use utils/helpers; keep the screens/services structure |
 
-**Gate Result**: PASS - すべての原則を遵守
+**Gate Result**: PASS - all principles are satisfied
 
 ## Project Structure
 
@@ -55,20 +55,20 @@ specs/001-settings-notifications/
 lib/
 ├── main.dart
 ├── providers/
-│   ├── settings_provider.dart    # 既存 - 活用
-│   └── notification_provider.dart # 既存 - 活用
+│   ├── settings_provider.dart    # existing - reuse
+│   └── notification_provider.dart # existing - reuse
 ├── screens/
 │   ├── settings/
-│   │   └── settings_screen.dart  # 修正対象
+│   │   └── settings_screen.dart  # target for changes
 │   └── notifications/
-│       └── notification_rules_screen.dart # 修正対象
+│       └── notification_rules_screen.dart # target for changes
 ├── services/
 │   └── notification/
-│       └── notification_engine.dart # 既存 - 活用
+│       └── notification_engine.dart # existing - reuse
 ├── theme/
-│   └── app_theme.dart            # テーマ管理
-└── widgets/
-    └── dialogs/                  # 新規ダイアログウィジェット
+│   └── app_theme.dart            # theme management
+└── Widgets/
+    └── dialogs/                  # new dialog Widgets
 
 test/
 ├── providers/
@@ -77,12 +77,15 @@ test/
 ├── screens/
 │   ├── settings_screen_test.dart
 │   └── notification_rules_screen_test.dart
-└── widgets/
+└── Widgets/
     └── dialogs_test.dart
 ```
 
-**Structure Decision**: Mobile単一プロジェクト構造。既存のFlutter標準構造を維持。
+**Structure Decision**: Single mobile project structure. Keep the existing Flutter standard structure.
 
 ## Complexity Tracking
 
-> 違反なし - 追加の複雑性正当化は不要
+> No violations - no additional complexity justification is needed
+
+
+

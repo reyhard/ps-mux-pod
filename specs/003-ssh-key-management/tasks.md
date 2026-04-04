@@ -1,9 +1,9 @@
-# Tasks: SSH鍵管理機能
+# Tasks: SSH Key Management
 
 **Input**: Design documents from `/specs/003-ssh-key-management/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md
 
-**Tests**: TDDアプローチに基づきテストを含む（Constitution III. Test-First）
+**Tests**: Includes tests based on the TDD approach (Constitution III. Test-First)
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -49,11 +49,11 @@
 
 ---
 
-## Phase 3: User Story 1 - SSH鍵の生成 (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - SSH key generation (Priority: P1) 🎯 MVP
 
-**Goal**: ユーザーがEd25519またはRSA鍵ペアを生成し、セキュアストレージに保存できる
+**Goal**: Ed25519RSAkeygenerate、secure storagesave
 
-**Independent Test**: 鍵生成画面で名前と鍵タイプを選択し「Generate」をタップすると、新しい鍵が作成され一覧に表示される
+**Independent Test**: key generation screenkeyselect「Generate」、keycreatelistdisplay
 
 ### Tests for User Story 1
 
@@ -80,11 +80,11 @@
 
 ---
 
-## Phase 4: User Story 2 - SSH鍵のインポート (Priority: P1)
+## Phase 4: User Story 2 - SSH key import (Priority: P1)
 
-**Goal**: ユーザーがファイルまたはPEMペーストで既存の秘密鍵をインポートできる
+**Goal**: filePEMexistingprivate keyimport
 
-**Independent Test**: インポート画面でファイルを選択またはPEMをペーストし「Import」をタップすると、鍵が保存され一覧に表示される
+**Independent Test**: importscreenfileselectPEM「Import」、keysavelistdisplay
 
 ### Tests for User Story 2
 
@@ -111,11 +111,11 @@
 
 ---
 
-## Phase 5: User Story 3 - SSH鍵一覧の表示 (Priority: P2)
+## Phase 5: User Story 3 - SSH key listdisplay (Priority: P2)
 
-**Goal**: ユーザーが保存済みの全SSH鍵を一覧で確認できる
+**Goal**: can confirm all saved SSH keys in a list
 
-**Independent Test**: 鍵一覧画面を開くと、保存済みの鍵が名前・タイプと共にリスト表示される
+**Independent Test**: key list screen、savekeydisplay
 
 ### Implementation for User Story 3
 
@@ -130,11 +130,11 @@
 
 ---
 
-## Phase 6: User Story 4 - SSH鍵の削除 (Priority: P3)
+## Phase 6: User Story 4 - delete an SSH key (Priority: P3)
 
-**Goal**: ユーザーが不要になったSSH鍵を削除できる
+**Goal**: can delete SSH keys that are no longer needed
 
-**Independent Test**: 鍵を長押しまたはスワイプで削除メニューを表示し、確認後に削除される
+**Independent Test**: keydeletedisplay、confirmationdelete
 
 ### Implementation for User Story 4
 
@@ -169,7 +169,7 @@
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
 - **User Stories (Phase 3-6)**: All depend on Foundational phase completion
-  - User stories can proceed in priority order (P1 → P2 → P3)
+ - User stories can proceed in priority order (P1 → P2 → P3)
 - **Polish (Phase 7)**: Depends on all user stories being complete
 
 ### User Story Dependencies
@@ -214,24 +214,24 @@ Task: "Unit test for PEM format conversion in test/services/keychain/ssh_key_ser
 
 1. Complete Phase 1: Setup
 2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
-3. Complete Phase 3: User Story 1 (鍵生成)
+3. Complete Phase 3: User Story 1 (keygenerate)
 4. **STOP and VALIDATE**: Test key generation independently
 5. Deploy/demo if ready
 
 ### Incremental Delivery
 
 1. Complete Setup + Foundational → Foundation ready
-2. Add User Story 1 → Test independently → Deploy/Demo (MVP - 鍵生成可能!)
-3. Add User Story 2 → Test independently → Deploy/Demo (インポート可能!)
-4. Add User Story 3 → Test independently → Deploy/Demo (一覧表示改善!)
-5. Add User Story 4 → Test independently → Deploy/Demo (削除可能!)
+2. Add User Story 1 → Test independently → Deploy/Demo (MVP - keygeneratepossible!)
+3. Add User Story 2 → Test independently → Deploy/Demo (importpossible!)
+4. Add User Story 3 → Test independently → Deploy/Demo (listdisplayimprovement!)
+5. Add User Story 4 → Test independently → Deploy/Demo (deletepossible!)
 6. Each story adds value without breaking previous stories
 
 ### Recommended Order
 
-US1とUS2は両方P1だが、US1（生成）を先に完了することを推奨:
-- US1でSshKeyServiceの基盤が完成する
-- US2はUS1のtoPem/calculateFingerprintを再利用できる
+US1US2P1、US1（generate）completerecommended:
+- US1SshKeyService
+- US2US1toPem/calculateFingerprintreuse
 
 ---
 

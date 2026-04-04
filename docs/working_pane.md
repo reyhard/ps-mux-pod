@@ -1,62 +1,62 @@
 # Working Panes
 
-| 役割 | ターミナル | ID | エージェント | worktree | 状態 |
-|------|-----------|-----|-------------|----------|------|
-| SSH鍵管理 | tmux | %100 | claude | phase2-ssh-key | ✅ 完了 (103テスト) |
-| 再接続機能 | tmux | %101 | claude | phase2-reconnect | ✅ 完了 (101テスト) |
-| コンポーネントテスト | tmux | %102 | claude | phase2-tests | ✅ 完了 (57テスト) |
+| Role | Terminal | ID | Agent | worktree | Status |
+|------|---------|-----|-------|----------|--------|
+| SSH Key Management | tmux | %100 | claude | phase2-ssh-key | Done (103 tests) |
+| Reconnection Feature | tmux | %101 | claude | phase2-reconnect | Done (101 tests) |
+| Component Tests | tmux | %102 | claude | phase2-tests | Done (57 tests) |
 
-## セッション情報
+## Session Info
 
-- セッション名: mux-pod
-- ウィンドウ: agents
-- Phase 1 作成: 2026-01-10 20:07
-- Phase 1 完了: 2026-01-10 21:15
-- Phase 2 開始: 2026-01-11 01:00
-- Phase 2 完了: 2026-01-11 02:50
+- Session name: mux-pod
+- Window: agents
+- Phase 1 created: 2026-01-10 20:07
+- Phase 1 completed: 2026-01-10 21:15
+- Phase 2 started: 2026-01-11 01:00
+- Phase 2 completed: 2026-01-11 02:50
 
-## Phase 1 実装サマリ
+## Phase 1 Implementation Summary
 
-- Phase 1-2: Setup & Foundational ✅
-- Phase 3-4: SSH接続 & 接続管理 ✅
-- Phase 5: tmuxナビゲーション ✅
-- Phase 6: ターミナル表示 ✅
-- Phase 7: キー入力 ✅
-- Phase 8: Polish ✅
-- Review: コードレビュー ✅
+- Phase 1-2: Setup & Foundational
+- Phase 3-4: SSH Connection & Connection Management
+- Phase 5: tmux Navigation
+- Phase 6: Terminal Display
+- Phase 7: Key Input
+- Phase 8: Polish
+- Review: Code Review
 
-**ステータス**: TypeScript ✅ | Lint ✅ | Tests 62/62 ✅ | Review A-
+**Status**: TypeScript | Lint | Tests 62/62 | Review A-
 
-## Phase 2 実装サマリ
+## Phase 2 Implementation Summary
 
-- %102: コンポーネントテスト追加 (57テスト) ✅
-- %101: ネットワーク再接続機能 (101テスト) ✅
-- %100: SSH鍵管理機能 (103テスト) ✅
+- %102: Component tests added (57 tests)
+- %101: Network reconnection feature (101 tests)
+- %100: SSH key management feature (103 tests)
 
-**ステータス**: TypeScript ✅ | Tests 261 ✅ | 並列実行成功
+**Status**: TypeScript | Tests 261 | Parallel execution successful
 
-## 成果物
+## Artifacts
 
 ### Phase 1
-- `specs/001-phase1-mvp/` - Spec-Kit成果物一式
-- `src/` - 実装コード (33ファイル)
-- `__tests__/` - テスト (62テスト)
-- `docs/working/review_001-phase1-mvp.md` - レビューレポート
-- `docs/working/result_001-phase1-mvp.md` - 最終結果レポート
+- `specs/001-phase1-mvp/` - Spec-Kit artifacts
+- `src/` - Implementation code (33 files)
+- `__tests__/` - Tests (62 tests)
+- `docs/working/review_001-phase1-mvp.md` - Review report
+- `docs/working/result_001-phase1-mvp.md` - Final result report
 
 ### Phase 2
-- `worktree/phase2-tests/` - コンポーネントテスト
-- `worktree/phase2-reconnect/` - 再接続機能
-- `worktree/phase2-ssh-key/` - SSH鍵管理
-- `docs/working/decision_20260111_0100_phase2_parallel.md` - 決定ログ
-- `docs/working/result_phase2_parallel.md` - 最終レポート
+- `worktree/phase2-tests/` - Component tests
+- `worktree/phase2-reconnect/` - Reconnection feature
+- `worktree/phase2-ssh-key/` - SSH key management
+- `docs/working/decision_20260111_0100_phase2_parallel.md` - Decision log
+- `docs/working/result_phase2_parallel.md` - Final report
 
-## 備考
+## Notes
 
-- 各ペインでClaudeエージェントを起動
-- Phase 1: 単一エージェント実装
-- Phase 2: 3並列worktree実行 (Spec-Kit Conductor)
-- 2026-01-10 20:10 Phase 1開始
-- 2026-01-10 21:15 Phase 1完了
-- 2026-01-11 01:00 Phase 2開始
-- 2026-01-11 02:50 Phase 2完了
+- Claude agent launched in each pane
+- Phase 1: Single agent implementation
+- Phase 2: 3-parallel worktree execution (Spec-Kit Conductor)
+- 2026-01-10 20:10 Phase 1 started
+- 2026-01-10 21:15 Phase 1 completed
+- 2026-01-11 01:00 Phase 2 started
+- 2026-01-11 02:50 Phase 2 completed

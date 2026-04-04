@@ -1,7 +1,7 @@
 /// SSH Service Contract
 ///
-/// SSH接続管理のサービス層インターフェース。
-/// dartssh2の実装詳細を隠蔽し、テスタビリティを確保する。
+/// SSHConnection Managementserviceinterface。
+/// dartssh2implementdetails、。
 
 import 'dart:async';
 import 'dart:typed_data';
@@ -9,7 +9,7 @@ import 'dart:typed_data';
 import '../models/connection.dart';
 import '../models/ssh_key.dart';
 
-/// SSH接続状態
+/// SSH connectionstate
 enum ConnectionStatus {
   disconnected,
   connecting,
@@ -18,7 +18,7 @@ enum ConnectionStatus {
   error,
 }
 
-/// SSH接続状態の変更イベント
+/// SSH connectionstatechange
 class ConnectionStateEvent {
   final String connectionId;
   final ConnectionStatus status;
@@ -33,52 +33,52 @@ class ConnectionStateEvent {
   });
 }
 
-/// SSHシェルセッション
+/// SSHshellsession
 abstract class SshShellSession {
-  /// シェル出力ストリーム
+  /// shelloutput
   Stream<Uint8List> get stdout;
 
-  /// シェルエラー出力ストリーム
+  /// shellerroroutput
   Stream<Uint8List> get stderr;
 
-  /// シェル終了Future
+  /// shellcloseFuture
   Future<void> get done;
 
-  /// データ送信
+  /// datasend
   void write(Uint8List data);
 
-  /// 文字列送信（UTF-8エンコード）
+  /// characterscolumnsend（UTF-8code）
   void writeString(String data);
 
-  /// PTYサイズ変更
+  /// PTYsizechange
   Future<void> resize(int width, int height);
 
-  /// シェルクローズ
+  /// shell
   Future<void> close();
 }
 
-/// SSHサービスインターフェース
+/// SSHserviceinterface
 abstract class SshService {
-  /// 接続状態ストリーム
+  /// connectionstate
   Stream<ConnectionStateEvent> get connectionState;
 
-  /// SSH接続（パスワード認証）
+  /// SSH connection（passwordauthentication）
   Future<void> connectWithPassword({
     required Connection connection,
     required String password,
   });
 
-  /// SSH接続（鍵認証）
+  /// SSH connection（keyauthentication）
   Future<void> connectWithKey({
     required Connection connection,
     required SSHKey key,
     String? passphrase,
   });
 
-  /// 接続状態取得
+  /// connectionstateretrieve
   ConnectionStatus getStatus(String connectionId);
 
-  /// シェルセッション開始
+  /// shellsessionstart
   Future<SshShellSession> startShell({
     required String connectionId,
     int? width,
@@ -86,23 +86,23 @@ abstract class SshService {
     String term = 'xterm-256color',
   });
 
-  /// コマンド実行（単発）
+  /// commandrun（）
   Future<SshExecResult> exec({
     required String connectionId,
     required String command,
   });
 
-  /// 切断
+  /// disconnect
   Future<void> disconnect(String connectionId);
 
-  /// 全接続切断
+  /// allconnectiondisconnect
   Future<void> disconnectAll();
 
-  /// キープアライブ送信
+  /// keysend
   Future<void> ping(String connectionId);
 }
 
-/// コマンド実行結果
+/// commandrunresult
 class SshExecResult {
   final String stdout;
   final String stderr;
@@ -116,3 +116,6 @@ class SshExecResult {
 
   bool get success => exitCode == 0;
 }
+
+
+

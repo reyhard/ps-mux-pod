@@ -5,27 +5,27 @@
 
 ## Research Topics
 
-### 1. SSH接続ライブラリ選定
+### 1. SSH connectionlibrary
 
-**Decision**: `react-native-ssh-sftp` を採用
+**Decision**: `react-native-ssh-sftp` 
 
 **Rationale**:
-- React Native向けに設計された唯一の成熟したSSHライブラリ
-- パスワード認証・公開鍵認証の両方をサポート
-- シェル接続（PTY）とコマンド実行の両方に対応
-- iOS/Android両方で動作実績あり
+- React NativematureSSHlibrary
+- passwordauthenticationpublic keyauthenticationsupport
+- shellconnection（PTY）commandrunsupport
+- iOS/Androidbehaviortrack record
 
 **Alternatives Considered**:
 
-| ライブラリ | 評価 | 却下理由 |
+| library |  | rationale |
 |-----------|------|----------|
-| ssh2 (Node.js) | × | React Nativeでは動作しない |
-| WebSocket経由 | × | サーバー側に追加コンポーネントが必要 |
-| react-native-tcp | × | SSH実装を自前で行う必要がある |
+| ssh2 (Node.js) | × | React Nativebehavior |
+| WebSocket | × | serveraddcomponentrequired |
+| react-native-tcp | × | SSHimplementperformrequired |
 
 **Implementation Notes**:
 ```typescript
-// 基本的な接続パターン
+// basicconnectionpattern
 import SSHClient from 'react-native-ssh-sftp';
 
 const client = new SSHClient(host, port, username, {
@@ -41,26 +41,26 @@ shell.write('command\n');
 
 ---
 
-### 2. ANSIエスケープシーケンス処理
+### 2. ANSIescapesequenceprocessing
 
-**Decision**: カスタムパーサーを実装（軽量版）
+**Decision**: customparserimplement（lightweight）
 
 **Rationale**:
-- npmの`ansi-parser`等はNode.js依存が多い
-- React Native環境で動作する軽量実装が必要
-- 必要な機能は16色/256色表示のみ（Phase 1）
+- npm`ansi-parser`Node.jsdependency
+- React Nativebehaviorlightweightimplementrequired
+- requiredfeature16color/256colordisplay（Phase 1）
 
 **Alternatives Considered**:
 
-| アプローチ | 評価 | 却下理由 |
+|  |  | rationale |
 |-----------|------|----------|
-| ansi-parser | × | Node.js依存 |
-| xterm.js | × | DOM依存、React Native非対応 |
-| strip-ansi | △ | 色情報が失われる |
+| ansi-parser | × | Node.jsdependency |
+| xterm.js | × | DOMdependency、React Nativesupport |
+| strip-ansi | △ | colorinformation |
 
 **Implementation Pattern**:
 ```typescript
-// ANSIパーサーの基本構造
+// ANSIparserbasic
 interface AnsiSpan {
   text: string;
   fg?: number; // 0-255
@@ -73,36 +73,36 @@ interface AnsiSpan {
 function parseAnsi(input: string): AnsiSpan[] {
   const ESC = '\x1b';
   const CSI = ESC + '[';
-  // SGRシーケンス解析: \x1b[<params>m
-  // 対応: 30-37 (fg), 40-47 (bg), 38;5;n (256色fg), 48;5;n (256色bg)
+  // SGRsequenceparse: \x1b[<params>m
+  // support: 30-37 (fg), 40-47 (bg), 38;5;n (256colorfg), 48;5;n (256colorbg)
 }
 ```
 
 ---
 
-### 3. tmuxコマンド出力パース
+### 3. tmuxcommandoutputparse
 
-**Decision**: タブ区切りフォーマット指定でパース
+**Decision**: tabformatparse
 
 **Rationale**:
-- tmuxの`-F`オプションでカスタムフォーマット指定可能
-- タブ区切りにより確実なパースが可能
-- 追加ライブラリ不要
+- tmux`-F`customformatpossible
+- tabparsepossible
+- addlibrarynot needed
 
 **Command Patterns**:
 
 ```bash
-# セッション一覧
+# sessionlist
 tmux list-sessions -F "#{session_name}\t#{session_created}\t#{session_attached}\t#{session_windows}"
 
-# ウィンドウ一覧
+# windowlist
 tmux list-windows -t SESSION -F "#{window_index}\t#{window_name}\t#{window_active}\t#{window_panes}"
 
-# ペイン一覧
+# panelist
 tmux list-panes -t SESSION:WINDOW -F "#{pane_index}\t#{pane_id}\t#{pane_active}\t#{pane_current_command}\t#{pane_width}\t#{pane_height}"
 
-# ペイン内容取得
-tmux capture-pane -t SESSION:WINDOW.PANE -p -e  # -e でANSI保持
+# panecontentsretrieve
+tmux capture-pane -t SESSION:WINDOW.PANE -p -e  # -e ANSIretain
 ```
 
 **Parser Pattern**:
@@ -124,14 +124,14 @@ function parseTmuxOutput<T>(output: string, keys: (keyof T)[]): T[] {
 
 ---
 
-### 4. 状態管理パターン（Zustand + 永続化）
+### 4. statemanagementpattern（Zustand + persistence）
 
 **Decision**: Zustand + persist middleware + AsyncStorage
 
 **Rationale**:
-- Zustand 5.0は軽量でReact Nativeに最適
-- persist middlewareで自動永続化
-- 接続状態（ランタイム）と接続設定（永続化）を分離
+- Zustand 5.0lightweightReact Nativeoptimal
+- persist middlewareautomaticpersistence
+- connectionstate（）connection settings（persistence）
 
 **Implementation Pattern**:
 ```typescript
@@ -167,44 +167,44 @@ export const useConnectionStore = create<ConnectionStore>()(
 
 ---
 
-### 5. セキュアストレージ（パスワード保存）
+### 5. securestorage（passwordsave）
 
-**Decision**: expo-secure-store を使用
+**Decision**: expo-secure-store 
 
 **Rationale**:
-- ExpoのオフィシャルAPI
-- Android Keystore / iOS Keychain を内部使用
-- 同期API（使いやすい）
+- ExpoAPI
+- Android Keystore / iOS Keychain internal
+- syncAPI（）
 
 **Implementation Pattern**:
 ```typescript
 import * as SecureStore from 'expo-secure-store';
 
-// パスワード保存
+// passwordsave
 await SecureStore.setItemAsync(`password-${connectionId}`, password);
 
-// パスワード取得
+// passwordretrieve
 const password = await SecureStore.getItemAsync(`password-${connectionId}`);
 
-// パスワード削除
+// passworddelete
 await SecureStore.deleteItemAsync(`password-${connectionId}`);
 ```
 
 **Security Notes**:
-- パスワードはConnectionオブジェクトに含めない
-- 接続時にSecureStoreから取得
-- アプリアンインストール時に自動削除される
+- passwordConnection
+- connectionSecureStoreretrieve
+- appinstallautomaticdelete
 
 ---
 
-### 6. ターミナル表示パフォーマンス
+### 6. terminal displayperformance
 
-**Decision**: FlatList + メモ化 + 仮想化
+**Decision**: FlatList +  + 
 
 **Rationale**:
-- 1000行のスクロールバック履歴を効率的に表示
-- FlatListの仮想化で画面外要素をアンマウント
-- React.memoで再レンダリング最小化
+- 1000linescrollbackhistorydisplay
+- FlatListscreen
+- React.memoreminimum
 
 **Implementation Pattern**:
 ```typescript
@@ -227,7 +227,7 @@ const TerminalView = ({ lines }: { lines: AnsiSpan[][] }) => {
       initialNumToRender={30}
       maxToRenderPerBatch={20}
       windowSize={10}
-      inverted // 最新行を下に
+      inverted // newline
     />
   );
 };
@@ -235,17 +235,17 @@ const TerminalView = ({ lines }: { lines: AnsiSpan[][] }) => {
 
 ---
 
-### 7. 日本語・全角文字幅計算
+### 7. Japaneseallcharacterswidth
 
-**Decision**: East Asian Width対応のカスタム実装
+**Decision**: East Asian Widthsupportcustomimplement
 
 **Rationale**:
-- ターミナルでは全角文字は2カラム分
-- Unicode East Asian Width プロパティに準拠
+- terminalallcharacters2
+- Unicode East Asian Width 
 
 **Implementation Pattern**:
 ```typescript
-// 簡易版: CJK範囲チェック
+// : CJKrangecheck
 function getCharWidth(char: string): 1 | 2 {
   const code = char.charCodeAt(0);
   // CJK Unified Ideographs, Hiragana, Katakana, Fullwidth forms
@@ -266,13 +266,13 @@ function getStringWidth(str: string): number {
 
 ---
 
-### 8. 特殊キー送信
+### 8. specialkeysend
 
-**Decision**: tmux send-keysコマンドを使用
+**Decision**: tmux send-keyscommand
 
 **Rationale**:
-- tmuxのsend-keysは特殊キー名をサポート
-- エスケープシーケンスを直接送る必要がない
+- tmuxsend-keysspecialkeysupport
+- escapesequencerequired
 
 **Key Mapping**:
 ```typescript
@@ -292,12 +292,12 @@ const SPECIAL_KEYS: Record<string, string> = {
   'PageDown': 'NPage',
 };
 
-// Ctrl+キー
+// Ctrl+key
 function ctrlKey(key: string): string {
   return `C-${key.toLowerCase()}`;
 }
 
-// 送信例
+// sendexample
 await tmux.sendKeys(session, window, pane, 'C-c'); // Ctrl+C
 await tmux.sendKeys(session, window, pane, 'Escape'); // ESC
 ```
@@ -308,11 +308,14 @@ await tmux.sendKeys(session, window, pane, 'Escape'); // ESC
 
 | Topic | Decision | Key Benefit |
 |-------|----------|-------------|
-| SSH接続 | react-native-ssh-sftp | React Native対応の成熟ライブラリ |
-| ANSIパース | カスタム軽量実装 | Node.js依存なし |
-| tmux出力パース | タブ区切りフォーマット | 確実なパース |
-| 状態管理 | Zustand + persist | 軽量 + 自動永続化 |
-| パスワード保存 | expo-secure-store | OS標準のセキュアストレージ |
-| ターミナル表示 | FlatList + 仮想化 | 1000行でも60fps |
-| 文字幅 | East Asian Width対応 | 日本語正しく表示 |
-| 特殊キー | tmux send-keys | キーマッピングが簡潔 |
+| SSH connection | react-native-ssh-sftp | React Nativesupportmaturelibrary |
+| ANSIparse | customlightweightimplement | Node.jsdependency |
+| tmuxoutputparse | tabformat | parse |
+| statemanagement | Zustand + persist | lightweight + automaticpersistence |
+| passwordsave | expo-secure-store | OSstandardsecurestorage |
+| terminal display | FlatList +  | 1000line60fps |
+| characterswidth | East Asian Widthsupport | Japanesedisplay |
+| specialkey | tmux send-keys | keysimple |
+
+
+

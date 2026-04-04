@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// 最小フォントサイズ選択ダイアログ
+/// Minimum font size selection dialog
 ///
-/// ターミナル自動フィット時の最小フォントサイズを選択する。
-/// この値を下回る場合は水平スクロールが有効になる。
+/// Select the minimum font size when the terminal auto-fits.
+/// Horizontal scrolling is enabled when the size would fall below this value.
 class MinFontSizeDialog extends StatefulWidget {
   final double currentSize;
 
@@ -19,7 +19,7 @@ class MinFontSizeDialog extends StatefulWidget {
 class _MinFontSizeDialogState extends State<MinFontSizeDialog> {
   late double _selectedSize;
 
-  // 最小フォントサイズの選択肢（6〜12pt）
+  // Minimum font size options (6-12 pt)
   static const List<double> _minFontSizes = [6, 7, 8, 9, 10, 11, 12];
 
   @override

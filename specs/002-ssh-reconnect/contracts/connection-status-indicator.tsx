@@ -1,75 +1,75 @@
 /**
  * ConnectionStatusIndicator Contract
  *
- * 接続状態インジケーターのインターフェース定義。
- * 実装は src/components/connection/ConnectionStatusIndicator.tsx に配置する。
+ * Interface definition for the connection status indicator.
+ * Implementation goes in src/components/connection/ConnectionStatusIndicator.tsx.
  */
 
 import type { ConnectionState } from '@/types/connection';
 
 /**
- * インジケーターサイズ
+ * Indicator sizes
  */
 export type IndicatorSize = 'sm' | 'md' | 'lg';
 
 /**
- * ConnectionStatusIndicatorのProps
+ * Props for ConnectionStatusIndicator
  */
 export interface ConnectionStatusIndicatorProps {
-  /** 接続状態 */
+  /** Connection state */
   state: ConnectionState;
 
-  /** サイズ (default: 'md') */
+  /** Size (default: 'md') */
   size?: IndicatorSize;
 
-  /** タップ時のコールバック */
+  /** Tap callback */
   onPress?: () => void;
 
-  /** 詳細情報を表示するかどうか (default: false) */
+  /** Whether to show details (default: false) */
   showDetails?: boolean;
 
-  /** アニメーションを有効にするか (default: true) */
+  /** Whether to enable animation (default: true) */
   animated?: boolean;
 }
 
 /**
- * 状態ごとの表示仕様
+ * Display spec by state
  */
 export const STATUS_DISPLAY = {
   connected: {
     color: '#22c55e',  // colors.success
     icon: 'circle',    // filled circle
-    label: '接続中',
+    label: 'Connected',
     animated: false,
   },
   connecting: {
     color: '#eab308',  // colors.warning
     icon: 'circle-outline',
-    label: '接続中...',
-    animated: true,    // パルスアニメーション
+    label: 'Connecting...',
+    animated: true,    // Pulse animation
   },
   reconnecting: {
     color: '#eab308',  // colors.warning
-    icon: 'refresh',   // 回転矢印
-    label: '再接続中...',
-    animated: true,    // 回転アニメーション
+    icon: 'refresh',   // Rotating arrow
+    label: 'Reconnecting...',
+    animated: true,    // Rotation animation
   },
   disconnected: {
     color: '#ef4444',  // colors.error
     icon: 'circle',
-    label: '切断',
+    label: 'Disconnected',
     animated: false,
   },
   error: {
     color: '#ef4444',  // colors.error
     icon: 'alert',
-    label: 'エラー',
+    label: 'Error',
     animated: false,
   },
 } as const;
 
 /**
- * サイズごとの寸法
+ * Dimensions by size
  */
 export const SIZE_SPECS = {
   sm: {
@@ -90,11 +90,11 @@ export const SIZE_SPECS = {
 } as const;
 
 /**
- * 期待される動作
+ * Expected behavior
  *
- * 1. state.status に応じて色・アイコン・ラベルを表示
- * 2. onPress が指定されている場合、タップ可能な外観にする
- * 3. showDetails=true の場合、追加情報（切断時刻、エラー詳細等）を表示
- * 4. reconnecting 状態で attemptInfo がある場合、「再接続中 (2/3)」のように表示
- * 5. animated=true の場合、状態に応じたアニメーションを適用
+ * 1. Show color, icon, and label based on `state.status`
+ * 2. If `onPress` is provided, make it look tappable
+ * 3. If `showDetails=true`, show extra info such as disconnect time and error details
+ * 4. If reconnecting and `attemptInfo` exists, show something like `Reconnecting (2/3)`
+ * 5. If `animated=true`, apply animations according to the state
  */

@@ -51,11 +51,11 @@
 
 ---
 
-## Phase 3: User Story 1 - SSH接続の確立 (Priority: P1) 🎯 MVP Core
+## Phase 3: User Story 1 - Establish SSH Connection (Priority: P1) 🎯 MVP Core
 
-**Goal**: ユーザーがSSH接続を確立し、サーバーに接続できる
+**Goal**: The user can establish an SSH connection and connect to the server
 
-**Independent Test**: サーバー情報とパスワードを入力→接続→セッション一覧表示を確認
+**Independent Test**: Enter server information and a password, connect, and verify that the session list is displayed
 
 ### Tests for User Story 1
 
@@ -71,15 +71,15 @@
 - [ ] T021 [US1] Add SecureStore integration for password storage in src/services/ssh/auth.ts
 - [ ] T022 [US1] Add connection state management (connecting, connected, error) in connectionStore
 
-**Checkpoint**: SSH接続が確立できる。パスワード認証でサーバーに接続し、切断できる
+**Checkpoint**: SSH connection can be established. The user can connect to the server with password authentication and disconnect
 
 ---
 
-## Phase 4: User Story 2 - 接続管理 (Priority: P1) 🎯 MVP Core
+## Phase 4: User Story 2 - Connection Management (Priority: P1) 🎯 MVP Core
 
-**Goal**: ユーザーが接続設定を追加・編集・削除・永続化できる
+**Goal**: The user can add, edit, delete, and persist connection settings
 
-**Independent Test**: 接続追加→アプリ再起動→接続が残っている、編集・削除も動作確認
+**Independent Test**: Add a connection, restart the app, verify the connection remains, and confirm edit/delete also work
 
 ### Tests for User Story 2
 
@@ -98,15 +98,15 @@
 - [ ] T032 [US2] Add long-press context menu for edit/delete actions
 - [ ] T033 [US2] Add delete confirmation dialog
 
-**Checkpoint**: 接続設定のCRUD完全動作、アプリ再起動後も永続化
+**Checkpoint**: Full CRUD for connection settings works and persists after app restart
 
 ---
 
-## Phase 5: User Story 3 - tmuxナビゲーション (Priority: P2)
+## Phase 5: User Story 3 - tmux Navigation (Priority: P2)
 
-**Goal**: ユーザーがセッション→ウィンドウ→ペインの階層をナビゲートできる
+**Goal**: The user can navigate the session -> window -> pane hierarchy
 
-**Independent Test**: 接続後にセッション一覧表示→ウィンドウ選択→ペイン選択まで操作可能
+**Independent Test**: After connecting, the user can display the session list, select a window, and select a pane
 
 ### Tests for User Story 3
 
@@ -126,15 +126,15 @@
 - [ ] T044 [US3] Create terminal screen with navigation in app/(main)/terminal/[connectionId].tsx
 - [ ] T045 [US3] Add auto-selection of first session/window/pane on connect
 
-**Checkpoint**: セッション/ウィンドウ/ペインのナビゲーション完全動作
+**Checkpoint**: Session, window, and pane navigation works completely
 
 ---
 
-## Phase 6: User Story 4 - ターミナル表示 (Priority: P2)
+## Phase 6: User Story 4 - Terminal Display (Priority: P2)
 
-**Goal**: 選択したペインの内容をANSIカラー対応で表示、日本語も正しく表示
+**Goal**: Display the selected pane's contents with ANSI color support and render Japanese text correctly
 
-**Independent Test**: ペイン選択→ANSIカラー付き出力が正しく表示、日本語テキストも文字化けなし
+**Independent Test**: Select a pane and verify that ANSI-colored output is displayed correctly and Japanese text does not become garbled
 
 ### Tests for User Story 4
 
@@ -154,15 +154,15 @@
 - [ ] T056 [US4] Add scrollback support (1000 lines)
 - [ ] T057 [US4] Integrate TerminalView into terminal screen
 
-**Checkpoint**: ターミナル内容がANSIカラー付きでリアルタイム表示
+**Checkpoint**: Terminal contents are displayed in real time with ANSI colors
 
 ---
 
-## Phase 7: User Story 5 - キー入力 (Priority: P2)
+## Phase 7: User Story 5 - Key Input (Priority: P2)
 
-**Goal**: ユーザーがキーボードから文字や特殊キーを入力し、ペインに送信できる
+**Goal**: The user can enter characters and special keys from the keyboard and send them to the pane
 
-**Independent Test**: テキスト入力→Enter→コマンド実行、Ctrl+C→プロセス中断
+**Independent Test**: Type text, press Enter to run a command, and send Ctrl+C to interrupt a process
 
 ### Tests for User Story 5
 
@@ -179,7 +179,7 @@
 - [ ] T065 [US5] Add keyboard handling for software keyboard input
 - [ ] T066 [US5] Add Ctrl+key combination support (Ctrl+C, Ctrl+D, etc.)
 
-**Checkpoint**: フルインタラクティブターミナル操作が可能
+**Checkpoint**: Full interactive terminal operation is possible
 
 ---
 
@@ -221,11 +221,11 @@ Phase 1 (Setup) → Phase 2 (Foundational) → [Phase 3-7 User Stories] → Phas
 
 | Story | Depends On | Can Start After |
 |-------|------------|-----------------|
-| US1 (SSH接続) | Foundational | Phase 2 complete |
-| US2 (接続管理) | US1 (connectionStore) | T019-T022 complete |
-| US3 (tmuxナビ) | US1 (SSHClient) | Phase 3 complete |
-| US4 (表示) | US3 (tmux commands) | T036-T039 complete |
-| US5 (入力) | US3, US4 | T062 (sendKeys) ready |
+| US1 (SSH Connection) | Foundational | Phase 2 complete |
+| US2 (Connection Management) | US1 (connectionStore) | T019-T022 complete |
+| US3 (tmux Navigation) | US1 (SSHClient) | Phase 3 complete |
+| US4 (Display) | US3 (tmux commands) | T036-T039 complete |
+| US5 (Input) | US3, US4 | T062 (sendKeys) ready |
 
 ### Parallel Opportunities
 
@@ -280,20 +280,20 @@ Task: "Create PaneSelector in src/components/navigation/PaneSelector.tsx"
 
 1. Complete Phase 1: Setup
 2. Complete Phase 2: Foundational
-3. Complete Phase 3: User Story 1 (SSH接続)
-4. Complete Phase 4: User Story 2 (接続管理)
-5. **STOP and VALIDATE**: 接続設定の保存・読み込み・SSH接続が動作
+3. Complete Phase 3: User Story 1 (SSH Connection)
+4. Complete Phase 4: User Story 2 (Connection Management)
+5. **STOP and VALIDATE**: Connection setting save/load and SSH connection work
 
 ### Core Terminal (US3 + US4)
 
-6. Complete Phase 5: User Story 3 (tmuxナビ)
-7. Complete Phase 6: User Story 4 (表示)
-8. **STOP and VALIDATE**: セッション選択・ペイン内容表示が動作
+6. Complete Phase 5: User Story 3 (tmux Navigation)
+7. Complete Phase 6: User Story 4 (Display)
+8. **STOP and VALIDATE**: Session selection and pane content display work
 
 ### Full Interactive (US5)
 
-9. Complete Phase 7: User Story 5 (入力)
-10. **STOP and VALIDATE**: フルインタラクティブ操作
+9. Complete Phase 7: User Story 5 (Input)
+10. **STOP and VALIDATE**: Full interactive operation works
 
 ### Production Ready
 
@@ -308,11 +308,11 @@ Task: "Create PaneSelector in src/components/navigation/PaneSelector.tsx"
 |-------|-------|----------------|
 | 1. Setup | 8 | 5 |
 | 2. Foundational | 6 | 4 |
-| 3. US1 (SSH接続) | 8 | 4 |
-| 4. US2 (接続管理) | 11 | 4 |
-| 5. US3 (tmuxナビ) | 12 | 6 |
-| 6. US4 (表示) | 12 | 4 |
-| 7. US5 (入力) | 9 | 3 |
+| 3. US1 (SSH connection) | 8 | 4 |
+| 4. US2 (Connection Management) | 11 | 4 |
+| 5. US3 (tmux) | 12 | 6 |
+| 6. US4 (display) | 12 | 4 |
+| 7. US5 (input) | 9 | 3 |
 | 8. Polish | 9 | 5 |
 | **Total** | **75** | **35** |
 
@@ -326,3 +326,6 @@ Task: "Create PaneSelector in src/components/navigation/PaneSelector.tsx"
 - Each user story should be independently testable at its checkpoint
 - Commit after each task or logical group
 - Run `pnpm typecheck && pnpm lint` before completing each phase
+
+
+

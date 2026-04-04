@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="README.ja.md">🇯🇵 日本語</a>
+  <a href="README.ja.md">🇯🇵 Japanese</a>
 </p>
 
 ---

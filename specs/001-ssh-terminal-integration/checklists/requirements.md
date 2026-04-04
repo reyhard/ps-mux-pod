@@ -1,4 +1,4 @@
-# Specification Quality Checklist: SSH/Terminal統合機能
+# Specification Quality Checklist: SSH/Terminal Integration
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-01-11
@@ -31,6 +31,9 @@
 
 ## Notes
 
-- 全項目が完了しました
-- 仕様書は `/speckit.clarify` または `/speckit.plan` に進む準備ができています
-- 既存のコードベース（`SshClient`, `TmuxCommands`, `SshProvider`, `TerminalProvider`, `TmuxProvider`）を活用する前提で記述
+- allitemscomplete
+- specification `/speckit.clarify`  `/speckit.plan` setup
+- existingcodebase（`SshClient`, `TmuxCommands`, `SshProvider`, `TerminalProvider`, `TmuxProvider`）reuseassumptiondescribe
+
+
+

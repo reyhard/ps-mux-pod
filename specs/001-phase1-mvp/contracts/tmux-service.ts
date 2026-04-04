@@ -1,58 +1,58 @@
 /**
  * tmux Service Contract
  *
- * tmuxコマンド実行サービスのインターフェース定義。
- * SSH経由でtmuxコマンドを実行し、結果をパースする。
+ * tmuxcommandrunserviceinterface。
+ * SSHtmuxcommandrun、resultparse。
  */
 
 import type { TmuxSession, TmuxWindow, TmuxPane } from '../../../src/types/tmux';
 
 /**
- * ペインキャプチャオプション
+ * pane
  */
 export interface CapturePaneOptions {
-  /** 開始行（負の値でスクロールバック） */
+  /** startline（scrollback） */
   start?: number;
-  /** 終了行 */
+  /** closeline */
   end?: number;
-  /** ANSIエスケープシーケンスを保持するか */
+  /** ANSIescapesequenceretain */
   escape?: boolean;
 }
 
 /**
- * tmuxサービスインターフェース
+ * tmuxserviceinterface
  */
 export interface ITmuxService {
   /**
-   * セッション一覧を取得する
-   * @returns セッション配列（空配列 = tmux未実行）
+   * sessionlistretrieve
+   * @returns sessioncolumn（column = tmuxrun）
    */
   listSessions(): Promise<TmuxSession[]>;
 
   /**
-   * 指定セッションのウィンドウ一覧を取得する
-   * @param sessionName セッション名
-   * @returns ウィンドウ配列
-   * @throws セッションが存在しない場合
+   * sessionwindowlistretrieve
+   * @param sessionName session
+   * @returns windowcolumn
+   * @throws sessionwhen
    */
   listWindows(sessionName: string): Promise<TmuxWindow[]>;
 
   /**
-   * 指定ウィンドウのペイン一覧を取得する
-   * @param sessionName セッション名
-   * @param windowIndex ウィンドウインデックス
-   * @returns ペイン配列
-   * @throws セッション/ウィンドウが存在しない場合
+   * windowpanelistretrieve
+   * @param sessionName session
+   * @param windowIndex window
+   * @returns panecolumn
+   * @throws session/windowwhen
    */
   listPanes(sessionName: string, windowIndex: number): Promise<TmuxPane[]>;
 
   /**
-   * ペインの内容をキャプチャする
-   * @param sessionName セッション名
-   * @param windowIndex ウィンドウインデックス
-   * @param paneIndex ペインインデックス
-   * @param options キャプチャオプション
-   * @returns 行配列（生テキスト、ANSIエスケープ含む）
+   * panecontents
+   * @param sessionName session
+   * @param windowIndex window
+   * @param paneIndex pane
+   * @param options 
+   * @returns linecolumn（、ANSIescape）
    */
   capturePane(
     sessionName: string,
@@ -62,12 +62,12 @@ export interface ITmuxService {
   ): Promise<string[]>;
 
   /**
-   * ペインにキー入力を送信する
-   * @param sessionName セッション名
-   * @param windowIndex ウィンドウインデックス
-   * @param paneIndex ペインインデックス
-   * @param keys キー文字列（tmux形式: Enter, Escape, C-c 等）
-   * @param literal リテラル送信するか（エスケープ解釈しない）
+   * panekey inputsend
+   * @param sessionName session
+   * @param windowIndex window
+   * @param paneIndex pane
+   * @param keys keycharacterscolumn（tmuxformat: Enter, Escape, C-c ）
+   * @param literal send（escape）
    */
   sendKeys(
     sessionName: string,
@@ -78,10 +78,10 @@ export interface ITmuxService {
   ): Promise<void>;
 
   /**
-   * ペインを選択する（アクティブにする）
-   * @param sessionName セッション名
-   * @param windowIndex ウィンドウインデックス
-   * @param paneIndex ペインインデックス
+   * paneselect（active）
+   * @param sessionName session
+   * @param windowIndex window
+   * @param paneIndex pane
    */
   selectPane(
     sessionName: string,
@@ -90,19 +90,19 @@ export interface ITmuxService {
   ): Promise<void>;
 
   /**
-   * ウィンドウを選択する
-   * @param sessionName セッション名
-   * @param windowIndex ウィンドウインデックス
+   * windowselect
+   * @param sessionName session
+   * @param windowIndex window
    */
   selectWindow(sessionName: string, windowIndex: number): Promise<void>;
 
   /**
-   * ペインをリサイズする
-   * @param sessionName セッション名
-   * @param windowIndex ウィンドウインデックス
-   * @param paneIndex ペインインデックス
-   * @param width 幅（カラム数）
-   * @param height 高さ（行数）
+   * paneresize
+   * @param sessionName session
+   * @param windowIndex window
+   * @param paneIndex pane
+   * @param width width（count）
+   * @param height height（rows）
    */
   resizePane(
     sessionName: string,
@@ -114,7 +114,7 @@ export interface ITmuxService {
 }
 
 /**
- * 特殊キーマッピング
+ * specialkey
  */
 export const SPECIAL_KEYS = {
   Enter: 'Enter',
@@ -146,19 +146,22 @@ export const SPECIAL_KEYS = {
 } as const;
 
 /**
- * Ctrl+キーを生成する
- * @param key 英字キー (a-z)
- * @returns tmux形式のCtrlキー (C-a 等)
+ * Ctrl+keygenerate
+ * @param key key (a-z)
+ * @returns tmuxformatCtrlkey (C-a )
  */
 export function ctrlKey(key: string): string {
   return `C-${key.toLowerCase()}`;
 }
 
 /**
- * Alt+キーを生成する
- * @param key キー
- * @returns tmux形式のAltキー (M-a 等)
+ * Alt+keygenerate
+ * @param key key
+ * @returns tmuxformatAltkey (M-a )
  */
 export function altKey(key: string): string {
   return `M-${key}`;
 }
+
+
+

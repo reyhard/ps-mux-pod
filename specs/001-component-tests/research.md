@@ -5,37 +5,37 @@
 
 ## Research Summary
 
-コンポーネントテスト実装に必要な技術調査結果をまとめる。
+Summarize the technical research needed to implement the component tests.
 
 ---
 
 ## 1. React Native Testing Library Best Practices
 
 ### Decision
-`@testing-library/react-native`を使用し、ユーザー視点のテストを記述する。
+Use `@testing-library/react-native` to write user-focused tests.
 
 ### Rationale
-- Testing Libraryの哲学「実装詳細ではなく振る舞いをテストする」に従う
-- `getByText`, `getByTestId`, `fireEvent`を活用したユーザー操作のシミュレーション
-- アクセシビリティ重視のクエリ（`getByRole`, `getByLabelText`）を優先
+- Follow Testing Library's philosophy of testing behavior rather than implementation details
+- Simulate user actions with `getByText`, `getByTestId`, and `fireEvent`
+- Prefer accessibility-focused queries such as `getByRole` and `getByLabelText`
 
 ### Alternatives Considered
 | Alternative | Rejected Because |
 |-------------|------------------|
-| Enzyme | React 18+のサポートが不完全、メンテナンス停滞 |
-| react-test-renderer | 低レベルすぎる、イベント処理が困難 |
+| Enzyme | Incomplete React 18+ support, maintenance has stalled |
+| react-test-renderer | Too low-level, event handling is difficult |
 
 ---
 
-## 2. @expo/vector-icons モック戦略
+## 2. @expo/vector-icons Mock Strategy
 
 ### Decision
-`jest.mock('@expo/vector-icons')`でアイコンコンポーネントをダミーに置き換える。
+Use `jest.mock('@expo/vector-icons')` to replace icon components with dummies.
 
 ### Rationale
-- アイコンの表示自体はテスト対象外（視覚的要素）
-- ネイティブモジュールのモック回避でテスト実行を高速化
-- `MaterialCommunityIcons`と`MaterialIcons`両方をモック
+- Icon rendering itself is out of scope for testing because it is a visual concern
+- Avoid native module work to speed up test execution
+- Mock both `MaterialCommunityIcons` and `MaterialIcons`
 
 ### Implementation Pattern
 ```typescript
@@ -47,15 +47,15 @@ jest.mock('@expo/vector-icons', () => ({
 
 ---
 
-## 3. Pressable コンポーネントのテストパターン
+## 3. Pressable Component Test Pattern
 
 ### Decision
-`fireEvent.press`を使用し、コールバック呼び出しを検証する。
+Use `fireEvent.press` to verify callback invocation.
 
 ### Rationale
-- React NativeのPressableはonPressイベントで操作を受け付ける
-- `fireEvent.press`が最も直接的で信頼性の高いアプローチ
-- disabled状態の検証も可能
+- React Native `Pressable` handles interaction through `onPress`
+- `fireEvent.press` is the most direct and reliable approach
+- Disabled-state verification is also possible
 
 ### Testing Pattern
 ```typescript
@@ -67,33 +67,33 @@ expect(onPress).toHaveBeenCalledTimes(1);
 
 ---
 
-## 4. FlatList/ScrollView のテストパターン
+## 4. FlatList/ScrollView Test Pattern
 
 ### Decision
-`initialNumToRender`を考慮し、表示される要素のみをテストする。
+Take `initialNumToRender` into account and test only the elements that are actually rendered.
 
 ### Rationale
-- FlatListはパフォーマンス最適化のため全要素をレンダリングしない
-- テストでは少量のデータ（5-10件）を使用して全要素表示を保証
-- スクロール動作自体はネイティブ側の責務
+- `FlatList` does not render every item because of performance optimization
+- Use a small amount of data in tests, typically 5 to 10 items, to ensure all items are rendered
+- Scrolling behavior itself is the responsibility of the native layer
 
 ### Alternatives Considered
 | Alternative | Rejected Because |
 |-------------|------------------|
-| 全データモック | 大量データはテスト実行時間に影響 |
-| スクロールイベント発火 | ネイティブ動作のシミュレーションは不安定 |
+| Full data mock | Large data sets affect test runtime |
+| Triggering scroll events | Simulating native behavior is unstable |
 
 ---
 
-## 5. 状態変化のテストパターン
+## 5. State Change Test Pattern
 
 ### Decision
-`rerender`または`fireEvent`後に状態変化を確認する。
+Check state changes after `rerender` or `fireEvent`.
 
 ### Rationale
-- SpecialKeysのCTRL/ALTモード切替はコンポーネント内部状態
-- `fireEvent`後にスタイル変化（アクティブ状態）を確認
-- 非同期状態更新は`waitFor`で対応
+- CTRL/ALT mode switching in SpecialKeys is internal component state
+- Verify style changes after `fireEvent` to confirm the active state
+- Handle asynchronous state updates with `waitFor`
 
 ### Testing Pattern
 ```typescript
@@ -105,15 +105,15 @@ expect(screen.getByText('CTRL')).toHaveStyle({ backgroundColor: colors.primary }
 
 ---
 
-## 6. テストデータ（Fixtures）設計
+## 6. Test Data (Fixtures) Design
 
 ### Decision
-各テストファイル内にモックデータを定義し、必要に応じて共通ファイルに抽出する。
+Define mock data inside each test file and extract shared data into a common file when needed.
 
 ### Rationale
-- 初期段階では各ファイル独立でシンプルに保つ
-- 重複が3回以上発生したら共通化（Rule of Three）
-- 型安全なモックデータで実際のデータ構造を反映
+- Keep each file independent and simple in the initial stage
+- Consolidate after duplication appears three or more times (Rule of Three)
+- Reflect the real data structure with type-safe mock data
 
 ### Mock Data Examples
 ```typescript
@@ -145,4 +145,4 @@ const mockSession: TmuxSession = {
 
 ## Unresolved Items
 
-なし - 全ての技術的な疑問点は解決済み。
+None - all technical questions have been resolved.

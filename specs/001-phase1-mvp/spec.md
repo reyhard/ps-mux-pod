@@ -3,175 +3,178 @@
 **Feature Branch**: `001-phase1-mvp`
 **Created**: 2026-01-10
 **Status**: Draft
-**Input**: MuxPod Phase 1 MVP - SSH接続基盤、接続管理UI、tmux基本操作、ターミナル表示、キー入力機能を含む
+**Input**: MuxPod Phase 1 MVP - includes the SSH connection foundation, connection management UI, basic tmux operations, terminal display, and key input features
 
-## 概要
+## Overview
 
-MuxPodは、AndroidスマートフォンからSSH経由でリモートサーバーのtmuxセッション・ウィンドウ・ペインを閲覧・操作するExpo (React Native) アプリケーション。Phase 1 MVPでは、SSH接続基盤の確立、接続管理UI、tmux基本操作、ターミナル表示、キー入力機能を実装する。
+MuxPod is an Expo (React Native) application that lets users view and control tmux sessions, windows, and panes on a remote server from an Android smartphone over SSH. Phase 1 MVP implements the SSH connection foundation, connection management UI, basic tmux operations, terminal display, and key input features.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - SSH接続の確立 (Priority: P1)
+### User Story 1 - Establish SSH Connection (Priority: P1)
 
-ユーザーはリモートサーバーへのSSH接続を確立し、tmuxセッションにアクセスできる。サーバー情報（ホスト、ポート、ユーザー名）と認証情報（パスワードまたはSSH鍵）を入力して接続を開始する。
+The user can establish an SSH connection to a remote server and access tmux sessions. They enter server information (host, port, username) and credentials (password or SSH key) to start the connection.
 
-**Why this priority**: SSH接続はアプリの根幹機能であり、これがなければ他のすべての機能が動作しない。ユーザーがサーバーに接続できなければ、tmux操作もターミナル表示も不可能。
+**Why this priority**: SSH connection is the core feature of the app. Without it, none of the other features work. If the user cannot connect to the server, tmux operations and terminal display are impossible.
 
-**Independent Test**: サーバー情報を入力して「接続」をタップし、正常に接続が確立されてtmuxセッション一覧が表示されることを確認できる。
+**Independent Test**: Enter server information, tap Connect, and verify that the connection is established and the tmux session list is displayed.
 
 **Acceptance Scenarios**:
 
-1. **Given** ユーザーが接続一覧画面にいる, **When** 新規接続を追加してサーバー情報とパスワードを入力し「接続」をタップ, **Then** SSH接続が確立され、tmuxセッション一覧画面に遷移する
-2. **Given** 既存の接続設定がある, **When** その接続カードをタップ, **Then** 保存された認証情報で接続が開始される
-3. **Given** 無効な認証情報を入力, **When** 「接続」をタップ, **Then** エラーメッセージが表示され、ユーザーは再試行できる
+1. **Given** the user is on the connection list screen, **When** they add a new connection, enter server information and a password, and tap Connect, **Then** the SSH connection is established and the app navigates to the tmux session list screen
+2. **Given** an existing connection setting, **When** the user taps that connection card, **Then** the connection starts using the saved credentials
+3. **Given** invalid credentials are entered, **When** the user taps Connect, **Then** an error message is shown and the user can try again
 
 ---
 
-### User Story 2 - 接続管理 (Priority: P1)
+### User Story 2 - Connection Management (Priority: P1)
 
-ユーザーは複数のサーバー接続設定を追加、編集、削除できる。各接続には表示名、ホスト、ポート、ユーザー名、認証方法が設定可能。
+The user can add, edit, and delete multiple server connection settings. Each connection can be configured with a display name, host, port, username, and authentication method.
 
-**Why this priority**: 接続管理はSSH接続と同等に重要。ユーザーが接続情報を保存・管理できなければ、毎回手動で入力が必要になり実用性が大幅に低下する。
+**Why this priority**: Connection management is as important as SSH connection. If the user cannot save and manage connection information, they must enter it manually every time, which greatly reduces usefulness.
 
-**Independent Test**: 接続を追加・編集・削除し、アプリを再起動しても設定が保持されていることを確認できる。
+**Independent Test**: Add, edit, and delete connections, then verify that the settings remain after restarting the app.
 
 **Acceptance Scenarios**:
 
-1. **Given** 接続一覧画面, **When** 「+」ボタンをタップして接続情報を入力し保存, **Then** 新しい接続が一覧に追加される
-2. **Given** 既存の接続がある, **When** 接続カードを長押しして「編集」を選択, **Then** 接続編集画面が表示され、変更を保存できる
-3. **Given** 既存の接続がある, **When** 接続カードを長押しして「削除」を選択し確認, **Then** 接続が一覧から削除される
-4. **Given** 接続設定を追加, **When** アプリを終了して再起動, **Then** 保存した接続設定が復元されている
+1. **Given** the connection list screen, **When** the user taps the + button, enters connection information, and saves it, **Then** the new connection is added to the list
+2. **Given** an existing connection, **When** the user long-presses the connection card and chooses Edit, **Then** the connection edit screen appears and changes can be saved
+3. **Given** an existing connection, **When** the user long-presses the connection card and chooses Delete, confirms, **Then** the connection is removed from the list
+4. **Given** a connection setting has been added, **When** the app is closed and reopened, **Then** the saved connection setting is restored
 
 ---
 
-### User Story 3 - tmuxセッション・ウィンドウ・ペインのナビゲーション (Priority: P2)
+### User Story 3 - tmux Session, Window, and Pane Navigation (Priority: P2)
 
-ユーザーは接続中のサーバーのtmuxセッション、ウィンドウ、ペインの階層構造を閲覧し、任意のペインを選択して表示できる。
+The user can browse the hierarchy of tmux sessions, windows, and panes on the connected server and select any pane to display it.
 
-**Why this priority**: tmux操作はSSH接続確立後に必要な機能。セッション/ウィンドウ/ペインをナビゲートできなければ、特定のペインにアクセスできない。
+**Why this priority**: tmux operations are needed after the SSH connection is established. Without navigating sessions, windows, and panes, the user cannot access a specific pane.
 
-**Independent Test**: 接続後にセッション一覧が表示され、セッション→ウィンドウ→ペインとドリルダウンして目的のペインを選択できる。
+**Independent Test**: After connecting, the session list appears and the user can drill down from session to window to pane and select the desired pane.
 
 **Acceptance Scenarios**:
 
-1. **Given** SSH接続が確立されている, **When** ターミナル画面でセッションタブをタップ, **Then** 利用可能なtmuxセッション一覧が表示される
-2. **Given** セッション一覧が表示されている, **When** セッションを選択, **Then** そのセッションのウィンドウ一覧が表示される
-3. **Given** ウィンドウが選択されている, **When** ペインセレクターを使用, **Then** 複数ペインがある場合は選択可能、単一ペインの場合は自動選択される
+1. **Given** the SSH connection is established, **When** the user taps the session tab on the terminal screen, **Then** the list of available tmux sessions is shown
+2. **Given** the session list is shown, **When** the user selects a session, **Then** the session's window list is shown
+3. **Given** a window is selected, **When** the user uses the pane selector, **Then** multiple panes can be chosen if they exist, and a single pane is auto-selected
 
 ---
 
-### User Story 4 - ターミナル表示 (Priority: P2)
+### User Story 4 - Terminal Display (Priority: P2)
 
-ユーザーは選択したペインの内容をANSIカラー対応のターミナルビューで閲覧できる。日本語文字も正しく表示される。
+The user can view the contents of the selected pane in an ANSI color-capable terminal view. Japanese characters are also displayed correctly.
 
-**Why this priority**: ペインの内容が見えなければ、リモート操作の意味がない。ターミナル表示はtmuxナビゲーションと密接に連携する。
+**Why this priority**: If the pane contents are not visible, remote operation has no value. Terminal display is closely tied to tmux navigation.
 
-**Independent Test**: ペインを選択後、ターミナル出力がANSIカラー付きで正しく表示され、日本語テキストも文字化けせずに表示される。
+**Independent Test**: After selecting a pane, verify that terminal output is rendered correctly with ANSI colors and that Japanese text displays without corruption.
 
 **Acceptance Scenarios**:
 
-1. **Given** ペインが選択されている, **When** ターミナル画面を表示, **Then** ペインの現在の内容がリアルタイムで表示される
-2. **Given** ペイン内にANSIカラーコードを含む出力がある, **When** ターミナル画面を表示, **Then** 正しい色で表示される
-3. **Given** ペイン内に日本語テキストがある, **When** ターミナル画面を表示, **Then** 日本語が正しく表示される
-4. **Given** ターミナル画面を表示中, **When** リモートでコマンドが実行される, **Then** 出力がリアルタイムで更新される
+1. **Given** a pane is selected, **When** the terminal screen is shown, **Then** the pane's current contents are shown in real time
+2. **Given** output in the pane contains ANSI color codes, **When** the terminal screen is shown, **Then** it is displayed with the correct colors
+3. **Given** the pane contains Japanese text, **When** the terminal screen is shown, **Then** the Japanese text is displayed correctly
+4. **Given** the terminal screen is visible, **When** a command runs remotely, **Then** the output updates in real time
 
 ---
 
-### User Story 5 - キー入力 (Priority: P2)
+### User Story 5 - Key Input (Priority: P2)
 
-ユーザーはソフトウェアキーボードまたは特殊キーバーから文字や特殊キー（Enter、Tab、ESC、矢印キー、Ctrl+キー）を入力し、選択中のペインに送信できる。
+The user can type characters or special keys from the software keyboard or special key bar, including Enter, Tab, ESC, arrow keys, and Ctrl+key combinations, and send them to the selected pane.
 
-**Why this priority**: 入力機能がなければ閲覧のみになり、リモート操作アプリとしての価値が半減する。ターミナル表示と組み合わせて双方向のインタラクションを実現する。
+**Why this priority**: Without input, the app would be view-only and half as valuable as a remote operation tool. Combined with terminal display, it enables two-way interaction.
 
-**Independent Test**: キーボードから文字を入力し、特殊キーバーからEnterやCtrl+Cを送信して、リモートペインで反映されることを確認できる。
+**Independent Test**: Type characters from the keyboard and send Enter or Ctrl+C from the special key bar, then verify that the remote pane reflects the input.
 
 **Acceptance Scenarios**:
 
-1. **Given** ペインが選択されている, **When** テキストを入力してEnterを送信, **Then** コマンドがリモートペインで実行される
-2. **Given** ペインが選択されている, **When** 特殊キーバーのESCボタンをタップ, **Then** ESCキーがペインに送信される
-3. **Given** ペインが選択されている, **When** Ctrl+Cを送信, **Then** 実行中のプロセスが中断される
-4. **Given** ペインが選択されている, **When** 矢印キーを送信, **Then** カーソル移動やヒストリーナビゲーションが動作する
+1. **Given** a pane is selected, **When** the user types text and sends Enter, **Then** the command runs in the remote pane
+2. **Given** a pane is selected, **When** the user taps ESC on the special key bar, **Then** the ESC key is sent to the pane
+3. **Given** a pane is selected, **When** the user sends Ctrl+C, **Then** the running process is interrupted
+4. **Given** a pane is selected, **When** the user sends arrow keys, **Then** cursor movement and history navigation work
 
 ---
 
 ### Edge Cases
 
-- SSH接続中にネットワークが切断された場合、ユーザーに通知し再接続オプションを提示する
-- サーバーにtmuxがインストールされていない場合、エラーメッセージを表示する
-- tmuxセッションが存在しない場合、新規セッション作成を促すメッセージを表示する
-- 非常に長い行（画面幅を超える行）の折り返し表示を正しく処理する
-- 高速な出力（ログストリーミング等）でも表示が追従する
-- SSH接続タイムアウト時に適切なエラーメッセージを表示する
+- If the network disconnects during an SSH session, notify the user and present a reconnect option
+- If tmux is not installed on the server, show an error message
+- If no tmux session exists, show a message that prompts the user to create one
+- Correctly handle wrapping for very long lines that exceed the screen width
+- Keep up with fast output such as log streaming
+- Show an appropriate error message when the SSH connection times out
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-#### SSH接続基盤
+#### SSH Connection Foundation
 
-- **FR-001**: システムはパスワード認証によるSSH接続を確立できなければならない
-- **FR-002**: システムはSSH鍵認証（ed25519、RSA、ECDSA）による接続を確立できなければならない
-- **FR-003**: システムはカスタムポート（1-65535）でのSSH接続をサポートしなければならない
-- **FR-004**: システムは接続タイムアウトを設定可能にしなければならない（デフォルト30秒）
-- **FR-005**: システムはKeepAlive間隔を設定可能にし、接続維持をサポートしなければならない
+- **FR-001**: The system must be able to establish SSH connections with password authentication
+- **FR-002**: The system must be able to establish SSH connections with SSH key authentication (ed25519, RSA, ECDSA)
+- **FR-003**: The system must support SSH connections on custom ports (1-65535)
+- **FR-004**: The system must allow the connection timeout to be configured (default 30 seconds)
+- **FR-005**: The system must allow the KeepAlive interval to be configured and support connection maintenance
 
-#### 接続管理
+#### Connection Management
 
-- **FR-006**: ユーザーは新規SSH接続設定を作成できなければならない
-- **FR-007**: ユーザーは既存の接続設定を編集できなければならない
-- **FR-008**: ユーザーは既存の接続設定を削除できなければならない
-- **FR-009**: 接続設定はローカルストレージに永続化されなければならない
-- **FR-010**: パスワードは暗号化されたセキュアストレージに保存されなければならない
-- **FR-011**: 接続一覧は最終接続日時でソート可能でなければならない
+- **FR-006**: The user must be able to create new SSH connection settings
+- **FR-007**: The user must be able to edit existing connection settings
+- **FR-008**: The user must be able to delete existing connection settings
+- **FR-009**: Connection settings must be persisted in local storage
+- **FR-010**: Passwords must be saved in encrypted secure storage
+- **FR-011**: The connection list must be sortable by last connection time
 
-#### tmux操作
+#### tmux Operations
 
-- **FR-012**: システムはサーバー上のtmuxセッション一覧を取得できなければならない
-- **FR-013**: システムは各セッションのウィンドウ一覧を取得できなければならない
-- **FR-014**: システムは各ウィンドウのペイン一覧を取得できなければならない
-- **FR-015**: システムは指定したペインの内容をキャプチャできなければならない
-- **FR-016**: システムは指定したペインにキー入力を送信できなければならない
+- **FR-012**: The system must be able to retrieve the tmux session list on the server
+- **FR-013**: The system must be able to retrieve the window list for each session
+- **FR-014**: The system must be able to retrieve the pane list for each window
+- **FR-015**: The system must be able to capture the contents of a specified pane
+- **FR-016**: The system must be able to send key input to a specified pane
 
-#### ターミナル表示
+#### Terminal Display
 
-- **FR-017**: システムはANSIカラーコード（16色、256色）をパースして表示できなければならない
-- **FR-018**: システムは日本語文字（全角文字）を正しく表示できなければならない
-- **FR-019**: システムはスクロールバック機能（履歴表示）をサポートしなければならない
-- **FR-020**: システムはペイン内容をポーリングしてリアルタイム更新しなければならない（100msごと）
+- **FR-017**: The system must be able to parse and display ANSI color codes (16 colors, 256 colors)
+- **FR-018**: The system must be able to display Japanese text (full-width characters) correctly
+- **FR-019**: The system must support scrollback history display
+- **FR-020**: The system must poll pane contents and update them in real time every 100 ms
 
-#### キー入力
+#### Key Input
 
-- **FR-021**: ユーザーは通常のテキスト文字を入力できなければならない
-- **FR-022**: ユーザーはEnter、Tab、Backspace、ESCキーを送信できなければならない
-- **FR-023**: ユーザーは矢印キー（上下左右）を送信できなければならない
-- **FR-024**: ユーザーはCtrl+キーの組み合わせを送信できなければならない
+- **FR-021**: The user must be able to input regular text characters
+- **FR-022**: The user must be able to send Enter, Tab, Backspace, and ESC keys
+- **FR-023**: The user must be able to send arrow keys (up, down, left, right)
+- **FR-024**: The user must be able to send Ctrl+key combinations
 
 ### Key Entities
 
-- **Connection**: SSH接続設定を表す。ホスト、ポート、ユーザー名、認証方法、表示名を持つ。接続履歴やカスタマイズ情報も保持。
-- **TmuxSession**: tmuxセッションを表す。セッション名、作成日時、アタッチ状態、所属ウィンドウのリストを持つ。
-- **TmuxWindow**: tmuxウィンドウを表す。インデックス、ウィンドウ名、アクティブ状態、所属ペインのリストを持つ。
-- **TmuxPane**: tmuxペインを表す。インデックス、ID、アクティブ状態、現在のコマンド、サイズ、カーソル位置を持つ。
-- **PaneContent**: ペインの表示内容を表す。行ごとのテキスト、スクロールバックサイズ、カーソル位置を持つ。
+- **Connection**: Represents an SSH connection setting. It stores the host, port, username, authentication method, and display name, plus connection history and customization data.
+- **TmuxSession**: Represents a tmux session. It stores the session name, creation time, attached state, and a list of associated windows.
+- **TmuxWindow**: Represents a tmux window. It stores the index, window name, active state, and a list of associated panes.
+- **TmuxPane**: Represents a tmux pane. It stores the index, ID, active state, current command, size, and cursor position.
+- **PaneContent**: Represents the displayed content of a pane. It stores per-line text, scrollback size, and cursor position.
 
 ## Assumptions
 
-- ターゲットサーバーにはtmuxがインストール済みであり、SSHでアクセス可能である
-- ユーザーはSSH接続に必要な認証情報（パスワードまたは秘密鍵）を持っている
-- 端末サイズはスマートフォンの画面に収まる標準的なサイズ（80x24など）を想定
-- ネットワーク遅延は一般的なモバイル環境（4G/WiFi）を想定
-- Phase 1ではSSH鍵の生成・Secure Enclave連携は対象外（Phase 2で対応）
-- Phase 1では通知機能は対象外（Phase 2で対応）
+- tmux is installed on the target server and the server is reachable over SSH
+- The user has the credentials needed for SSH access, either a password or a private key
+- Terminal size is assumed to be a standard smartphone-friendly size such as 80x24
+- Network latency is assumed to be typical for mobile environments such as 4G or Wi-Fi
+- Phase 1 does not include SSH key generation or Secure Enclave integration; those are handled in Phase 2
+- Phase 1 does not include notifications; those are handled in Phase 2
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: ユーザーは新規接続設定の作成から初回接続までを2分以内に完了できる
-- **SC-002**: SSH接続確立からtmuxセッション一覧表示まで5秒以内で完了する
-- **SC-003**: ペイン選択からターミナル内容表示まで1秒以内で完了する
-- **SC-004**: ターミナル更新遅延は200ms以下で、リアルタイムに近い体験を提供する
-- **SC-005**: キー入力から画面反映まで300ms以下で完了する
-- **SC-006**: 10以上のセッション、各セッション10以上のウィンドウがあっても快適にナビゲートできる
-- **SC-007**: 1000行のスクロールバック履歴を保持しても、スクロール操作がスムーズ（60fps維持）
-- **SC-008**: 接続設定を5件以上保存しても、アプリ起動時間は3秒以内
+- **SC-001**: The user can complete the flow from creating a new connection setting to the first successful connection within 2 minutes
+- **SC-002**: The flow from establishing the SSH connection to showing the tmux session list completes within 5 seconds
+- **SC-003**: The flow from selecting a pane to displaying terminal contents completes within 1 second
+- **SC-004**: Terminal update latency is 200 ms or less, providing a near-real-time experience
+- **SC-005**: Input-to-screen reflection completes within 300 ms
+- **SC-006**: Navigation remains smooth even with more than 10 sessions and 10 windows per session
+- **SC-007**: Scroll operations remain smooth at 60 fps even with 1,000 lines of scrollback history
+- **SC-008**: App startup remains within 3 seconds even with 5 or more saved connection settings
+
+
+

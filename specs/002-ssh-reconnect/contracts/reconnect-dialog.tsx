@@ -1,77 +1,77 @@
 /**
  * ReconnectDialog Contract
  *
- * 再接続確認ダイアログのインターフェース定義。
- * 実装は src/components/connection/ReconnectDialog.tsx に配置する。
+ * Interface definition for the reconnect confirmation dialog.
+ * Implementation goes in src/components/connection/ReconnectDialog.tsx.
  */
 
 import type { Connection, ConnectionState } from '@/types/connection';
 
 /**
- * ダイアログの状態
+ * Dialog state
  */
 export type DialogState =
-  | 'confirm'      // 再接続確認待ち
-  | 'connecting'   // 接続試行中
-  | 'password'     // パスワード入力待ち
-  | 'error'        // エラー表示
-  | 'success';     // 成功（自動閉じる前）
+  | 'confirm'      // Waiting for reconnect confirmation
+  | 'connecting'   // Connecting
+  | 'password'     // Waiting for password input
+  | 'error'        // Error display
+  | 'success';     // Success (before auto-close)
 
 /**
- * ReconnectDialogのProps
+ * Props for ReconnectDialog
  */
 export interface ReconnectDialogProps {
-  /** 表示するかどうか */
+  /** Whether it is visible */
   visible: boolean;
 
-  /** 再接続対象の接続 */
+  /** Connection to reconnect */
   connection: Connection;
 
-  /** 接続状態 */
+  /** Connection state */
   connectionState: ConnectionState;
 
-  /** 再接続ボタン押下時 */
+  /** When the reconnect button is pressed */
   onReconnect: (password?: string) => void;
 
-  /** キャンセルボタン押下時 */
+  /** When the cancel button is pressed */
   onCancel: () => void;
 
-  /** ダイアログを閉じる（背景タップ等） */
+  /** Close the dialog (background tap, etc.) */
   onDismiss: () => void;
 
-  /** 再試行ボタン押下時（エラー状態から） */
+  /** When the retry button is pressed from the error state */
   onRetry?: () => void;
 }
 
 /**
- * ダイアログ内部で使用する状態
+ * Internal state used by the dialog
  */
 export interface DialogInternalState {
-  /** 現在のダイアログ状態 */
+  /** Current dialog state */
   state: DialogState;
 
-  /** エラーメッセージ（state === 'error' の場合） */
+  /** Error message (when `state === 'error'`) */
   errorMessage?: string;
 
-  /** 試行回数表示（state === 'connecting' の場合） */
+  /** Attempt display (when `state === 'connecting'`) */
   attemptInfo?: {
     current: number;
     max: number;
   };
 
-  /** 入力されたパスワード（state === 'password' の場合） */
+  /** Entered password (when `state === 'password'`) */
   passwordInput?: string;
 }
 
 /**
- * 期待される動作
+ * Expected behavior
  *
- * 1. visible=true で表示
- * 2. connection.autoReconnect=false の場合、'confirm' 状態から開始
- * 3. 「再接続」ボタン → onReconnect() 呼び出し
- * 4. 「キャンセル」ボタン → onCancel() 呼び出し
- * 5. 接続試行中は 'connecting' 状態でスピナー表示
- * 6. パスワード必要時は 'password' 状態でテキスト入力表示
- * 7. エラー時は 'error' 状態でメッセージ表示
- * 8. 成功時は自動的に閉じる（または 'success' 状態を経由）
+ * 1. Display when `visible=true`
+ * 2. If `connection.autoReconnect=false`, start from the `confirm` state
+ * 3. `Reconnect` button -> calls `onReconnect()`
+ * 4. `Cancel` button -> calls `onCancel()`
+ * 5. Show a spinner in the `connecting` state
+ * 6. Show text input in the `password` state when needed
+ * 7. Show a message in the `error` state
+ * 8. Close automatically on success (or pass through the `success` state)
  */

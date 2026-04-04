@@ -6,44 +6,44 @@
 
 ## Research Questions
 
-### RQ-1: xterm パッケージでのフォントサイズ動的変更
+### RQ-1: Dynamic font size changes in xterm
 
-**Question**: xterm パッケージで実行時にフォントサイズを変更できるか？
+**Question**: xterm packagerunfont sizechange？
 
 **Findings**:
-- `TerminalView` は `textStyle` パラメータで `TerminalStyle` を受け取る
-- `TerminalStyle` は `fontSize` を含む（デフォルト14）
-- フォントサイズを変更するには、新しい `TerminalStyle` を渡して Widget をリビルドする
-- パフォーマンス: TerminalView のリビルドは軽量（内部でキャッシュされている）
+- `TerminalView`  `textStyle`  `TerminalStyle` 
+- `TerminalStyle`  `fontSize` （default14）
+- font sizechange、new `TerminalStyle`  Widget build
+- performance: TerminalView buildlightweight（internal）
 
-**Decision**: `TerminalStyle` の `fontSize` を動的に変更してリビルドすることでフォントサイズを調整
+**Decision**: `TerminalStyle`  `fontSize` dynamicchangebuildfont sizeadjust
 
-**Rationale**: xterm パッケージの標準的な使用方法であり、追加の依存関係不要
+**Rationale**: xterm packagestandard、adddependenciesnot needed
 
 **Alternatives Considered**:
-- Transform.scale でスケーリング → テキストがぼやける、品質低下
-- カスタムレンダラー → 複雑すぎる、xterm の内部実装に依存
+- Transform.scale  → 、low
+- custom → 、xterm internalimplementdependency
 
 ---
 
-### RQ-2: 等幅フォントの文字幅計算
+### RQ-2: Monospaced Font Width Calculation
 
-**Question**: 画面幅とペイン文字数からフォントサイズを計算する方法
+**Question**: screen widthpanecharacterscountfont size
 
 **Findings**:
-- 等幅フォントでは、1文字の幅 = fontSize × 文字幅比率
-- JetBrains Mono の文字幅比率 ≈ 0.6（実測値）
-- 計算式: `fontSize = screenWidth / (paneWidth × charWidthRatio)`
-- Flutter の `TextPainter` で正確な文字幅を測定可能
+- widthfont、1characterswidth = fontSize × characterswidth
+- JetBrains Mono characterswidth ≈ 0.6（）
+- : `fontSize = screenWidth / (paneWidth × charWidthRatio)`
+- Flutter  `TextPainter` characterswidthpossible
 
-**Decision**: TextPainter で実際の文字幅を測定し、正確なフォントサイズを計算
+**Decision**: TextPainter characterswidth、font size
 
-**Rationale**: フォントファミリーが変わっても正確な計算が可能
+**Rationale**: font familypossible
 
 **Code Example**:
 ```dart
 double calculateFontSize(double screenWidth, int paneCharWidth, String fontFamily) {
-  // TextPainter で 1 文字の幅を測定
+  // TextPainter  1 characterswidth
   final painter = TextPainter(
     text: TextSpan(text: 'M', style: TextStyle(fontFamily: fontFamily, fontSize: 100)),
     textDirection: TextDirection.ltr,
@@ -56,18 +56,18 @@ double calculateFontSize(double screenWidth, int paneCharWidth, String fontFamil
 
 ---
 
-### RQ-3: Flutter でのピンチジェスチャー実装
+### RQ-3: Pinch Gesture Implementation in Flutter
 
-**Question**: ピンチジェスチャーでスムーズにズームする方法
+**Question**: pinchzoom
 
 **Findings**:
-- `GestureDetector` の `onScaleStart/Update/End` でピンチを検出
-- `InteractiveViewer` は使用しない（TerminalView との統合が複雑）
-- ズーム中は `Transform.scale` で即座に表示し、終了後に正確なフォントサイズに切り替え
+- `GestureDetector`  `onScaleStart/Update/End` pinch
+- `InteractiveViewer` （TerminalView integration）
+- zoomin progress `Transform.scale` display、closefont sizeswitch
 
-**Decision**: GestureDetector + state でピンチ倍率を管理し、ズーム終了時にフォントサイズを更新
+**Decision**: GestureDetector + state pinchmanagement、zoomclosefont sizeupdate
 
-**Rationale**: 60fps のスムーズなアニメーションが可能で、xterm との統合も容易
+**Rationale**: 60fps possible、xterm integration
 
 **Implementation Pattern**:
 ```dart
@@ -78,7 +78,7 @@ GestureDetector(
   },
   onScaleEnd: (details) {
     final newFontSize = (baseFontSize * _currentScale).clamp(minFontSize, maxFontSize);
-    // フォントサイズを確定し、スケールをリセット
+    // font size、
   },
   child: Transform.scale(
     scale: _currentScale,
@@ -89,18 +89,18 @@ GestureDetector(
 
 ---
 
-### RQ-4: 水平スクロールの実装
+### RQ-4: Horizontal Scroll Implementation
 
-**Question**: TerminalView で水平スクロールを有効にする方法
+**Question**: TerminalView scrollenabled
 
 **Findings**:
-- `TerminalView` 自体は水平スクロールをサポートしていない
-- `SingleChildScrollView` で wrap することで水平スクロール可能
-- スクロール位置は状態として保持し、ペイン切り替え時にリセット
+- `TerminalView` scrollsupport
+- `SingleChildScrollView`  wrap scrollpossible
+- scrollstateretain、paneswitch
 
-**Decision**: `SingleChildScrollView` (horizontal) で TerminalView を wrap
+**Decision**: `SingleChildScrollView` (horizontal)  TerminalView  wrap
 
-**Rationale**: シンプルで Flutter 標準のスクロール動作と一貫性がある
+**Rationale**:  Flutter standardscrollbehaviorconsistency
 
 **Code Structure**:
 ```dart
@@ -116,19 +116,19 @@ SingleChildScrollView(
 
 ---
 
-### RQ-5: 既存の設定インフラストラクチャ
+### RQ-5: Existing Settings Infrastructure
 
-**Question**: 最小フォントサイズ設定を既存システムに統合する方法
+**Question**: minimumfont sizesettingsexistingintegration
 
 **Findings**:
-- `AppSettings` に `minFontSize` フィールドを追加
-- `SettingsNotifier` に getter/setter を追加
-- `shared_preferences` で永続化（既存パターンに従う）
-- 設定画面に MinFontSizeDialog を追加
+- `AppSettings`  `minFontSize` add
+- `SettingsNotifier`  getter/setter add
+- `shared_preferences` persist（existingpattern）
+- Settings Screen MinFontSizeDialog add
 
-**Decision**: 既存の `settings_provider.dart` を拡張
+**Decision**: existing `settings_provider.dart` extension
 
-**Rationale**: 既存パターンに従うことで一貫性を維持、コード重複を回避
+**Rationale**: existingpatternconsistencymaintain、code
 
 ---
 
@@ -136,15 +136,18 @@ SingleChildScrollView(
 
 | Topic | Decision | Confidence |
 |-------|----------|------------|
-| フォントサイズ変更 | TerminalStyle.fontSize を動的変更 | High |
-| 文字幅計算 | TextPainter で実測 | High |
-| ピンチズーム | GestureDetector + Transform.scale | High |
-| 水平スクロール | SingleChildScrollView wrap | High |
-| 設定永続化 | 既存 settings_provider 拡張 | High |
+| font sizechange | TerminalStyle.fontSize dynamicchange | High |
+| characterswidth | TextPainter  | High |
+| pinchzoom | GestureDetector + Transform.scale | High |
+| scroll | SingleChildScrollView wrap | High |
+| settingspersist | existing settings_provider extension | High |
 
 ## Dependencies
 
-- xterm ^4.0.0 (既存)
-- flutter_riverpod ^3.1.0 (既存)
-- shared_preferences ^2.5.4 (既存)
-- 追加依存なし
+- xterm ^4.0.0 (existing)
+- flutter_riverpod ^3.1.0 (existing)
+- shared_preferences ^2.5.4 (existing)
+- adddependency
+
+
+

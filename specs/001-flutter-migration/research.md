@@ -5,24 +5,24 @@
 
 ## Executive Summary
 
-MuxPodをReact Native (Expo)からFlutterへ移行するための技術調査結果。dartssh2 + xterm.dartの組み合わせが最適であり、Pure Dart実装でネイティブ依存を完全排除可能。
+MuxPodReact Native (Expo)Flutterlineanalysisresult。dartssh2 + xterm.dartoptimal、Pure Dartimplementdependencycompletepossible。
 
 ---
 
-## 1. SSH接続 (dartssh2)
+## 1. SSH connection (dartssh2)
 
 ### Decision
-**dartssh2 2.13+** を採用。Pure Dart実装でネイティブ依存なし。
+**dartssh2 2.13+** 。Pure Dartimplementdependency。
 
 ### Rationale
-- TerminalStudio がアクティブにメンテナンス
-- xterm.dart と同一チームで開発、連携良好
-- パスワード認証 + RSA/Ed25519鍵認証対応
-- PTY（256色対応）、キープアライブ内蔵
+- TerminalStudio active
+- xterm.dart same、integrationgood
+- passwordauthentication + RSA/Ed25519keyauthenticationsupport
+- PTY（256colorsupport）、key
 
 ### Key Patterns
 
-**パスワード認証:**
+**passwordauthentication:**
 ```dart
 final socket = await SSHSocket.connect(host, port);
 final client = SSHClient(
@@ -33,7 +33,7 @@ final client = SSHClient(
 await client.authenticated;
 ```
 
-**公開鍵認証:**
+**public keyauthentication:**
 ```dart
 final client = SSHClient(
   socket,
@@ -42,7 +42,7 @@ final client = SSHClient(
 );
 ```
 
-**シェル起動（PTY付き）:**
+**shellstart（PTY）:**
 ```dart
 final shell = await client.shell(
   pty: SSHPtyConfig(
@@ -53,33 +53,33 @@ final shell = await client.shell(
 );
 ```
 
-**特殊キー送信:**
+**specialkeysend:**
 ```dart
 shell.write(Uint8List.fromList([0x1B]));       // ESC
 shell.write(Uint8List.fromList([0x03]));       // Ctrl+C
-shell.write(Uint8List.fromList([0x1B, 0x5B, 0x41])); // 矢印キー（上）
+shell.write(Uint8List.fromList([0x1B, 0x5B, 0x41])); // key（）
 ```
 
 ### Alternatives Considered
-- **ssh2** (Dart): 4年間更新なし、ネイティブ依存あり → 却下
-- **WebSocket Proxy**: サーバー設置必要、設計思想に反する → 却下
+- **ssh2** (Dart): 4update、dependency → 
+- **WebSocket Proxy**: serverrequired、 → 
 
 ---
 
-## 2. ターミナルエミュレーション (xterm.dart)
+## 2. terminal (xterm.dart)
 
 ### Decision
-**xterm 4.0+** を採用。dartssh2との統合が良好。
+**xterm 4.0+** 。dartssh2integrationgood。
 
 ### Rationale
-- 60fps レンダリング
-- ANSI 256色 + トゥルーカラー対応
-- CJK文字・絵文字対応
-- クロスプラットフォーム
+- 60fps 
+- ANSI 256color + colorsupport
+- CJKcharactersemojicharacterssupport
+- 
 
 ### Key Patterns
 
-**TerminalView統合:**
+**TerminalViewintegration:**
 ```dart
 late final terminal = Terminal();
 
@@ -90,20 +90,20 @@ TerminalView(
 )
 ```
 
-**SSH出力接続:**
+**SSHoutputconnection:**
 ```dart
-// リモート出力 → Terminal
+// output → Terminal
 shell.stdout.listen((data) {
   terminal.write(utf8.decode(data));
 });
 
-// ユーザー入力 → リモート
+// userinput → 
 terminal.onOutput = (String output) {
   shell.write(utf8.encode(output));
 };
 ```
 
-**リサイズ同期:**
+**resizesync:**
 ```dart
 terminal.onResize = (w, h) {
   session.setPtySize(columns: w, rows: h);
@@ -111,25 +111,25 @@ terminal.onResize = (w, h) {
 ```
 
 ### Alternatives Considered
-- 自前実装: 複雑すぎる → 却下
-- react-native-terminal: RN依存 → 却下
+- implement:  → 
+- react-native-terminal: RNdependency → 
 
 ---
 
-## 3. 状態管理 (Riverpod)
+## 3. statemanagement (Riverpod)
 
 ### Decision
-**flutter_riverpod + riverpod_annotation (codegen)** を採用。
+**flutter_riverpod + riverpod_annotation (codegen)** 。
 
 ### Rationale
-- AsyncNotifierProvider で非同期操作を自然に扱える
-- .family で接続ごとの独立した状態管理
-- autoDispose でメモリリーク防止
-- DI が容易でテスタビリティ向上
+- AsyncNotifierProvider syncoperation
+- .family connectionindependentstatemanagement
+- autoDispose memory
+- DI 
 
 ### Key Patterns
 
-**SSH接続コントローラー:**
+**SSH connection:**
 ```dart
 @riverpod
 class SshConnectionController extends _$SshConnectionController {
@@ -146,45 +146,45 @@ class SshConnectionController extends _$SshConnectionController {
   }
 }
 
-// 使用: ref.watch(sshConnectionControllerProvider(connId))
+// : ref.watch(sshConnectionControllerProvider(connId))
 ```
 
-**Provider構成:**
+**Provider:**
 ```
-基盤層:   sshConnectionProvider (family)
-          ↓ 依存
-ドメイン層: tmuxSessionsProvider, terminalProvider
-          ↓ 依存
-UI層:     selectedPaneProvider (StateProvider)
+foundation:   sshConnectionProvider (family)
+          ↓ dependency
+main: tmuxSessionsProvider, terminalProvider
+          ↓ dependency
+UI:     selectedPaneProvider (StateProvider)
 ```
 
 ### Alternatives Considered
-- **Provider**: シンプルだが複雑な非同期に弱い → 却下
-- **BLoC**: ボイラープレート多い → 却下
-- **GetX**: 設計思想が異なる → 却下
+- **Provider**: sync → 
+- **BLoC**:  → 
+- **GetX**:  → 
 
 ---
 
-## 4. セキュアストレージ
+## 4. securestorage
 
 ### Decision
-- **機密データ**: flutter_secure_storage（秘密鍵、パスワード）
-- **非機密データ**: shared_preferences（接続設定メタデータ）
+- **data**: flutter_secure_storage（private key、password）
+- **data**: shared_preferences（connection settingsdata）
 
 ### Rationale
-- flutter_secure_storage: Android Keystore / iOS Keychain 使用、暗号化保証
-- shared_preferences: 高速、設定値に適切
-- expo-secure-store と同等のセキュリティレベル
+- flutter_secure_storage: Android Keystore / iOS Keychain 、encrypted
+- shared_preferences: high、settingsappropriate
+- expo-secure-store 
 
 ### Key Patterns
 
-**秘密鍵保存:**
+**private keysave:**
 ```dart
 final storage = FlutterSecureStorage();
 await storage.write(key: 'ssh_key_$id', value: privateKeyPem);
 ```
 
-**バイオメトリック認証:**
+**authentication:**
 ```dart
 final storage = FlutterSecureStorage(
   aOptions: AndroidOptions(
@@ -193,35 +193,35 @@ final storage = FlutterSecureStorage(
 );
 ```
 
-**接続設定保存:**
+**connection settingssave:**
 ```dart
 final prefs = await SharedPreferences.getInstance();
 await prefs.setString('connections', jsonEncode(connections));
 ```
 
 ### Migration Strategy (RN → Flutter)
-1. expo-secure-store からデータをJSON形式でエクスポート
-2. flutter_secure_storage に再暗号化して保存
-3. キー名規則を維持（`ssh_key_${id}`, `password_${id}`）
+1. expo-secure-store dataJSONformatport
+2. flutter_secure_storage reencryptedsave
+3. keymaintain（`ssh_key_${id}`, `password_${id}`）
 
-**注意**: 暗号化実装が異なるため、直接互換性なし。ユーザーは初回起動時に再設定が必要になる可能性あり。
+**note**: encryptedimplement、。The user first-timestartresettingsrequiredpossible。
 
 ### Alternatives Considered
-- **flutter_keychain**: 低レベルすぎる → 却下
-- **biometric_storage**: flutter_secure_storageで十分 → 不要
+- **flutter_keychain**: low → 
+- **biometric_storage**: flutter_secure_storage → not needed
 
 ---
 
-## 5. ナビゲーション
+## 5. 
 
 ### Decision
-**go_router** を採用。
+**go_router** 。
 
 ### Rationale
-- 宣言的ルーティング
-- Deep link 対応
-- Navigator 2.0 ベース
-- Riverpod との統合良好
+- routing
+- Deep link support
+- Navigator 2.0 base
+- Riverpod integrationgood
 
 ### Key Patterns
 
@@ -243,16 +243,16 @@ final router = GoRouter(
 
 ---
 
-## 6. データモデル (Freezed)
+## 6. datamodel (Freezed)
 
 ### Decision
-**freezed + json_serializable** を採用。
+**freezed + json_serializable** 。
 
 ### Rationale
-- イミュータブルクラス自動生成
-- copyWith 自動生成
-- JSON シリアライズ対応
-- パターンマッチング対応
+- tabclassautomaticgenerate
+- copyWith automaticgenerate
+- JSON support
+- patternsupport
 
 ### Key Patterns
 
@@ -276,36 +276,36 @@ class Connection with _$Connection {
 
 ---
 
-## 7. 依存パッケージ一覧
+## 7. dependencypackagelist
 
 ### Core
-| パッケージ | バージョン | 用途 |
+| package | version | purpose |
 |-----------|-----------|------|
-| dartssh2 | ^2.13.0 | SSH接続 |
-| xterm | ^4.0.0 | ターミナルエミュレーション |
-| flutter_riverpod | ^2.5.0 | 状態管理 |
+| dartssh2 | ^2.13.0 | SSH connection |
+| xterm | ^4.0.0 | terminal |
+| flutter_riverpod | ^2.5.0 | statemanagement |
 | riverpod_annotation | ^2.3.0 | Riverpod codegen |
-| go_router | ^14.0.0 | ルーティング |
+| go_router | ^14.0.0 | routing |
 
 ### Storage
-| パッケージ | バージョン | 用途 |
+| package | version | purpose |
 |-----------|-----------|------|
-| flutter_secure_storage | ^9.2.0 | 暗号化ストレージ |
-| shared_preferences | ^2.3.0 | 設定保存 |
+| flutter_secure_storage | ^9.2.0 | encryptedstorage |
+| shared_preferences | ^2.3.0 | settingssave |
 
 ### Model/Codegen
-| パッケージ | バージョン | 用途 |
+| package | version | purpose |
 |-----------|-----------|------|
-| freezed | ^2.5.0 | イミュータブルモデル |
-| json_serializable | ^6.8.0 | JSONシリアライズ |
-| freezed_annotation | ^2.4.0 | Freezed アノテーション |
+| freezed | ^2.5.0 | tabmodel |
+| json_serializable | ^6.8.0 | JSON |
+| freezed_annotation | ^2.4.0 | Freezed  |
 
 ### Testing
-| パッケージ | バージョン | 用途 |
+| package | version | purpose |
 |-----------|-----------|------|
-| flutter_test | (SDK) | ウィジェットテスト |
-| mockito | ^5.4.0 | モック生成 |
-| build_runner | ^2.4.0 | コード生成 |
+| flutter_test | (SDK) | widgettest |
+| mockito | ^5.4.0 | mockgenerate |
+| build_runner | ^2.4.0 | codegenerate |
 
 ---
 
@@ -314,12 +314,12 @@ class Connection with _$Connection {
 | Principle | Status | Notes |
 |-----------|--------|-------|
 | I. Type Safety | ✅ PASS | Dart strict mode + Freezed |
-| II. KISS & YAGNI | ✅ PASS | 既存機能のみ移植 |
+| II. KISS & YAGNI | ✅ PASS | existingfeature |
 | III. Test-First | ✅ PASS | mockito + flutter_test |
 | IV. Security-First | ✅ PASS | flutter_secure_storage + biometric |
-| V. SOLID | ✅ PASS | Riverpod DI + サービス層分離 |
+| V. SOLID | ✅ PASS | Riverpod DI + service |
 | VI. DRY | ✅ PASS | Freezed codegen |
-| Prohibited Naming | ✅ PASS | ドメイン名で命名 |
+| Prohibited Naming | ✅ PASS | main |
 
 ---
 
@@ -327,7 +327,10 @@ class Connection with _$Connection {
 
 - [dartssh2 - pub.dev](https://pub.dev/packages/dartssh2)
 - [xterm.dart - pub.dev](https://pub.dev/packages/xterm)
-- [Riverpod 公式ドキュメント](https://riverpod.dev/docs/)
+- [Riverpod documentation](https://riverpod.dev/docs/)
 - [flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage)
 - [go_router](https://pub.dev/packages/go_router)
 - [freezed](https://pub.dev/packages/freezed)
+
+
+

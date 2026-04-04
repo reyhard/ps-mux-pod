@@ -1,130 +1,130 @@
-# Research: SSH鍵管理機能
+# Research: SSH Key Management
 
 **Feature**: 002-ssh-key-management
 **Date**: 2026-01-10
 
-## 1. ED25519鍵生成 in React Native
+## 1. ED25519 Key Generation in React Native
 
 ### Decision
-`react-native-ssh-sftp` ライブラリのネイティブ機能を使用してED25519鍵を生成する。
+Use the native capabilities of `react-native-ssh-sftp` to generate ED25519 keys.
 
 ### Rationale
-- `react-native-ssh-sftp` は既にプロジェクトの依存関係に含まれている
-- ネイティブコードでの鍵生成により、JavaScript層での暗号化ライブラリ依存を回避
-- Android Keystore との連携が容易
+- `react-native-ssh-sftp` is already a project dependency
+- Native key generation avoids extra cryptography dependencies in the JavaScript layer
+- It integrates easily with Android Keystore
 
 ### Alternatives Considered
 | Alternative | Rejected Because |
 |-------------|------------------|
-| `tweetnacl-js` | Pure JS は遅く、セキュアでない。Secure Enclave連携不可 |
-| `expo-crypto` | ED25519鍵生成をサポートしていない |
-| `react-native-crypto` | メンテナンス停止、Expo SDK 52非対応 |
+| `tweetnacl-js` | Pure JS is slow, not secure, and cannot integrate with Secure Enclave |
+| `expo-crypto` | ED25519keygenerate |
+| `react-native-crypto` | 、Expo SDK 52support |
 
 ### Implementation Notes
-- `react-native-ssh-sftp` の `SSHClient.generateKey()` メソッドを使用
-- 生成された鍵はOpenSSH形式で出力される
-- 公開鍵はauthorized_keys形式で提供
+- Use the `SSHClient.generateKey()` method from `react-native-ssh-sftp`
+- Generated keys are output in OpenSSH format
+- Public keys are provided in `authorized_keys` format
 
-## 2. 秘密鍵のセキュアストレージ
+## 2. Secure Storage for Private Keys
 
 ### Decision
-`expo-secure-store` を使用し、Android Keystore でハードウェアバックアップされたキーチェーンに保存する。
+Use `expo-secure-store` and store keys in a hardware-backed keystore through Android Keystore.
 
 ### Rationale
-- `expo-secure-store` は既に `auth.ts` でパスワード保存に使用されている
-- Android Keystore は Secure Enclave 相当のハードウェアセキュリティを提供
-- 生体認証との統合が容易（`expo-local-authentication` 連携）
+- `expo-secure-store` is already used in `auth.ts` for password storage
+- Android Keystore provides hardware security similar to Secure Enclave
+- It is easy to integrate with biometrics via `expo-local-authentication`
 
 ### Alternatives Considered
 | Alternative | Rejected Because |
 |-------------|------------------|
-| AsyncStorage + 暗号化 | ソフトウェア暗号化のみ、ハードウェアバックアップなし |
-| react-native-keychain | expo-secure-store と機能重複、追加依存不要 |
+| AsyncStorage + encryption | Software-only encryption with no hardware backing |
+| react-native-keychain | Overlaps with `expo-secure-store` and adds no value |
 
 ### Implementation Notes
-- 秘密鍵は `muxpod-ssh-key-{keyId}` キーで保存
-- メタデータ（名前、タイプ、フィンガープリント）は別途 AsyncStorage に保存
-- 鍵アクセス時に生体認証を要求する設定をサポート
+- Store private keys under the `muxpod-ssh-key-{keyId}` key
+- Store metadata such as name, type, and fingerprint separately in AsyncStorage
+- Support a setting that requires biometric authentication when a key is accessed
 
-## 3. 鍵インポートとパスフレーズ処理
+## 3. Key Import and Passphrase Handling
 
 ### Decision
-PEM/OpenSSH形式の秘密鍵をパースし、パスフレーズ付き鍵は復号してからセキュアストレージに保存する。
+Parse PEM/OpenSSH private keys and decrypt passphrase-protected keys before storing them in secure storage.
 
 ### Rationale
-- ユーザーは既存の鍵を持っている可能性が高い
-- 一度復号してセキュアストレージに保存することで、接続時の UX を向上
-- パスフレーズを毎回入力する必要がない
+- Users are likely to already have existing keys
+- Decrypting once and storing in secure storage improves the connection experience
+- Users do not need to enter the passphrase every time
 
 ### Alternatives Considered
 | Alternative | Rejected Because |
 |-------------|------------------|
-| パスフレーズ付きで保存 | 接続のたびにパスフレーズ入力が必要、UX低下 |
-| パスフレーズを別途保存 | セキュリティリスク増大、複雑化 |
+| Store with passphrase | Requires passphrase entry on every connection and hurts UX |
+| Store the passphrase separately | Increases security risk and complexity |
 
 ### Implementation Notes
-- `sshpk` または類似ライブラリで鍵パース
-- サポート形式: PEM (RSA, ECDSA, ED25519), OpenSSH
-- インポート時にパスフレーズ入力ダイアログを表示
-- 復号後、平文の秘密鍵をセキュアストレージに保存
+- Parse keys with `sshpk` or a similar library
+- Supported formats: PEM (RSA, ECDSA, ED25519) and OpenSSH
+- Show a passphrase prompt during import
+- After decryption, store the plain private key in secure storage
 
-## 4. 既知ホスト管理
+## 4. Known Host Management
 
 ### Decision
-AsyncStorage に既知ホストを JSON 形式で保存し、接続時にフィンガープリントを検証する。
+Store known hosts as JSON in AsyncStorage and verify fingerprints during connection.
 
 ### Rationale
-- 既知ホストはセキュリティ情報だが、暗号化保存は不要（公開情報）
-- AsyncStorage で十分なパフォーマンス
-- known_hosts ファイル形式との互換性を維持
+- Known hosts are security-related but do not need encrypted storage because they are public information
+- AsyncStorage is fast enough
+- This preserves compatibility with the `known_hosts` file format
 
 ### Alternatives Considered
 | Alternative | Rejected Because |
 |-------------|------------------|
-| SecureStore | 容量制限あり、公開情報に過剰 |
-| SQLite | 追加依存、この規模では過剰 |
+| SecureStore | Has storage limits and is overkill for public data |
+| SQLite | Adds a dependency and is excessive at this scale |
 
 ### Implementation Notes
-- ホスト識別子: `{host}:{port}`
-- 保存形式: `{ identifier, keyType, fingerprint, addedAt, lastVerifiedAt }`
-- 検証失敗時は警告ダイアログを表示し、ユーザーに選択肢を提示
+- Host identifier: `{host}:{port}`
+- Storage format: `{ identifier, keyType, fingerprint, addedAt, lastVerifiedAt }`
+- When verification fails, show a warning dialog and present choices to the user
 
-## 5. ファイルインポートUI
+## 5. File Import UI
 
 ### Decision
-`expo-document-picker` を使用してデバイスまたはクラウドストレージから秘密鍵ファイルを選択する。
+Use `expo-document-picker` to select private key files from local or cloud storage.
 
 ### Rationale
-- Expo SDK に含まれる公式ライブラリ
-- iCloud, Google Drive, Dropbox などのクラウドストレージに対応
-- プラットフォーム標準のファイルピッカー UI を提供
+- It is an official library included with Expo SDK
+- It supports cloud storage providers such as iCloud, Google Drive, and Dropbox
+- It provides a platform-native file picker UI
 
 ### Implementation Notes
-- MIME タイプ: `*/*` または `text/plain`
-- 選択後、ファイル内容を読み込み、鍵形式を検証
-- 無効な形式の場合はエラーメッセージを表示
+- MIME type: `*/*` or `text/plain`
+- After selection, read the file content and validate the key format
+- Show an error message if the format is invalid
 
-## 6. 生体認証
+## 6. Biometrics
 
 ### Decision
-`expo-local-authentication` を使用し、鍵使用時に生体認証を要求する。
+Use `expo-local-authentication` to require biometric authentication when a key is used.
 
 ### Rationale
-- Expo SDK の公式ライブラリ
-- 指紋認証、顔認証の両方に対応
-- SecureStore のアクセス制御と連携可能
+- It is an official Expo SDK library
+- It supports both fingerprint and face authentication
+- It can work with SecureStore access control
 
 ### Implementation Notes
-- 認証は鍵アクセス時（接続開始時）に要求
-- 認証失敗時はパスワード認証へのフォールバックを提供しない（セキュリティ優先）
-- ユーザー設定で生体認証の有効/無効を切替可能
+- Authentication is required when the key is accessed, such as when a connection starts
+- No fallback to password authentication is offered if biometric authentication fails, for security reasons
+- Users can enable or disable biometrics in settings
 
 ## Technology Stack Summary
 
 | Concern | Technology | Status |
 |---------|------------|--------|
-| 鍵生成 | react-native-ssh-sftp | 既存依存 |
-| セキュアストレージ | expo-secure-store | 既存依存 |
-| メタデータ保存 | AsyncStorage | 既存依存 |
-| ファイルピッカー | expo-document-picker | 追加必要 |
-| 生体認証 | expo-local-authentication | 追加必要 |
+| Key generation | react-native-ssh-sftp | Existing dependency |
+| Secure storage | expo-secure-store | Existing dependency |
+| Metadata storage | AsyncStorage | Existing dependency |
+| File picker | expo-document-picker | Needs to be added |
+| Biometrics | expo-local-authentication | Needs to be added |

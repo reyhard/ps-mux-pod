@@ -31,6 +31,6 @@
 
 ## Notes
 
-- 全項目パス。仕様は次フェーズ（/speckit.plan）へ進む準備完了。
-- テスト対象コンポーネント: ConnectionCard, TerminalView, SpecialKeys, SessionTabs
-- 既存のjest設定を活用する前提で作成
+- All items pass. The specification is ready to move to the next phase (`/speckit.plan`).
+- Test target components: ConnectionCard, TerminalView, SpecialKeys, SessionTabs
+- Created on the assumption that the existing Jest configuration will be used

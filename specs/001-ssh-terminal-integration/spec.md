@@ -1,130 +1,133 @@
-# Feature Specification: SSH/Terminal統合機能
+# Feature Specification: SSH/Terminal Integration
 
 **Feature Branch**: `001-ssh-terminal-integration`
 **Created**: 2026-01-11
 **Status**: Draft
-**Input**: User description: "SSH/Terminal統合機能を実装してください。terminal_screen.dartのTODOコメント(39行目と287行目)を解決し、既存のlib/services/ssh/ssh_client.dartとlib/services/tmux/tmux_commands.dartを使ってSSH接続→tmuxアタッチ→キー送信のパイプラインを完成させてください。"
+**Input**: User description: "Implement SSH/Terminal integration. Resolve the TODO comments in `terminal_screen.dart` (lines 39 and 287), and use the existing `lib/services/ssh/ssh_client.dart` and `lib/services/tmux/tmux_commands.dart` to complete the pipeline from SSH connection to tmux attach to key sending."
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - ターミナル画面でSSH接続確立 (Priority: P1)
+### User Story 1 - terminal screenSSH connectionestablishment (Priority: P1)
 
-ユーザーが接続一覧からサーバーを選択してターミナル画面に遷移すると、自動的にSSH接続が確立され、tmuxセッションの内容が表示される。
+When the user selects a server from the connection list and navigates to the terminal screen, the SSH connection is established automatically and the tmux session content is displayed.
 
-**Why this priority**: アプリの核となる機能。SSH接続なしではターミナル操作ができないため最優先。
+**Why this priority**: This is the core app feature. Terminal operations are impossible without an SSH connection, so it has the highest priority.
 
-**Independent Test**: ターミナル画面を開いた時点でSSH接続が確立され、リモートサーバーのtmuxセッション内容が画面に表示されることを確認できる。
+**Independent Test**: When the terminal screen opens, verify that the SSH connection is established and the remote server's tmux session content is shown on screen.
 
 **Acceptance Scenarios**:
 
-1. **Given** 有効な接続設定が保存されている, **When** ユーザーがその接続をタップしてターミナル画面を開く, **Then** SSH接続が確立されtmuxセッション一覧が取得される
-2. **Given** SSH接続が確立している, **When** tmuxセッションが存在する, **Then** 最初のセッションに自動アタッチしてターミナル出力が表示される
-3. **Given** SSH接続が確立している, **When** tmuxセッションが存在しない, **Then** 新しいセッションが作成されてアタッチされる
+1. **Given** a valid connection setting is saved, **When** the user taps that connection to open the terminal screen, **Then** the SSH connection is established and the tmux session list is retrieved
+2. **Given** the SSH connection is established, **When** a tmux session exists, **Then** the app auto-attaches to the first session and displays terminal output
+3. **Given** the SSH connection is established, **When** no tmux session exists, **Then** a new session is created and attached
 
 ---
 
-### User Story 2 - キー入力送信 (Priority: P1)
+### User Story 2 - Key Inputsend (Priority: P1)
 
-ユーザーがターミナル画面でキーを入力すると、SSH経由でリモートサーバーのtmuxセッションにキーが送信され、結果が画面に反映される。
+When the user enters keys on the terminal screen, those keys are sent to the remote server's tmux session over SSH and the results are reflected on screen.
 
-**Why this priority**: ターミナル操作の基本機能。接続だけでは操作できないため同等に重要。
+**Why this priority**: This is a basic terminal interaction feature. Connection alone is not enough to operate the app, so it is equally important.
 
-**Independent Test**: 特殊キーバーのボタンやテキスト入力でキーを送信し、リモートのtmuxセッションに反映されることを確認できる。
+**Independent Test**: Send keys through the special key bar and text input, then verify that they are reflected in the remote tmux session.
 
 **Acceptance Scenarios**:
 
-1. **Given** tmuxセッションにアタッチしている, **When** ユーザーが特殊キーバーのESCボタンを押す, **Then** ESCキーがSSH経由で送信される
-2. **Given** tmuxセッションにアタッチしている, **When** ユーザーがテキスト入力ダイアログからコマンドを入力する, **Then** コマンド文字列がSSH経由で送信され、結果が表示される
-3. **Given** tmuxセッションにアタッチしている, **When** ユーザーがCtrl+Cを押す, **Then** 割り込みシグナルが送信される
+1. **Given** the user is attached to a tmux session, **When** the ESC button in the special key bar is pressed, **Then** the ESC key is sent over SSH
+2. **Given** the user is attached to a tmux session, **When** the user enters a command from the text input dialog, **Then** the command string is sent over SSH and the result is displayed
+3. **Given** the user is attached to a tmux session, **When** the user presses Ctrl+C, **Then** an interrupt signal is sent
 
 ---
 
-### User Story 3 - ターミナル出力のリアルタイム表示 (Priority: P1)
+### User Story 3 - terminal outputdisplay (Priority: P1)
 
-リモートサーバーからのターミナル出力がリアルタイムでxterm画面に表示される。ANSIカラーコードも正しく解釈される。
+Terminal output from the remote server is displayed in real time on the xterm screen. ANSI color codes are also interpreted correctly.
 
-**Why this priority**: 出力が見えなければターミナルとして機能しないため最優先。
+**Why this priority**: Without visible output, the terminal cannot function, so this has the highest priority.
 
-**Independent Test**: リモートでコマンドを実行し、その出力がローカルのターミナル画面にリアルタイムで表示されることを確認できる。
+**Independent Test**: Run a command remotely and verify that its output appears in real time on the local terminal screen.
 
 **Acceptance Scenarios**:
 
-1. **Given** tmuxセッションにアタッチしている, **When** リモートからデータが到着する, **Then** xtermウィジェットにリアルタイムで表示される
-2. **Given** tmuxセッションにアタッチしている, **When** ANSIカラーコードを含む出力が到着する, **Then** 適切な色で表示される
+1. **Given** the user is attached to a tmux session, **When** data arrives from the remote side, **Then** it is displayed in real time in the xterm Widget
+2. **Given** the user is attached to a tmux session, **When** output containing ANSI color codes arrives, **Then** it is displayed with the correct colors
 
 ---
 
-### User Story 4 - 接続エラーハンドリング (Priority: P2)
+### User Story 4 - connectionerror (Priority: P2)
 
-接続失敗時やネットワーク切断時に、ユーザーに分かりやすいエラーメッセージを表示し、再接続オプションを提供する。
+When the connection fails or the network is interrupted, show clear error messages and provide a reconnect option.
 
-**Why this priority**: ユーザー体験に重要だが、基本機能が動作してから実装可能。
+**Why this priority**: This is important for user experience, but it can be implemented after the core functionality works.
 
-**Independent Test**: ネットワークを切断した状態で接続を試み、エラーメッセージが表示されることを確認できる。
+**Independent Test**: Attempt a connection while the network is disconnected and verify that an error message is shown.
 
 **Acceptance Scenarios**:
 
-1. **Given** 無効なホスト名で接続しようとする, **When** 接続タイムアウトが発生する, **Then** タイムアウトエラーメッセージが表示される
-2. **Given** SSH接続中, **When** ネットワークが切断される, **Then** 切断通知が表示され再接続ボタンが表示される
-3. **Given** 認証情報が間違っている, **When** 接続を試みる, **Then** 認証エラーメッセージが表示される
+1. **Given** the user tries to connect with an invalid host name, **When** a connection timeout occurs, **Then** a timeout error message is shown
+2. **Given** an SSH connection is active, **When** the network is disconnected, **Then** a disconnection notice and reconnect button are shown
+3. **Given** the authentication details are incorrect, **When** the user attempts to connect, **Then** an authentication error message is shown
 
 ---
 
-### User Story 5 - ターミナルリサイズ (Priority: P3)
+### User Story 5 - terminalresize (Priority: P3)
 
-デバイスの画面サイズ変更や回転に応じて、ターミナルサイズが自動調整される。
+The terminal size automatically adjusts in response to device screen size changes and rotation.
 
-**Why this priority**: 機能的には重要だが、固定サイズでも基本操作は可能。
+**Why this priority**: This is functionally important, but basic operation is still possible at a fixed size.
 
-**Independent Test**: デバイスを回転させてターミナルサイズが変更されることを確認できる。
+**Independent Test**: Rotate the device and verify that the terminal size changes accordingly.
 
 **Acceptance Scenarios**:
 
-1. **Given** ターミナル画面を表示中, **When** デバイスを縦横回転する, **Then** ターミナルサイズが新しい画面サイズに合わせて更新される
+1. **Given** the terminal screen is visible, **When** the device is rotated between portrait and landscape, **Then** the terminal size updates to match the new screen size
 
 ---
 
 ### Edge Cases
 
-- SSH接続中にアプリがバックグラウンドになった場合の動作
-- 認証情報（パスワードまたはSSH鍵）がストレージから取得できない場合
-- tmuxがリモートサーバーにインストールされていない場合
-- セッションが別のクライアントから削除された場合
+- Behavior when the app is sent to the background during an SSH connection
+- When authentication details (password or SSH key) cannot be retrieved from storage
+- When tmux is not installed on the remote server
+- When the session is deleted from another client
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: TerminalScreenはconnectionIdを受け取り、対応する接続情報を使用してSSH接続を確立できること
-- **FR-002**: SSH接続確立後、tmuxセッション一覧を取得し、存在するセッションにアタッチできること
-- **FR-003**: tmuxセッションが存在しない場合、新規セッションを作成してアタッチできること
-- **FR-004**: SSHシェルからのデータ（stdout/stderr）をxtermウィジェットにリアルタイム表示できること
-- **FR-005**: 特殊キーバーからのキー入力をSSH経由でリモートに送信できること
-- **FR-006**: テキスト入力ダイアログからの入力をSSH経由でリモートに送信できること
-- **FR-007**: ターミナル画面終了時にSSH接続を適切にクリーンアップできること
-- **FR-008**: 接続エラー・認証エラー時にユーザーフレンドリーなエラーメッセージを表示できること
-- **FR-009**: 画面サイズ変更時にtmuxのウィンドウサイズを同期できること
+- **FR-001**: TerminalScreen must accept `connectionId` and establish an SSH connection using the corresponding connection information
+- **FR-002**: After the SSH connection is established, it must retrieve the tmux session list and attach to an existing session
+- **FR-003**: If no tmux session exists, it must create and attach to a new session
+- **FR-004**: It must display data from the SSH shell (`stdout`/`stderr`) in the xterm Widget in real time
+- **FR-005**: It must send key input from the special key bar to the remote side over SSH
+- **FR-006**: It must send input from the text input dialog to the remote side over SSH
+- **FR-007**: It must properly clean up the SSH connection when the terminal screen is closed
+- **FR-008**: It must display user-friendly error messages for connection and authentication failures
+- **FR-009**: It must synchronize the tmux window size when the screen size changes
 
 ### Key Entities
 
-- **Connection**: SSH接続情報（ホスト、ポート、ユーザー名、認証方式）
-- **SshClient**: SSH接続を管理し、データ送受信を行う
-- **TmuxSession**: tmuxセッション情報（名前、ウィンドウ一覧）
-- **Terminal**: xtermウィジェットのバックエンド、ANSIシーケンス処理
+- **Connection**: SSH connection information (host, port, username, authentication method)
+- **SshClient**: Manages the SSH connection and handles data send/receive
+- **TmuxSession**: tmux session information (name, window list)
+- **Terminal**: The xterm Widget backend and ANSI sequence handling
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: ユーザーが接続タップから3秒以内にターミナル画面でリモート出力を確認できる（ネットワーク遅延除く）
-- **SC-002**: キー入力から画面反映まで200ms以内の応答性を維持できる
-- **SC-003**: 接続エラー発生時、5秒以内にユーザーにエラー内容が通知される
-- **SC-004**: ANSIカラー256色が正しく表示される
-- **SC-005**: ターミナル画面から戻った際、SSH接続リソースが確実に解放される
+- **SC-001**: The user can see remote output on the terminal screen within 3 seconds of tapping a connection, excluding network latency
+- **SC-002**: Input-to-screen latency is kept within 200 ms
+- **SC-003**: When a connection error occurs, the user is notified within 5 seconds
+- **SC-004**: ANSI 256 colors are rendered correctly
+- **SC-005**: SSH connection resources are reliably released when returning from the terminal screen
 
 ## Assumptions
 
-- リモートサーバーにはtmuxがインストールされている（tmuxがない場合のフォールバックは将来対応）
-- 認証情報（パスワードまたはSSH鍵）は既にflutter_secure_storageに保存されている
-- ネットワーク接続は基本的に安定している（不安定なネットワークでの自動再接続は将来対応）
-- ターミナルサイズの初期値は80列x24行を使用
+- tmux is installed on the remote server; fallback behavior for missing tmux will be addressed later
+- Authentication details (password or SSH key) are already stored in `flutter_secure_storage`
+- Network connectivity is generally stable; automatic reconnection on unstable networks will be addressed later
+- The initial terminal size is 80 columns by 24 rows
+
+
+

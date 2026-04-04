@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/services.dart';
 
-/// ディープリンクのパース結果
+/// Parsed deep link result
 final class DeepLinkData {
   final String? server;
   final String? session;
@@ -24,9 +24,9 @@ final class DeepLinkData {
       'DeepLinkData(server: $server, session: $session, window: $window, pane: $pane)';
 }
 
-/// `muxpod://` URLスキームのディープリンクを処理するサービス
+/// Service that handles deep links for the `muxpod://` URL scheme
 ///
-/// URL形式: `muxpod://connect?server=id&session=name&window=name&pane=index`
+/// URL format: `muxpod://connect?server=id&session=name&window=name&pane=index`
 final class DeepLinkService {
   static const _tag = 'DeepLinkService';
   static const _channel = MethodChannel('com.muxpod.app/deeplink');
@@ -40,15 +40,15 @@ final class DeepLinkService {
 
   bool _initialized = false;
 
-  /// 初期化。コールドスタート時のリンクとホットリンクの両方を処理する。
+  /// Initialize. Handles both cold-start links and hot links.
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
 
-    // MethodChannelでネイティブからのディープリンクを受信
+    // Receive deep links from native code via MethodChannel
     _channel.setMethodCallHandler(_handleMethodCall);
 
-    // コールドスタート時の初期リンクを取得
+    // Get the initial link for cold-start launches
     try {
       final initialUri = await _channel.invokeMethod<String>('getInitialLink');
       if (initialUri != null) {
@@ -59,7 +59,7 @@ final class DeepLinkService {
         }
       }
     } on MissingPluginException {
-      // プラットフォームチャネル未実装（テスト時など）
+      // Platform channel not implemented (for tests, etc.)
       developer.log('Deep link channel not available', name: _tag);
     } catch (e) {
       developer.log('Error getting initial link: $e', name: _tag);
@@ -79,12 +79,12 @@ final class DeepLinkService {
     }
   }
 
-  /// URI文字列をDeepLinkDataにパース
+  /// Parse a URI string into DeepLinkData
   static DeepLinkData parseUri(String uriString) {
     try {
       final uri = Uri.parse(uriString);
 
-      // muxpod://connect?... の形式のみ受け付け
+      // Accept only the muxpod://connect?... format
       if (uri.scheme != 'muxpod') {
         return const DeepLinkData();
       }

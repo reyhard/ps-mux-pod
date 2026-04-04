@@ -5,7 +5,7 @@
 
 ## Overview
 
-コンポーネントテストで使用するテストフィクスチャ（モックデータ）の構造を定義する。
+Define the structure of the test fixtures (mock data) used by the component tests.
 
 ---
 
@@ -17,15 +17,15 @@
 ```typescript
 interface Connection {
   id: string;                    // UUID
-  name: string;                  // 表示名
-  host: string;                  // ホスト名
-  port: number;                  // ポート番号
-  username: string;              // ユーザー名
-  authMethod: 'password' | 'key'; // 認証方式
-  timeout: number;               // タイムアウト秒
-  keepAliveInterval: number;     // Keepalive間隔
-  createdAt: number;             // 作成日時
-  updatedAt: number;             // 更新日時
+  name: string;                  // display name
+  host: string;                  // host name
+  port: number;                  // port number
+  username: string;              // user name
+  authMethod: 'password' | 'key'; // authentication method
+  timeout: number;               // timeout in seconds
+  keepAliveInterval: number;     // keep-alive interval
+  createdAt: number;             // creation time
+  updatedAt: number;             // update time
 }
 ```
 
@@ -52,8 +52,8 @@ interface AnsiLine {
 
 interface AnsiSpan {
   text: string;
-  fg?: number;          // 前景色 (0-255)
-  bg?: number;          // 背景色 (0-255)
+  fg?: number;          // foreground color (0-255)
+  bg?: number;          // background color (0-255)
   bold?: boolean;
   dim?: boolean;
   italic?: boolean;
@@ -71,7 +71,7 @@ interface TerminalTheme {
   foreground: string;
   cursor: string;
   selection: string;
-  palette: readonly string[]; // 16色
+  palette: readonly string[]; // 16 colors
 }
 ```
 
@@ -115,19 +115,19 @@ interface SpecialKeysCallbacks {
 
 ## Fixture Factories
 
-テスト用のファクトリ関数パターン（必要に応じて実装）:
+Factory function patterns for tests, implemented as needed:
 
 ```typescript
-// 基本的なConnectionを生成
+// Create a basic Connection
 function createMockConnection(overrides?: Partial<Connection>): Connection
 
-// 接続済み状態を生成
+// Create a connected state
 function createConnectedState(connectionId: string): ConnectionState
 
-// エラー状態を生成
+// Create an error state
 function createErrorState(connectionId: string, error: string): ConnectionState
 
-// ANSIスタイル付きテキストを生成
+// Create ANSI-styled text
 function createStyledSpan(text: string, style: Partial<AnsiSpan>): AnsiSpan
 ```
 
@@ -155,6 +155,6 @@ ALT Mode → ALT press → Normal
 
 ## Notes
 
-- 実際の型定義は`src/types/`に存在、テストではこれらをインポートして使用
-- モックデータは各テストファイル内でインラインで定義（初期段階）
-- 重複が発生した場合は`__tests__/fixtures/`に抽出を検討
+- The actual type definitions live in `src/types/`, and the tests should import and use them
+- Mock data is defined inline in each test file during the initial phase
+- If duplication appears, consider extracting it to `__tests__/fixtures/`
