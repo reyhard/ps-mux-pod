@@ -94,6 +94,9 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
   // 入力キュー（切断中の入力を保持）
   final _inputQueue = InputQueue();
 
+  // UTF-8デコーダ（チャンク境界のマルチバイト文字を正しく処理）
+  final _utf8Decoder = const Utf8Decoder(allowMalformed: true);
+
   // directInput設定のローカルキャッシュ（ref.watch回避）
   bool _directInputEnabled = true;
 
@@ -323,7 +326,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     _ptySubscription = _ptySession!.stdout.listen(
       (data) {
         if (!_isDisposed) {
-          _terminal.write(String.fromCharCodes(data));
+          _terminal.write(_utf8Decoder.convert(data));
         }
       },
       onError: (error) {
@@ -334,6 +337,9 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
       },
       onDone: () {
         debugPrint('PTY stream closed');
+        if (!_isDisposed) {
+          _attemptReconnect();
+        }
       },
     );
   }
@@ -768,7 +774,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     // switch-clientでセッションを切り替え（PTY経由でtmuxが自動的にリドローする）
     try {
       await sshClient.execPersistent(
-        _resolveMuxCmd('tmux switch-client -t $sessionName'),
+        _resolveMuxCmd("tmux switch-client -t '${sessionName.replaceAll("'", "'\\''")}'"),
       );
     } catch (e) {
       debugPrint('[Terminal] Failed to switch session: $e');
@@ -895,8 +901,11 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
     WidgetsBinding.instance.removeObserver(this);
     // WakeLockを無効化
     WakelockPlus.disable();
-    // PTYをクローズ
-    _closePty();
+    // PTYサブスクリプションを同期的にキャンセルし、セッションを非同期クローズ
+    _ptySubscription?.cancel();
+    _ptySubscription = null;
+    _ptySession?.close();
+    _ptySession = null;
     // Riverpodサブスクリプションをキャンセル
     _sshSubscription?.close();
     _sshSubscription = null;
