@@ -370,7 +370,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             _buildNavigationKeysRow(),
             _buildModifierKeysRow(),
             _buildArrowKeysRow(),
-            if (_rawInputEnabled) _buildRawInputRow(),
+            if (_rawInputEnabled) _buildHiddenRawInput(),
             if (widget.directInputEnabled && !_rawInputEnabled) _buildDirectInputRow(),
             const SizedBox(height: 4),
           ],
@@ -562,85 +562,58 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// RAW input row — IME-free keyboard, each keystroke sent immediately
-  Widget _buildRawInputRow() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: DesignColors.warning.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: DesignColors.warning.withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          children: [
-            // RAW indicator
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: DesignColors.warning.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'RAW',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: DesignColors.warning,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Hidden input field — no IME, no suggestions, each key sent immediately
-            Expanded(
-              child: Focus(
-                onKeyEvent: _handleDirectInputKeyEvent,
-                child: TextField(
-                  controller: _rawInputController,
-                  focusNode: _rawInputFocusNode,
-                  autofocus: true,
-                  keyboardType: TextInputType.visiblePassword,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  enableIMEPersonalizedLearning: false,
-                  onChanged: (text) {
-                    if (text.isEmpty) {
-                      // Backspace was pressed
-                      widget.onSpecialKeyPressed(Vt100Keys.backspace);
-                    } else {
-                      // Send each character immediately
-                      widget.onKeyPressed(text);
-                      _rawInputController.clear();
-                    }
-                  },
-                  onSubmitted: (_) {
-                    widget.onSpecialKeyPressed(Vt100Keys.enter);
-                    _rawInputFocusNode.requestFocus();
-                  },
-                  textInputAction: TextInputAction.send,
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 14,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Raw input...',
-                    hintStyle: GoogleFonts.jetBrainsMono(
-                      fontSize: 14,
-                      color: DesignColors.warning.withValues(alpha: 0.5),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    isDense: true,
-                  ),
-                ),
-              ),
-            ),
-          ],
+  /// Hidden zero-height raw input — captures keyboard without visible UI.
+  /// Uses sentinel for backspace detection (same trick as LIVE mode).
+  Widget _buildHiddenRawInput() {
+    return SizedBox(
+      height: 0,
+      child: Focus(
+        onKeyEvent: _handleDirectInputKeyEvent,
+        child: TextField(
+          controller: _rawInputController,
+          focusNode: _rawInputFocusNode,
+          autofocus: true,
+          keyboardType: TextInputType.visiblePassword,
+          autocorrect: false,
+          enableSuggestions: false,
+          enableIMEPersonalizedLearning: false,
+          onChanged: _onRawInputChanged,
+          onSubmitted: (_) {
+            widget.onSpecialKeyPressed(Vt100Keys.enter);
+            _rawInputFocusNode.requestFocus();
+          },
+          textInputAction: TextInputAction.send,
+          style: const TextStyle(fontSize: 1),
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
         ),
       ),
+    );
+  }
+
+  /// RAW input handler — each char sent immediately, sentinel for backspace
+  void _onRawInputChanged(String text) {
+    if (text.isEmpty) {
+      // Sentinel was deleted = Backspace
+      widget.onSpecialKeyPressed(Vt100Keys.backspace);
+      _resetRawSentinel();
+      return;
+    }
+
+    final actual = text.replaceAll(_sentinel, '');
+    if (actual.isNotEmpty) {
+      widget.onKeyPressed(actual);
+    }
+    _resetRawSentinel();
+  }
+
+  void _resetRawSentinel() {
+    _rawInputController.value = TextEditingValue(
+      text: _sentinel,
+      selection: TextSelection.collapsed(offset: _sentinel.length),
     );
   }
 
@@ -669,10 +642,12 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           }
         });
         if (_rawInputEnabled) {
-          // Focus the raw input field after build
+          _resetRawSentinel();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _rawInputFocusNode.requestFocus();
           });
+        } else {
+          _rawInputController.clear();
         }
       },
       child: Container(
