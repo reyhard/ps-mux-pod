@@ -51,24 +51,28 @@ class Vt100Keys {
   static String alt(String key) => '\x1b$key';
 }
 
-/// 特殊キーバー（HTMLデザイン仕様準拠）
+/// Special keys bar (follows HTML design spec)
 ///
-/// VT100/xterm escape sequence方式でキーを送信するため、
-/// PTYストリームに直接書き込める形式のエスケープシーケンスを生成する。
+/// Sends keys as VT100/xterm escape sequences,
+/// generating escape sequences that can be written directly to the PTY stream.
 class SpecialKeysBar extends StatefulWidget {
-  /// リテラルキー送信（通常の文字）
+  /// Literal key send (normal characters)
   final void Function(String key) onKeyPressed;
 
-  /// 特殊キー送信（VT100エスケープシーケンス）
+  /// Special key send (VT100 escape sequences)
   final void Function(String sequence) onSpecialKeyPressed;
 
   final VoidCallback? onInputTap;
+
+  /// Raw input mode: opens TerminalView's native soft keyboard
+  final VoidCallback? onRawInputTap;
+
   final bool hapticFeedback;
 
-  /// DirectInputモードが有効か
+  /// Whether DirectInput mode is enabled
   final bool directInputEnabled;
 
-  /// DirectInputモードのトグルコールバック
+  /// DirectInput mode toggle callback
   final VoidCallback? onDirectInputToggle;
 
   const SpecialKeysBar({
@@ -76,6 +80,7 @@ class SpecialKeysBar extends StatefulWidget {
     required this.onKeyPressed,
     required this.onSpecialKeyPressed,
     this.onInputTap,
+    this.onRawInputTap,
     this.hapticFeedback = true,
     this.directInputEnabled = false,
     this.onDirectInputToggle,
@@ -92,20 +97,20 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   final TextEditingController _directInputController = TextEditingController();
   final FocusNode _directInputFocusNode = FocusNode();
 
-  /// 現在IME変換中かどうか
+  /// Whether IME composition is currently active
   bool _isComposing = false;
 
-  /// IME composing中の最新テキスト（iOS重複検出用）
-  /// iOSが自動確定時にcomposingテキストより長い確定テキストを返す場合、
-  /// composingテキストを正とし余分な重複を除去する
+  /// Latest text during IME composing (for iOS duplicate detection)
+  /// When iOS returns committed text longer than composing text during auto-commit,
+  /// treat the composing text as authoritative and remove the extra duplicate
   String? _lastComposingText;
 
-  /// DirectInputモードでBackspace検出のためのsentinel文字（ゼロ幅スペース）
-  /// iOS/iPadOSではTextField空の状態でBackspace押下時にKeyDownEventが
-  /// 生成されないため、常にsentinelを保持して削除検出でBackspaceを検知する
+  /// Sentinel character (zero-width space) for Backspace detection in DirectInput mode
+  /// On iOS/iPadOS, pressing Backspace when TextField is empty does not generate
+  /// a KeyDownEvent, so we always keep a sentinel to detect Backspace via deletion
   static const String _sentinel = '\u200B';
 
-  /// sentinel リセット中の再入防止フラグ
+  /// Re-entry guard flag during sentinel reset
   bool _isResettingController = false;
 
   @override
@@ -140,15 +145,15 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     super.dispose();
   }
 
-  /// DirectInput: テキスト変更時の処理
-  /// sentinelアプローチでBackspaceを検出（iOS/iPadOS対応）
+  /// DirectInput: handler for text changes
+  /// Detects Backspace via the sentinel approach (iOS/iPadOS compatible)
   void _onDirectInputChanged() {
     if (_isResettingController) return;
 
     final text = _directInputController.text;
     final value = _directInputController.value;
 
-    // composingが空でない = IME変換中
+    // Non-empty composing = IME composition in progress
     _isComposing = value.composing.isValid && !value.composing.isCollapsed;
 
     if (_isComposing) {
@@ -188,7 +193,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       return;
     }
 
-    // Sentinelが削除された = Backspaceが押された（iOS/iPadOS対応）
+    // Sentinel was deleted = Backspace was pressed (iOS/iPadOS compatible)
     if (text.isEmpty) {
       _lastComposingText = null;
       _sendDirectBackspace();
@@ -196,13 +201,13 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       return;
     }
 
-    // Sentinelを除去して実際の入力テキストを取得
+    // Remove sentinel to get the actual input text
     final actualText = text.replaceAll(_sentinel, '');
 
-    // 実際のテキストがあれば送信
+    // Send if there is actual text
     if (actualText.isNotEmpty) {
-      // iOS重複検出: 確定テキストがcomposingテキストより長く、
-      // composingテキストで始まる場合、iOSの重複挿入とみなしcomposingテキストを使用
+      // iOS duplicate detection: if committed text is longer than composing text
+      // and starts with composing text, treat as iOS duplicate insertion and use composing text
       String textToSend = actualText;
       if (_lastComposingText != null &&
           actualText.length > _lastComposingText!.length &&
@@ -234,12 +239,12 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         widget.onKeyPressed(textToSend);
       }
 
-      // 送信後にsentinelにリセット
+      // Reset to sentinel after sending
       _resetToSentinel();
     }
   }
 
-  /// DirectInput: ソフトウェアキーボードのEnter（送信）で呼ばれる
+  /// DirectInput: called when Enter (submit) is pressed on the software keyboard
   void _onDirectInputSubmitted(String value) {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
@@ -248,7 +253,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     _resetToSentinel();
   }
 
-  /// DirectInput: Backspaceキー送信
+  /// DirectInput: send Backspace key
   void _sendDirectBackspace() {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
@@ -256,8 +261,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     widget.onSpecialKeyPressed(Vt100Keys.backspace);
   }
 
-  /// DirectInput: ハードウェアキーボードのキーイベントを処理
-  /// Ctrl/Alt修飾付きキーや特殊キーをVT100エスケープシーケンスとして送信
+  /// DirectInput: handle hardware keyboard key events
+  /// Sends keys with Ctrl/Alt modifiers and special keys as VT100 escape sequences
   KeyEventResult _handleDirectInputKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
@@ -316,11 +321,11 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     return KeyEventResult.ignored;
   }
 
-  /// DirectInput: sentinelにリセット（Backspace検出用）
+  /// DirectInput: reset to sentinel (for Backspace detection)
   ///
-  /// _isResettingControllerの解除を次フレームまで遅延することで、
-  /// iOSプラットフォームがIME確定時に送る遅延テキスト更新を吸収する。
-  /// PostFrameCallbackでcontrollerが上書きされていれば再度sentinelにリセットする。
+  /// Delays releasing _isResettingController until the next frame to absorb
+  /// delayed text updates sent by the iOS platform during IME commit.
+  /// If the controller has been overwritten by PostFrameCallback, reset to sentinel again.
   void _resetToSentinel() {
     _isResettingController = true;
     _directInputController.value = TextEditingValue(
@@ -332,7 +337,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       final currentValue = _directInputController.value;
       final hasActiveComposing = currentValue.composing.isValid &&
           !currentValue.composing.isCollapsed;
-      // composing進行中ならiOSの入力を尊重して再リセットしない
+      // If composing is in progress, respect iOS input and skip re-reset
       if (!hasActiveComposing && _directInputController.text != _sentinel) {
         _directInputController.value = TextEditingValue(
           text: _sentinel,
@@ -370,7 +375,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// ナビゲーションキー行（PgUp, PgDn, Home, End, Del, Ins）
+  /// Navigation keys row (PgUp, PgDn, Home, End, Del, Ins)
   Widget _buildNavigationKeysRow() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -389,7 +394,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// 上部の修飾キー行（ESC, TAB, CTRL, ALT, SHIFT, ENTER, S-RET, /, -）
+  /// Upper modifier keys row (ESC, TAB, CTRL, ALT, SHIFT, ENTER, S-RET, /, -)
   Widget _buildModifierKeysRow() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -417,7 +422,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// Shift+Enterキーボタン（Claude CodeのAcceptEdits等用）
+  /// Shift+Enter key button (for Claude Code AcceptEdits, etc.)
   Widget _buildShiftEnterKeyButton() {
     return Expanded(
       child: GestureDetector(
@@ -459,7 +464,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// ENTERキーボタン（単体でEnterを送信）
+  /// ENTER key button (sends Enter on its own)
   Widget _buildEnterKeyButton() {
     return Expanded(
       child: GestureDetector(
@@ -512,13 +517,13 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// 下部の矢印キー + Inputボタン行
+  /// Lower arrow keys + Input button row
   Widget _buildArrowKeysRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Row(
         children: [
-          // 矢印キー横並び: 左・上・下・右
+          // Arrow keys in a row: Left, Up, Down, Right
           _buildArrowButton(Icons.arrow_left, Vt100Keys.left),
           const SizedBox(width: 2),
           _buildArrowButton(Icons.arrow_drop_up, Vt100Keys.up),
@@ -527,9 +532,12 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           const SizedBox(width: 2),
           _buildArrowButton(Icons.arrow_right, Vt100Keys.right),
           const SizedBox(width: 8),
-          // DirectInputモードトグルボタン
+          // Raw input mode button (opens TerminalView's native keyboard)
+          _buildRawInputButton(),
+          const SizedBox(width: 2),
+          // DirectInput mode toggle button (LIVE mode with IME/dictionary)
           _buildDirectInputToggle(),
-          // DirectInput有効時: 数字キー(1-4)を右寄せで表示
+          // When DirectInput is enabled: show number keys (1-4) right-aligned
           if (widget.directInputEnabled) ...[
             const Spacer(),
             _buildNumberKeyButton('1'),
@@ -540,7 +548,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             const SizedBox(width: 2),
             _buildNumberKeyButton('4'),
           ],
-          // DirectInput無効時: Inputボタンを表示
+          // When DirectInput is disabled: show Input button
           if (!widget.directInputEnabled) ...[
             const SizedBox(width: 4),
             Expanded(child: _buildInputButton()),
@@ -550,8 +558,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// DirectInput専用行（入力フィールドのみ）
-  /// RET/BSはネイティブキーボードのものを使用
+  /// DirectInput dedicated row (input field only)
+  /// RET/BS use the native keyboard keys
   Widget _buildDirectInputRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -559,7 +567,41 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// DirectInputモードのトグルボタン
+  /// Raw input button — opens TerminalView's native soft keyboard
+  /// Each keystroke goes directly to terminal without IME/dictionary
+  Widget _buildRawInputButton() {
+    return GestureDetector(
+      onTap: () {
+        if (widget.hapticFeedback) {
+          HapticFeedback.selectionClick();
+        }
+        widget.onRawInputTap?.call();
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: DesignColors.keyBackground,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.05),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            'RAW',
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 8,
+              fontWeight: FontWeight.w700,
+              color: Colors.white70,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// DirectInput mode toggle button
   Widget _buildDirectInputToggle() {
     final isEnabled = widget.directInputEnabled;
     return GestureDetector(
@@ -594,7 +636,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// DirectInput用テキストフィールド（リアルタイム送信）
+  /// DirectInput text field (real-time sending)
   Widget _buildDirectInputField() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -606,7 +648,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         ),
         child: Row(
           children: [
-            // LIVEインジケーター（左側に配置）
+            // LIVE indicator (placed on the left)
             Container(
               margin: const EdgeInsets.only(left: 8),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -644,7 +686,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
               ),
             ),
             const SizedBox(width: 8),
-            // 入力フィールド（hardware keyboard shortcuts intercepted via onKeyEvent）
+            // Input field (hardware keyboard shortcuts intercepted via onKeyEvent)
             Expanded(
               child: Focus(
                 onKeyEvent: _handleDirectInputKeyEvent,
@@ -676,7 +718,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// 特殊キーボタン（VT100エスケープシーケンスで送信）
+  /// Special key button (sends VT100 escape sequences)
   Widget _buildSpecialKeyButton(String label, String vt100Key) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
@@ -720,7 +762,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// リテラルキーボタン（そのまま文字として送信）
+  /// Literal key button (sends the character as-is)
   Widget _buildLiteralKeyButton(String label, String key) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
@@ -837,7 +879,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// 数字キーボタン（DirectInput有効時に矢印キー行に表示）
+  /// Number key button (shown in the arrow keys row when DirectInput is enabled)
   Widget _buildNumberKeyButton(String label) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
@@ -919,7 +961,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// 特殊キーを送信（VT100エスケープシーケンス）
+  /// Send a special key (VT100 escape sequence)
   void _sendSpecialKey(String key) {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
@@ -927,7 +969,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
 
     String sequence = key; // Already a VT100 sequence from button tap
 
-    // 特殊なケース: Shift+Tab → Back Tab (ESC [ Z)
+    // Special case: Shift+Tab -> Back Tab (ESC [ Z)
     if (_shiftPressed && key == Vt100Keys.tab) {
       setState(() => _shiftPressed = false);
       if (_ctrlPressed) setState(() => _ctrlPressed = false);
@@ -958,7 +1000,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     widget.onSpecialKeyPressed(sequence);
   }
 
-  /// リテラルキーを送信（文字そのまま）
+  /// Send a literal key (character as-is)
   void _sendLiteralKey(String key) {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
@@ -989,7 +1031,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       return;
     }
 
-    // 修飾子なしの場合はリテラル送信
+    // Send as literal when no modifiers are active
     widget.onKeyPressed(data);
   }
 }

@@ -151,6 +151,9 @@ class TmuxBackend implements MuxBackend {
   Future<MuxPtySession> attachPty(String sessionId) async {
     final shell = await _executor.openInteractiveShell();
 
+    // Wait briefly for shell to initialize before sending attach command
+    await Future.delayed(const Duration(milliseconds: 100));
+
     // Send the tmux attach command through the PTY (using TmuxCommands for proper escaping)
     final attachCmd = TmuxCommands.attachSession(sessionId);
     shell.write(Uint8List.fromList(utf8.encode('$attachCmd\n')));

@@ -169,6 +169,9 @@ class PsmuxBackend implements MuxBackend {
   Future<MuxPtySession> attachPty(String sessionId) async {
     final shell = await _executor.openInteractiveShell();
 
+    // Wait for shell to initialize (PowerShell startup can be slow)
+    await Future.delayed(const Duration(milliseconds: 300));
+
     final attachCmd = _toPsmuxCommand(TmuxCommands.attachSession(sessionId));
     shell.write(Uint8List.fromList(utf8.encode('$attachCmd\n')));
 
