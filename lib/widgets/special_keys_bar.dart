@@ -318,12 +318,12 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
       color: isDark ? DesignColors.surfaceDark : DesignColors.surfaceLight,
       child: Row(
         children: [
-          _buildSpecialKeyButton('PgUp', 'PPage'),
-          _buildSpecialKeyButton('PgDn', 'NPage'),
-          _buildSpecialKeyButton('Home', 'Home'),
-          _buildSpecialKeyButton('End', 'End'),
-          _buildSpecialKeyButton('Del', 'DC'),
-          _buildSpecialKeyButton('Ins', 'IC'),
+          _buildSpecialKeyButton('PgUp', Vt100Keys.pageUp),
+          _buildSpecialKeyButton('PgDn', Vt100Keys.pageDown),
+          _buildSpecialKeyButton('Home', Vt100Keys.home),
+          _buildSpecialKeyButton('End', Vt100Keys.end),
+          _buildSpecialKeyButton('Del', Vt100Keys.delete),
+          _buildSpecialKeyButton('Ins', Vt100Keys.insert),
         ],
       ),
     );
