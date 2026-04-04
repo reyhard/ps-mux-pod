@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import '../tmux/tmux_commands.dart';
 import '../tmux/tmux_parser.dart';
 import 'command_executor.dart';
@@ -163,8 +166,18 @@ class PsmuxBackend implements MuxBackend {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<MuxPtySession> attachPty(String sessionId) {
-    throw UnimplementedError('PTY stream not yet supported for psmux');
+  Future<MuxPtySession> attachPty(String sessionId) async {
+    final shell = await _executor.openInteractiveShell();
+
+    final attachCmd = _toPsmuxCommand(TmuxCommands.attachSession(sessionId));
+    shell.write(Uint8List.fromList(utf8.encode('$attachCmd\n')));
+
+    return MuxPtySession(
+      stdout: shell.stdout,
+      write: shell.write,
+      resize: shell.resize,
+      close: shell.close,
+    );
   }
 
   // ---------------------------------------------------------------------------
