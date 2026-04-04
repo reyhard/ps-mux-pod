@@ -256,6 +256,66 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     widget.onSpecialKeyPressed(Vt100Keys.backspace);
   }
 
+  /// DirectInput: ハードウェアキーボードのキーイベントを処理
+  /// Ctrl/Alt修飾付きキーや特殊キーをVT100エスケープシーケンスとして送信
+  KeyEventResult _handleDirectInputKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+
+    final ctrl = HardwareKeyboard.instance.isControlPressed;
+    final alt = HardwareKeyboard.instance.isAltPressed;
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+    final key = event.logicalKey;
+
+    // Special keys → VT100 escape sequences
+    final specialMap = <LogicalKeyboardKey, String>{
+      LogicalKeyboardKey.escape: Vt100Keys.escape,
+      LogicalKeyboardKey.tab: shift ? Vt100Keys.backTab : Vt100Keys.tab,
+      LogicalKeyboardKey.arrowUp: Vt100Keys.up,
+      LogicalKeyboardKey.arrowDown: Vt100Keys.down,
+      LogicalKeyboardKey.arrowLeft: Vt100Keys.left,
+      LogicalKeyboardKey.arrowRight: Vt100Keys.right,
+      LogicalKeyboardKey.home: Vt100Keys.home,
+      LogicalKeyboardKey.end: Vt100Keys.end,
+      LogicalKeyboardKey.pageUp: Vt100Keys.pageUp,
+      LogicalKeyboardKey.pageDown: Vt100Keys.pageDown,
+      LogicalKeyboardKey.delete: Vt100Keys.delete,
+      LogicalKeyboardKey.insert: Vt100Keys.insert,
+      LogicalKeyboardKey.f1: Vt100Keys.f1,
+      LogicalKeyboardKey.f2: Vt100Keys.f2,
+      LogicalKeyboardKey.f3: Vt100Keys.f3,
+      LogicalKeyboardKey.f4: Vt100Keys.f4,
+      LogicalKeyboardKey.f5: Vt100Keys.f5,
+      LogicalKeyboardKey.f6: Vt100Keys.f6,
+      LogicalKeyboardKey.f7: Vt100Keys.f7,
+      LogicalKeyboardKey.f8: Vt100Keys.f8,
+      LogicalKeyboardKey.f9: Vt100Keys.f9,
+      LogicalKeyboardKey.f10: Vt100Keys.f10,
+      LogicalKeyboardKey.f11: Vt100Keys.f11,
+      LogicalKeyboardKey.f12: Vt100Keys.f12,
+    };
+
+    if (specialMap.containsKey(key)) {
+      String seq = specialMap[key]!;
+      if (alt) seq = Vt100Keys.alt(seq);
+      widget.onSpecialKeyPressed(seq);
+      return KeyEventResult.handled;
+    }
+
+    // Ctrl+letter or Alt+letter → send as control/meta character
+    if ((ctrl || alt) && key.keyLabel.length == 1 && RegExp(r'^[A-Za-z]$').hasMatch(key.keyLabel)) {
+      String seq = key.keyLabel;
+      if (ctrl) seq = Vt100Keys.ctrl(seq);
+      if (alt) seq = Vt100Keys.alt(seq);
+      widget.onSpecialKeyPressed(seq);
+      return KeyEventResult.handled;
+    }
+
+    // Let TextField handle normal text input
+    return KeyEventResult.ignored;
+  }
+
   /// DirectInput: sentinelにリセット（Backspace検出用）
   ///
   /// _isResettingControllerの解除を次フレームまで遅延することで、
@@ -584,27 +644,30 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
               ),
             ),
             const SizedBox(width: 8),
-            // 入力フィールド
+            // 入力フィールド（hardware keyboard shortcuts intercepted via onKeyEvent）
             Expanded(
-              child: TextField(
-                controller: _directInputController,
-                focusNode: _directInputFocusNode,
-                autofocus: true,
-                textInputAction: TextInputAction.send,
-                onSubmitted: _onDirectInputSubmitted,
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 14,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Type here...',
-                  hintStyle: GoogleFonts.jetBrainsMono(
+              child: Focus(
+                onKeyEvent: _handleDirectInputKeyEvent,
+                child: TextField(
+                  controller: _directInputController,
+                  focusNode: _directInputFocusNode,
+                  autofocus: true,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: _onDirectInputSubmitted,
+                  style: GoogleFonts.jetBrainsMono(
                     fontSize: 14,
-                    color: DesignColors.success.withValues(alpha: 0.5),
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                  isDense: true,
+                  decoration: InputDecoration(
+                    hintText: 'Type here...',
+                    hintStyle: GoogleFonts.jetBrainsMono(
+                      fontSize: 14,
+                      color: DesignColors.success.withValues(alpha: 0.5),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    isDense: true,
+                  ),
                 ),
               ),
             ),
