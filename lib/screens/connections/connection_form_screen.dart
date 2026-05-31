@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../models/agent_interface.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/key_provider.dart';
 import '../../services/keychain/secure_storage.dart';
@@ -44,6 +45,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
   bool _obscurePassword = true;
   String _muxType = 'auto';
   String _transport = 'ssh';
+  AgentInterface _agentInterface = AgentInterface.claude;
   bool _nestedTmux = false;
 
   @override
@@ -67,6 +69,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
       _deepLinkIdController.text = connection.deepLinkId ?? '';
       _muxType = connection.muxType;
       _transport = connection.transport;
+      _agentInterface = connection.agentInterface;
       _wslDistroController.text = connection.wslDistro ?? '';
       _nestedTmux = connection.nestedTmux;
     }
@@ -274,6 +277,11 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
               _buildFieldLabel('TRANSPORT'),
               const SizedBox(height: 8),
               _buildTransportDropdown(),
+              const SizedBox(height: 16),
+              // Agent Interface
+              _buildFieldLabel('AGENT INTERFACE'),
+              const SizedBox(height: 8),
+              _buildAgentInterfaceDropdown(),
               // WSL Distribution (only when transport is wslBridge)
               if (_transport == 'wslBridge') ...[
                 const SizedBox(height: 16),
@@ -673,6 +681,47 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
       onChanged: (value) {
         if (value != null) {
           setState(() => _transport = value);
+        }
+      },
+    );
+  }
+
+  Widget _buildAgentInterfaceDropdown() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? DesignColors.textMuted : DesignColors.textMutedLight;
+    final inputColor = isDark ? DesignColors.inputDark : DesignColors.inputLight;
+    return DropdownButtonFormField<AgentInterface>(
+      initialValue: _agentInterface,
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.smart_toy_outlined, color: mutedColor, size: 20),
+        filled: true,
+        fillColor: inputColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      dropdownColor: colorScheme.surface,
+      style: GoogleFonts.spaceGrotesk(fontSize: 14, color: colorScheme.onSurface),
+      items: AgentInterface.values.map((agentInterface) {
+        return DropdownMenuItem(
+          value: agentInterface,
+          child: Text(agentInterface.displayLabel),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _agentInterface = value);
         }
       },
     );
@@ -1141,6 +1190,7 @@ class _ConnectionFormScreenState extends ConsumerState<ConnectionFormScreen> {
         transport: _transport,
         wslDistro: saveWslDistro.isNotEmpty ? saveWslDistro : null,
         nestedTmux: _nestedTmux,
+        agentInterface: _agentInterface,
         createdAt: widget.isEditing
             ? ref.read(connectionsProvider.notifier).getById(connectionId)?.createdAt ?? DateTime.now()
             : DateTime.now(),
