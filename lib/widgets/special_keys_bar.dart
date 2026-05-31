@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../models/agent_interface.dart';
 import '../theme/design_colors.dart';
 
 /// VT100/xterm escape sequence constants for special keys.
@@ -72,6 +73,8 @@ class SpecialKeysBar extends StatefulWidget {
   /// DirectInput mode toggle callback
   final VoidCallback? onDirectInputToggle;
 
+  final AgentInterface agentInterface;
+
   const SpecialKeysBar({
     super.key,
     required this.onKeyPressed,
@@ -80,6 +83,7 @@ class SpecialKeysBar extends StatefulWidget {
     this.hapticFeedback = true,
     this.directInputEnabled = false,
     this.onDirectInputToggle,
+    this.agentInterface = AgentInterface.claude,
   });
 
   @override
@@ -97,6 +101,9 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   bool _rawInputEnabled = false;
   final TextEditingController _rawInputController = TextEditingController();
   final FocusNode _rawInputFocusNode = FocusNode();
+
+  bool _quickActionsOpen = false;
+  bool _effortActionsOpen = false;
 
   /// Whether IME composition is currently active
   bool _isComposing = false;
@@ -129,6 +136,10 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   @override
   void didUpdateWidget(SpecialKeysBar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.agentInterface != oldWidget.agentInterface) {
+      _quickActionsOpen = false;
+      _effortActionsOpen = false;
+    }
     if (widget.directInputEnabled && !oldWidget.directInputEnabled) {
       _resetToSentinel();
     } else if (!widget.directInputEnabled && oldWidget.directInputEnabled) {
@@ -340,6 +351,32 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              transitionBuilder: (child, animation) => SizeTransition(
+                sizeFactor: animation,
+                axisAlignment: -1,
+                child: child,
+              ),
+              child: _effortActionsOpen
+                  ? _buildEffortActionsRow()
+                  : const SizedBox.shrink(
+                      key: ValueKey('effort-actions-closed'),
+                    ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              transitionBuilder: (child, animation) => SizeTransition(
+                sizeFactor: animation,
+                axisAlignment: -1,
+                child: child,
+              ),
+              child: _quickActionsOpen
+                  ? _buildQuickActionsRow()
+                  : const SizedBox.shrink(
+                      key: ValueKey('quick-actions-closed'),
+                    ),
+            ),
             _buildNavigationKeysRow(),
             _buildModifierKeysRow(),
             _buildArrowKeysRow(),
@@ -353,9 +390,36 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
     );
   }
 
-  /// Navigation keys row (PgUp, PgDn, Home, End, Del, Ins)
+  /// Navigation keys row (PgUp, PgDn, Claude shortcuts, quick actions toggle)
   Widget _buildNavigationKeysRow() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final shortcuts = widget.agentInterface == AgentInterface.codex
+        ? <Widget>[
+            _buildIconKeyButton(
+              icon: Icons.assignment_turned_in_outlined,
+              vt100Key: Vt100Keys.backTab,
+            ),
+            _buildEffortActionsToggle(),
+            _buildIconKeyButton(
+              icon: Icons.article_outlined,
+              vt100Key: Vt100Keys.ctrl('t'),
+            ),
+          ]
+        : <Widget>[
+            _buildIconKeyButton(
+              icon: Icons.description_outlined,
+              vt100Key: Vt100Keys.ctrl('o'),
+            ),
+            _buildIconKeyButton(
+              icon: Icons.route_outlined,
+              vt100Key: Vt100Keys.backTab,
+            ),
+            _buildIconKeyButton(
+              icon: Icons.stop_circle_outlined,
+              vt100Key: Vt100Keys.ctrl('c'),
+            ),
+          ];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       color: isDark ? DesignColors.surfaceDark : DesignColors.surfaceLight,
@@ -363,10 +427,42 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
         children: [
           _buildSpecialKeyButton('PgUp', Vt100Keys.pageUp),
           _buildSpecialKeyButton('PgDn', Vt100Keys.pageDown),
-          _buildSpecialKeyButton('Home', Vt100Keys.home),
-          _buildSpecialKeyButton('End', Vt100Keys.end),
-          _buildSpecialKeyButton('Del', Vt100Keys.delete),
-          _buildSpecialKeyButton('Ins', Vt100Keys.insert),
+          ...shortcuts,
+          _buildQuickActionsToggle(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEffortActionsRow() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      key: const ValueKey('effort-actions-open'),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      color: isDark ? DesignColors.surfaceDark : DesignColors.surfaceLight,
+      child: Row(
+        children: [
+          _buildSpecialKeyButton('Lower', Vt100Keys.alt(',')),
+          _buildSpecialKeyButton('Raise', Vt100Keys.alt('.')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsRow() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      key: const ValueKey('quick-actions-open'),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      color: isDark ? DesignColors.surfaceDark : DesignColors.surfaceLight,
+      child: Row(
+        children: [
+          _buildQuickActionButton('1', '1'),
+          _buildQuickActionButton('2', '2'),
+          _buildQuickActionButton('3', '3'),
+          _buildQuickActionButton('4', '4'),
+          _buildQuickActionButton('Y', 'y'),
+          _buildQuickActionButton('N', 'n'),
         ],
       ),
     );
@@ -862,7 +958,11 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   }
 
   /// Literal key button (sends the character as-is)
-  Widget _buildLiteralKeyButton(String label, String key) {
+  Widget _buildLiteralKeyButton(
+    String label,
+    String key, {
+    bool ignoreModifiers = false,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
@@ -872,7 +972,7 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
             HapticFeedback.lightImpact();
           }
         },
-        onTap: () => _sendLiteralKey(key),
+        onTap: () => _sendLiteralKey(key, ignoreModifiers: ignoreModifiers),
         child: Container(
           height: 32,
           margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -903,6 +1003,176 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
                 fontWeight: FontWeight.w700,
                 color: colorScheme.onSurface.withValues(alpha: 0.9),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(String label, String key) {
+    return _buildLiteralKeyButton(label, key, ignoreModifiers: true);
+  }
+
+  Widget _buildIconKeyButton({
+    required IconData icon,
+    required String vt100Key,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: GestureDetector(
+        onTapDown: (_) {
+          if (widget.hapticFeedback) {
+            HapticFeedback.lightImpact();
+          }
+        },
+        onTap: () => _sendSpecialKey(vt100Key),
+        child: Container(
+          height: 32,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: isDark
+                ? DesignColors.keyBackground
+                : DesignColors.keyBackgroundLight,
+            borderRadius: BorderRadius.circular(4),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? Colors.black : Colors.grey.shade400,
+                width: 2,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 16,
+              color: colorScheme.onSurface.withValues(alpha: 0.9),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: GestureDetector(
+        onTapDown: (_) {
+          if (widget.hapticFeedback) {
+            HapticFeedback.lightImpact();
+          }
+        },
+        onTap: () {
+          setState(() {
+            final opening = !_quickActionsOpen;
+            _quickActionsOpen = opening;
+            if (opening) {
+              _effortActionsOpen = false;
+            }
+          });
+        },
+        child: Container(
+          height: 32,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: _quickActionsOpen
+                ? DesignColors.warning.withValues(alpha: 0.3)
+                : (isDark
+                      ? DesignColors.keyBackground
+                      : DesignColors.keyBackgroundLight),
+            borderRadius: BorderRadius.circular(4),
+            border: Border(
+              bottom: BorderSide(
+                color: _quickActionsOpen
+                    ? DesignColors.warning.withValues(alpha: 0.5)
+                    : (isDark ? Colors.black : Colors.grey.shade400),
+                width: 2,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              Icons.keyboard_command_key,
+              size: 16,
+              color: _quickActionsOpen
+                  ? DesignColors.warning
+                  : colorScheme.onSurface.withValues(alpha: 0.9),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEffortActionsToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: GestureDetector(
+        onTapDown: (_) {
+          if (widget.hapticFeedback) {
+            HapticFeedback.lightImpact();
+          }
+        },
+        onTap: () {
+          setState(() {
+            final opening = !_effortActionsOpen;
+            _effortActionsOpen = opening;
+            if (opening) {
+              _quickActionsOpen = false;
+            }
+          });
+        },
+        child: Container(
+          height: 32,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: _effortActionsOpen
+                ? DesignColors.warning.withValues(alpha: 0.3)
+                : (isDark
+                      ? DesignColors.keyBackground
+                      : DesignColors.keyBackgroundLight),
+            borderRadius: BorderRadius.circular(4),
+            border: Border(
+              bottom: BorderSide(
+                color: _effortActionsOpen
+                    ? DesignColors.warning.withValues(alpha: 0.5)
+                    : (isDark ? Colors.black : Colors.grey.shade400),
+                width: 2,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.15),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              Icons.speed_outlined,
+              size: 16,
+              color: _effortActionsOpen
+                  ? DesignColors.warning
+                  : colorScheme.onSurface.withValues(alpha: 0.9),
             ),
           ),
         ),
@@ -1119,12 +1389,24 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
   }
 
   /// Send a literal key (character as-is)
-  void _sendLiteralKey(String key) {
+  void _sendLiteralKey(String key, {bool ignoreModifiers = false}) {
     if (widget.hapticFeedback) {
       HapticFeedback.lightImpact();
     }
 
     String data = key;
+
+    if (ignoreModifiers) {
+      if (_shiftPressed || _ctrlPressed || _altPressed) {
+        setState(() {
+          _shiftPressed = false;
+          _ctrlPressed = false;
+          _altPressed = false;
+        });
+      }
+      widget.onKeyPressed(data);
+      return;
+    }
 
     // Reset shift (literal keys don't need shift VT100 encoding)
     if (_shiftPressed) {
