@@ -4,6 +4,8 @@ import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/agent_interface.dart';
+
 /// Connection settings
 class Connection {
   final String id;
@@ -32,6 +34,9 @@ class Connection {
   /// Whether to search for tmux inside the WSL pane
   final bool nestedTmux;
 
+  /// Agent shortcut interface: Claude Code or Codex
+  final AgentInterface agentInterface;
+
   const Connection({
     required this.id,
     required this.name,
@@ -48,6 +53,7 @@ class Connection {
     this.transport = 'ssh',
     this.wslDistro,
     this.nestedTmux = false,
+    this.agentInterface = AgentInterface.claude,
   });
 
   Connection copyWith({
@@ -68,6 +74,7 @@ class Connection {
     String? wslDistro,
     bool clearWslDistro = false,
     bool? nestedTmux,
+    AgentInterface? agentInterface,
   }) {
     return Connection(
       id: id ?? this.id,
@@ -85,6 +92,7 @@ class Connection {
       transport: transport ?? this.transport,
       wslDistro: clearWslDistro ? null : (wslDistro ?? this.wslDistro),
       nestedTmux: nestedTmux ?? this.nestedTmux,
+      agentInterface: agentInterface ?? this.agentInterface,
     );
   }
 
@@ -105,6 +113,7 @@ class Connection {
       'transport': transport,
       'wslDistro': wslDistro,
       'nestedTmux': nestedTmux,
+      'agentInterface': agentInterface.storageValue,
     };
   }
 
@@ -127,6 +136,8 @@ class Connection {
       transport: json['transport'] as String? ?? 'ssh',
       wslDistro: json['wslDistro'] as String?,
       nestedTmux: json['nestedTmux'] as bool? ?? false,
+      agentInterface:
+          agentInterfaceFromStorage(json['agentInterface'] as String?),
     );
   }
 }
