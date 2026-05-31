@@ -8,11 +8,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/xterm.dart';
 
+import '../../models/agent_interface.dart';
 import '../../providers/active_session_provider.dart';
 import '../../providers/connection_provider.dart';
+import '../../providers/mux_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/ssh_provider.dart';
-import '../../providers/mux_provider.dart';
 import '../../providers/tmux_provider.dart';
 import '../../services/keychain/secure_storage.dart';
 import '../../services/mux/mux_backend.dart';
@@ -930,6 +931,14 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
   Widget build(BuildContext context) {
     final sshState = _sshState;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final connectionsState = ref.watch(connectionsProvider);
+    Connection? activeConnection;
+    for (final connection in connectionsState.connections) {
+      if (connection.id == widget.connectionId) {
+        activeConnection = connection;
+        break;
+      }
+    }
 
     return Scaffold(
       key: _scaffoldKey,
@@ -983,6 +992,8 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen>
                 ),
               ),
               SpecialKeysBar(
+                agentInterface:
+                    activeConnection?.agentInterface ?? AgentInterface.claude,
                 onKeyPressed: (String key) {
                   _writeToPty(key);
                 },
