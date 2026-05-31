@@ -33,6 +33,21 @@ void main() {
       expect(connection.agentInterface, AgentInterface.claude);
     });
 
+    test('falls back to Claude for malformed agentInterface values', () {
+      final connection = Connection.fromJson({
+        'id': 'conn-1',
+        'name': 'Production',
+        'host': 'example.com',
+        'port': 22,
+        'username': 'deploy',
+        'authMethod': 'password',
+        'createdAt': DateTime(2026, 5, 31).toIso8601String(),
+        'agentInterface': false,
+      });
+
+      expect(connection.agentInterface, AgentInterface.claude);
+    });
+
     test('persists Codex agentInterface to JSON', () {
       final connection = Connection(
         id: 'conn-1',

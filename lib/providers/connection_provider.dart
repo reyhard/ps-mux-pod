@@ -136,8 +136,11 @@ class Connection {
       transport: json['transport'] as String? ?? 'ssh',
       wslDistro: json['wslDistro'] as String?,
       nestedTmux: json['nestedTmux'] as bool? ?? false,
-      agentInterface:
-          agentInterfaceFromStorage(json['agentInterface'] as String?),
+      agentInterface: agentInterfaceFromStorage(
+        json['agentInterface'] is String
+            ? json['agentInterface'] as String
+            : null,
+      ),
     );
   }
 }
