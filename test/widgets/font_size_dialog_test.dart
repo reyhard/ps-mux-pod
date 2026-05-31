@@ -14,6 +14,8 @@ void main() {
       );
 
       expect(find.text('Font Size'), findsOneWidget);
+      expect(find.text('6'), findsOneWidget);
+      expect(find.text('8'), findsOneWidget);
       expect(find.text('10'), findsOneWidget);
       expect(find.text('12'), findsOneWidget);
       expect(find.text('14'), findsOneWidget);

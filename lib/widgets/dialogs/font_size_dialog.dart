@@ -16,7 +16,7 @@ class FontSizeDialog extends StatefulWidget {
 class _FontSizeDialogState extends State<FontSizeDialog> {
   late double _selectedSize;
 
-  static const List<double> _fontSizes = [10, 12, 14, 16, 18, 20];
+  static const List<double> _fontSizes = [6, 8, 10, 12, 14, 16, 18, 20];
 
   @override
   void initState() {

@@ -15,9 +15,14 @@ import 'mux_pty_session.dart';
 /// generation to [TmuxCommands] and parsing to [TmuxParser], substituting
 /// the leading "tmux" token with "psmux" before execution.
 class PsmuxBackend implements MuxBackend {
-  PsmuxBackend(this._executor);
+  PsmuxBackend(
+    this._executor, {
+    Duration? shellPromptTimeout,
+  }) : _shellPromptTimeout =
+           shellPromptTimeout ?? const Duration(seconds: 5);
 
   final CommandExecutor _executor;
+  final Duration _shellPromptTimeout;
 
   @override
   String get name => 'psmux';
@@ -31,22 +36,28 @@ class PsmuxBackend implements MuxBackend {
     final output = await _executor.execute(
       _toPsmuxCommand(TmuxCommands.listSessions()),
     );
-    final sessions = TmuxParser.parseSessions(output);
+    final sessions = TmuxParser.parseSessions(_sanitizeStructuredOutput(output));
     return sessions.map(_mapSession).toList();
   }
 
   @override
   Future<MuxSession> newSession({String? name}) async {
     final sessionName = name ?? 'session-${DateTime.now().millisecondsSinceEpoch}';
-    await _executor.execute(
-      _toPsmuxCommand(TmuxCommands.newSession(name: sessionName, detached: true)),
-    );
-    // Retrieve the freshly-created session so we can return accurate metadata.
-    final sessions = await listSessions();
-    final created = sessions.where((s) => s.name == sessionName).firstOrNull;
-    if (created != null) return created;
-    // Fallback: construct a minimal session if the list-sessions call did not
-    // yet reflect the new session (race condition on slow hosts).
+    final cmd = _toPsmuxCommand(TmuxCommands.newSession(name: sessionName, detached: true));
+    // ignore: avoid_print
+    print('[psmux] newSession cmd: $cmd');
+    final output = await _executor.execute(cmd);
+    // ignore: avoid_print
+    print('[psmux] newSession output: "$output"');
+
+    // Try to retrieve the freshly-created session.
+    try {
+      final sessions = await listSessions();
+      final created = sessions.where((s) => s.name == sessionName).firstOrNull;
+      if (created != null) return created;
+    } catch (_) {
+      // List may fail on Windows/psmux — fall through to minimal session.
+    }
     return MuxSession(id: sessionName, name: sessionName);
   }
 
@@ -73,7 +84,7 @@ class PsmuxBackend implements MuxBackend {
     final output = await _executor.execute(
       _toPsmuxCommand(TmuxCommands.listWindows(sessionId)),
     );
-    final windows = TmuxParser.parseWindows(output);
+    final windows = TmuxParser.parseWindows(_sanitizeStructuredOutput(output));
     return windows.map(_mapWindow).toList();
   }
 
@@ -112,7 +123,7 @@ class PsmuxBackend implements MuxBackend {
     final output = await _executor.execute(
       _toPsmuxCommand(TmuxCommands.listPanes(sessionName, windowIndex)),
     );
-    final panes = TmuxParser.parsePanes(output);
+    final panes = TmuxParser.parsePanes(_sanitizeStructuredOutput(output));
     return panes.map(_mapPane).toList();
   }
 
@@ -170,48 +181,48 @@ class PsmuxBackend implements MuxBackend {
   Future<MuxPtySession> attachPty(String sessionId) async {
     final shell = await _executor.openInteractiveShell();
 
-    final attachCmd = _toPsmuxCommand(TmuxCommands.attachSession(sessionId));
+    // Try to attach to an existing session; if it doesn't exist, create one.
+    // Uses PowerShell 7 `||` operator. The new-session (without -d) creates
+    // AND attaches in a single step, keeping the psmux server alive inside
+    // this shell.
+    final attachOrCreate =
+        'psmux attach-session -t $sessionId 2>\$null'
+        ' || psmux new-session -s $sessionId';
 
-    // Single controller that wraps shell.stdout for the entire lifecycle.
-    // First waits for shell prompt, sends the attach command, then forwards
-    // all subsequent output to consumers.
     final controller = StreamController<List<int>>();
-    bool promptSeen = false;
     final promptCompleter = Completer<void>();
+    var promptBuffer = '';
 
     shell.stdout.listen(
       (data) {
-        if (!promptSeen) {
-          // Check for shell prompt before forwarding
-          final text = String.fromCharCodes(data);
-          if (text.contains('>') || text.contains('\$') || text.contains('#')) {
-            promptSeen = true;
-            if (!promptCompleter.isCompleted) promptCompleter.complete();
+        if (!promptCompleter.isCompleted) {
+          promptBuffer += utf8.decode(data, allowMalformed: true);
+          if (promptBuffer.length > 512) {
+            promptBuffer = promptBuffer.substring(promptBuffer.length - 512);
+          }
+          if (_looksLikeShellPrompt(promptBuffer)) {
+            shell.write(Uint8List.fromList(utf8.encode('$attachOrCreate\r')));
+            promptCompleter.complete();
           }
         }
-        // Forward ALL data (including pre-prompt) to the consumer
         if (!controller.isClosed) controller.add(data);
       },
       onError: (e) { if (!controller.isClosed) controller.addError(e); },
       onDone: () { if (!controller.isClosed) controller.close(); },
     );
 
-    // Timeout after 5s in case prompt detection fails
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(_shellPromptTimeout, () {
       if (!promptCompleter.isCompleted) promptCompleter.complete();
     });
 
     await promptCompleter.future;
-
-    // Use \r (carriage return) — that's what Enter sends in a PTY
-    shell.write(Uint8List.fromList(utf8.encode('$attachCmd\r')));
 
     return MuxPtySession(
       stdout: controller.stream,
       write: shell.write,
       resize: shell.resize,
       close: () async {
-        await controller.close();
+        controller.close();
         await shell.close();
       },
     );
@@ -221,10 +232,28 @@ class PsmuxBackend implements MuxBackend {
   // Internal helpers
   // ---------------------------------------------------------------------------
 
-  /// Substitutes the leading "tmux " token with "psmux " in a tmux command
-  /// string, making it suitable for execution by psmux.
+  /// Translates a tmux command string for psmux on Windows/PowerShell.
+  ///
+  /// Replaces the leading "tmux" token with "psmux" and adapts bash-isms
+  /// (e.g. `2>/dev/null`) to PowerShell equivalents (`2>$null`).
   String _toPsmuxCommand(String tmuxCommand) {
-    return tmuxCommand.replaceFirst('tmux ', 'psmux ');
+    return tmuxCommand
+        .replaceFirst('tmux ', 'psmux ')
+        .replaceAll('2>/dev/null', r'2>$null')
+        .replaceAll('2>&1', '2>&1');
+  }
+
+  /// Strips shell noise (MOTD, keep-alive messages, etc.) from command output,
+  /// keeping only lines that look like psmux structured data.
+  String _sanitizeStructuredOutput(String output) {
+    final lines = output.split(RegExp(r'[\r\n]+'));
+    return lines.where((line) => line.contains('|||')).join('\n');
+  }
+
+  bool _looksLikeShellPrompt(String text) {
+    final normalized = text.replaceAll('\r', '\n');
+    final match = RegExp(r'(^|\n)[^\n]*[>#$] ?$').firstMatch(normalized);
+    return match != null;
   }
 
   /// Parses a window target of the form "sessionName:windowIndex".

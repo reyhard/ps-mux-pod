@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_muxpod/services/mux/command_executor.dart';
 import 'package:flutter_muxpod/services/mux/mux_models.dart';
@@ -10,8 +14,9 @@ class _MockExecutor implements CommandExecutor {
 
   /// Queue of responses returned by [execute] in FIFO order.
   final List<String> responses;
+  final List<InteractiveShell> interactiveShells;
 
-  _MockExecutor(this.responses);
+  _MockExecutor(this.responses, {this.interactiveShells = const []});
 
   @override
   Future<String> execute(String command) async {
@@ -24,11 +29,53 @@ class _MockExecutor implements CommandExecutor {
 
   @override
   Future<InteractiveShell> openInteractiveShell({int cols = 80, int rows = 24}) {
-    throw UnimplementedError('Not needed for psmux backend tests');
+    if (interactiveShells.isEmpty) {
+      throw UnimplementedError('No interactive shell configured for this test');
+    }
+    return Future.value(interactiveShells.removeAt(0));
   }
 
   @override
   Future<void> dispose() async {}
+}
+
+class _MockInteractiveShell implements InteractiveShell {
+  _MockInteractiveShell({String initialOutput = ''})
+      : _stdoutController = StreamController<List<int>>() {
+    if (initialOutput.isNotEmpty) {
+      Future.microtask(
+        () => _stdoutController.add(utf8.encode(initialOutput)),
+      );
+    }
+  }
+
+  final StreamController<List<int>> _stdoutController;
+  final List<String> writes = [];
+  final List<(int cols, int rows)> resizes = [];
+  bool closed = false;
+
+  @override
+  Stream<List<int>> get stdout => _stdoutController.stream;
+
+  void emitStdout(String text) {
+    _stdoutController.add(utf8.encode(text));
+  }
+
+  @override
+  void Function(Uint8List data) get write => (Uint8List data) {
+    writes.add(utf8.decode(data, allowMalformed: true));
+  };
+
+  @override
+  void Function(int cols, int rows) get resize => (int cols, int rows) {
+    resizes.add((cols, rows));
+  };
+
+  @override
+  Future<void> Function() get close => () async {
+    closed = true;
+    await _stdoutController.close();
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -216,12 +263,14 @@ void main() {
     test('newSession creates session and returns it from listSessions', () async {
       // First call (new-session) returns '', second (list-sessions) returns the
       // new session line.
-      final executor = _MockExecutor(['', 'mysession|||1700000001|||0|||1|||\$2']);
+      final executor = _MockExecutor([
+        '',
+        'mysession|||1700000001|||0|||1|||\$2',
+      ]);
       final backend = PsmuxBackend(executor);
       final session = await backend.newSession(name: 'mysession');
 
       expect(session.name, equals('mysession'));
-      // Both commands must use psmux prefix.
       for (final cmd in executor.capturedCommands) {
         expect(cmd, startsWith('psmux '));
       }
@@ -240,6 +289,25 @@ void main() {
       for (final cmd in executor.capturedCommands) {
         expect(cmd, startsWith('psmux '));
       }
+    });
+
+    test('attachPty sends attach-or-create command on first prompt', () async {
+      final shell = _MockInteractiveShell(initialOutput: r'PS C:\Users\mux>');
+      final executor = _MockExecutor([], interactiveShells: [shell]);
+      final backend = PsmuxBackend(
+        executor,
+        shellPromptTimeout: const Duration(milliseconds: 200),
+      );
+
+      final pty = await backend.attachPty('main');
+
+      expect(shell.writes, equals([
+        r'psmux attach-session -t main 2>$null || psmux new-session -s main' '\r',
+      ]));
+      expect(executor.capturedCommands, isEmpty);
+
+      await pty.close();
+      expect(shell.closed, isTrue);
     });
   });
 }
