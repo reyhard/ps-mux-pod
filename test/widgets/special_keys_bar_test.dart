@@ -287,7 +287,7 @@ void main() {
       await tester.tap(find.text('N'));
       await tester.pump();
 
-      expect(literalKeys, <String>['1', 'y', 'n']);
+      expect(literalKeys, <String>['1', 'Y', 'N']);
       expect(specialKeys, isEmpty);
 
       await tester.tap(find.byIcon(Icons.keyboard_command_key));

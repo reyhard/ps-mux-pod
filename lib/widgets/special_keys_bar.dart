@@ -461,8 +461,8 @@ class _SpecialKeysBarState extends State<SpecialKeysBar> {
           _buildQuickActionButton('2', '2'),
           _buildQuickActionButton('3', '3'),
           _buildQuickActionButton('4', '4'),
-          _buildQuickActionButton('Y', 'y'),
-          _buildQuickActionButton('N', 'n'),
+          _buildQuickActionButton('Y', 'Y'),
+          _buildQuickActionButton('N', 'N'),
         ],
       ),
     );
